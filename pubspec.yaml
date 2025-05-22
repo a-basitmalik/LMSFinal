@@ -43,6 +43,7 @@ dependencies:
   syncfusion_flutter_datepicker: ^26.2.14
   glassmorphism: ^3.0.0
   flutter_neumorphic: ^3.2.0
+  url_launcher: ^6.2.5
 
 
 

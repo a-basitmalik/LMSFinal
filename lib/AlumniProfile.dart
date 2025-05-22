@@ -61,10 +61,41 @@ class AlumniProfileScreen extends StatelessWidget {
     thesis: "Machine Learning Applications in Educational Technology",
   );
 
+  // Add context parameter to these methods since they're used in a StatelessWidget
+  Future<void> _launchEmail(String email, BuildContext context) async {
+    final Uri emailLaunchUri = Uri(
+      scheme: 'mailto',
+      path: email,
+    );
+
+    if (await canLaunchUrl(emailLaunchUri)) {
+      await launchUrl(emailLaunchUri);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("No email app found")),
+      );
+    }
+  }
+
+  Future<void> _launchPhone(String phone, BuildContext context) async {
+    final Uri phoneLaunchUri = Uri(
+      scheme: 'tel',
+      path: phone,
+    );
+
+    if (await canLaunchUrl(phoneLaunchUri)) {
+      await launchUrl(phoneLaunchUri);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("No phone app found")),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFF0A0E21),
+      backgroundColor: const Color(0xFF0A0E21),
       body: CustomScrollView(
         slivers: [
           SliverAppBar(
@@ -103,7 +134,7 @@ class AlumniProfileScreen extends StatelessWidget {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        SizedBox(height: 50),
+                        const SizedBox(height: 50),
                         Container(
                           width: 120,
                           height: 120,
@@ -139,7 +170,7 @@ class AlumniProfileScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  SizedBox(height: 20),
+                  const SizedBox(height: 20),
                   Center(
                     child: Text(
                       alumni.name,
@@ -151,7 +182,7 @@ class AlumniProfileScreen extends StatelessWidget {
                       ),
                     ),
                   ),
-                  SizedBox(height: 30),
+                  const SizedBox(height: 30),
 
                   // Contact Information Card
                   _buildSectionCard(
@@ -160,20 +191,22 @@ class AlumniProfileScreen extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         _buildContactItem(
+                          context,
                           Icons.email,
                           alumni.email,
-                          onTap: () => _launchEmail(alumni.email),
+                          onTap: () => _launchEmail(alumni.email, context),
                         ),
-                        Divider(color: Colors.white24, height: 30),
+                        const Divider(color: Colors.white24, height: 30),
                         _buildContactItem(
+                          context,
                           Icons.phone,
                           alumni.phone,
-                          onTap: () => _launchPhone(alumni.phone),
+                          onTap: () => _launchPhone(alumni.phone, context),
                         ),
                       ],
                     ),
                   ),
-                  SizedBox(height: 25),
+                  const SizedBox(height: 25),
 
                   // University Information Card
                   _buildSectionCard(
@@ -181,9 +214,9 @@ class AlumniProfileScreen extends StatelessWidget {
                     child: Column(
                       children: [
                         _buildInfoRow(Icons.school, alumni.university),
-                        Divider(color: Colors.white24, height: 30),
+                        const Divider(color: Colors.white24, height: 30),
                         _buildInfoRow(Icons.workspaces_outline, alumni.degree),
-                        Divider(color: Colors.white24, height: 30),
+                        const Divider(color: Colors.white24, height: 30),
                         _buildInfoRow(
                           Icons.calendar_today,
                           "Class of ${alumni.graduationYear}",
@@ -191,7 +224,7 @@ class AlumniProfileScreen extends StatelessWidget {
                       ],
                     ),
                   ),
-                  SizedBox(height: 25),
+                  const SizedBox(height: 25),
 
                   // Final Results Card
                   _buildSectionCard(
@@ -199,14 +232,14 @@ class AlumniProfileScreen extends StatelessWidget {
                     child: Column(
                       children: [
                         _buildResultRow("GPA", alumni.gpa),
-                        Divider(color: Colors.white24, height: 20),
+                        const Divider(color: Colors.white24, height: 20),
                         _buildResultRow("Standing", alumni.standing),
-                        Divider(color: Colors.white24, height: 20),
+                        const Divider(color: Colors.white24, height: 20),
                         _buildResultRow("Thesis", alumni.thesis),
                       ],
                     ),
                   ),
-                  SizedBox(height: 40),
+                  const SizedBox(height: 40),
                 ],
               ),
             ),
@@ -217,26 +250,26 @@ class AlumniProfileScreen extends StatelessWidget {
         onPressed: () {
           // Edit profile functionality
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text("Edit profile functionality")),
+            const SnackBar(content: Text("Edit profile functionality")),
           );
         },
         backgroundColor: Colors.tealAccent,
-        child: Icon(Icons.edit, color: Colors.black),
+        child: const Icon(Icons.edit, color: Colors.black),
         elevation: 8,
       ),
     );
   }
 
-  Widget _buildContactItem(IconData icon, String text, {VoidCallback? onTap}) {
+  Widget _buildContactItem(BuildContext context, IconData icon, String text, {VoidCallback? onTap}) {
     return InkWell(
       onTap: onTap,
       child: Row(
         children: [
           Icon(icon, color: Colors.tealAccent, size: 24),
-          SizedBox(width: 15),
+          const SizedBox(width: 15),
           Text(
             text,
-            style: TextStyle(color: Colors.white, fontSize: 16),
+            style: const TextStyle(color: Colors.white, fontSize: 16),
           ),
         ],
       ),
@@ -247,11 +280,11 @@ class AlumniProfileScreen extends StatelessWidget {
     return Row(
       children: [
         Icon(icon, color: Colors.tealAccent, size: 24),
-        SizedBox(width: 15),
+        const SizedBox(width: 15),
         Expanded(
           child: Text(
             text,
-            style: TextStyle(color: Colors.white, fontSize: 16),
+            style: const TextStyle(color: Colors.white, fontSize: 16),
           ),
         ),
       ],
@@ -268,7 +301,7 @@ class AlumniProfileScreen extends StatelessWidget {
             flex: 2,
             child: Text(
               label,
-              style: TextStyle(
+              style: const TextStyle(
                 color: Colors.white70,
                 fontSize: 16,
               ),
@@ -278,7 +311,7 @@ class AlumniProfileScreen extends StatelessWidget {
             flex: 3,
             child: Text(
               value,
-              style: TextStyle(
+              style: const TextStyle(
                 color: Colors.white,
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
@@ -293,9 +326,9 @@ class AlumniProfileScreen extends StatelessWidget {
   Widget _buildSectionCard({String? title, required Widget child}) {
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.all(20),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Color(0xFF1D1E33),
+        color: const Color(0xFF1D1E33),
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
@@ -317,41 +350,11 @@ class AlumniProfileScreen extends StatelessWidget {
                 letterSpacing: 1.2,
               ),
             ),
-            SizedBox(height: 15),
+            const SizedBox(height: 15),
           ],
           child,
         ],
       ),
     );
-  }
-
-  Future<void> _launchEmail(String email) async {
-    final Uri emailLaunchUri = Uri(
-      scheme: 'mailto',
-      path: email,
-    );
-
-    if (await canLaunch(emailLaunchUri.toString())) {
-      await launch(emailLaunchUri.toString());
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("No email app found")),
-      );
-    }
-  }
-
-  Future<void> _launchPhone(String phone) async {
-    final Uri phoneLaunchUri = Uri(
-      scheme: 'tel',
-      path: phone,
-    );
-
-    if (await canLaunch(phoneLaunchUri.toString())) {
-      await launch(phoneLaunchUri.toString());
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("No phone app found")),
-      );
-    }
   }
 }
