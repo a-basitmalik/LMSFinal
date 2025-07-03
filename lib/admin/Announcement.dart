@@ -20,7 +20,7 @@ class AnnouncementApp extends StatelessWidget {
           secondary: Color(0xFF00FFA3),
           surface: Color(0xFF1D1E33),
         ),
-        cardTheme: CardTheme(
+        cardTheme: CardThemeData(
           elevation: 6,
           margin: EdgeInsets.symmetric(vertical: 8),
           shape: RoundedRectangleBorder(

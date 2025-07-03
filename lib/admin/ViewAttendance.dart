@@ -22,7 +22,7 @@ class AttendanceApp extends StatelessWidget {
           secondary: Color(0xFF00D1FF),
           surface: Color(0xFF1D1E33),
         ),
-        cardTheme: CardTheme(
+        cardTheme: CardThemeData(
           elevation: 8,
           margin: EdgeInsets.symmetric(vertical: 8),
           shape: RoundedRectangleBorder(

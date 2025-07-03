@@ -67,7 +67,7 @@ class AppTheme {
           fontWeight: FontWeight.w500,
         ),
       ),
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         color: AppColors.surface,
         elevation: 4,
         margin: const EdgeInsets.all(8),
@@ -136,7 +136,7 @@ class AppTheme {
           fontWeight: FontWeight.w500,
         ),
       ),
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         color: AppColors.darkSurface,
         elevation: 4,
         margin: const EdgeInsets.all(8),

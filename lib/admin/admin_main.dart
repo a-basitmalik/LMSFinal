@@ -21,7 +21,7 @@ import 'package:newapp/admin/shared_list.dart';
 import 'package:newapp/admin/subjects.dart';
 import 'AcademicCalendar.dart';
 import 'AdminDashboard.dart';
-import 'FeeDashboard.dart';
+
 
 
 class AdminMain extends StatelessWidget {
