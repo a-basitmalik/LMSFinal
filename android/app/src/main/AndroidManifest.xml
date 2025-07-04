@@ -1,6 +1,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <uses-permission android:name="android.permission.INTERNET"/>
+
     <application
-        android:label="LMS LGC"
+        android:label="LGC"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

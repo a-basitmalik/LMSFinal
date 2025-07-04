@@ -17,7 +17,7 @@ android {
         keystoreProperties.load(keystorePropertiesFile.inputStream())
     }
 
-    namespace = "pk.edu.lgscolleges.lmslgc"
+    namespace = "pk.edu.lgscolleges.lgc"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = "27.0.12077973"
 
@@ -31,7 +31,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "pk.edu.lgscolleges.lmslgc"
+        applicationId = "pk.edu.lgscolleges.lgc"
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
