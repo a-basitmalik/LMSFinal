@@ -8,8 +8,13 @@ import 'package:file_picker/file_picker.dart';
 
 class SubjectChatScreen extends StatefulWidget {
   final Map<String, dynamic> subject;
+  final String teacherId; // RFID of the teacher
 
-  const SubjectChatScreen({super.key, required this.subject});
+  const SubjectChatScreen({
+    super.key,
+    required this.subject,
+    required this.teacherId,
+  });
 
   @override
   _SubjectChatScreenState createState() => _SubjectChatScreenState();
@@ -22,10 +27,10 @@ class _SubjectChatScreenState extends State<SubjectChatScreen>
   final ScrollController _scrollController = ScrollController();
   bool _isLoading = true;
   bool _isSending = false;
-  final String _apiUrl = 'https://your-api-endpoint.com/chat';
+  int? _roomId;
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
-  PlatformFile? _pickedFile; // To store the selected file
+  PlatformFile? _pickedFile;
 
   @override
   void initState() {
@@ -37,14 +42,41 @@ class _SubjectChatScreenState extends State<SubjectChatScreen>
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(parent: _animationController, curve: Curves.easeIn),
     );
-    _fetchMessages();
+    _initializeChat();
+  }
+
+  Future<void> _initializeChat() async {
+    try {
+      // First get or create chat room
+      final roomResponse = await http.get(
+        Uri.parse('http://192.168.18.185:5050/SubjectChat/api/chat/rooms/${widget.subject['subject_id']}'),
+      );
+
+      if (roomResponse.statusCode == 200) {
+        final roomData = json.decode(roomResponse.body);
+        setState(() {
+          _roomId = roomData['room_id'];
+        });
+        await _fetchMessages();
+      } else {
+        throw Exception('Failed to initialize chat room');
+      }
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error initializing chat: $e')),
+      );
+    }
   }
 
   Future<void> _fetchMessages() async {
+    if (_roomId == null) return;
+
     try {
       final response = await http.get(
-        Uri.parse('$_apiUrl?subject=${widget.subject['code']}'),
-        headers: {'Content-Type': 'application/json'},
+        Uri.parse('http://192.168.18.185:5050/SubjectChat/api/chat/messages?room_id=$_roomId'),
       );
 
       if (response.statusCode == 200) {
@@ -62,25 +94,30 @@ class _SubjectChatScreenState extends State<SubjectChatScreen>
       setState(() {
         _isLoading = false;
       });
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Error loading messages: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error loading messages: $e')),
+      );
     }
   }
 
   Future<void> _sendMessage() async {
-    if (_messageController.text.trim().isEmpty) return;
+    if (_messageController.text.trim().isEmpty || _roomId == null) return;
 
     final newMessage = {
       'text': _messageController.text,
-      'is_teacher': true,
-      'timestamp': DateTime.now().toIso8601String(),
-      'subject': widget.subject['code'],
+      'room_id': _roomId,
+      'sender_rfid': widget.teacherId,
     };
 
     setState(() {
       _isSending = true;
-      messages.add(newMessage);
+      // Add temporary message (will be replaced after API response)
+      messages.add({
+        'text': _messageController.text,
+        'sender_name': 'You',
+        'is_teacher': true,
+        'timestamp': DateTime.now().toIso8601String(),
+      });
       _messageController.clear();
     });
 
@@ -88,18 +125,26 @@ class _SubjectChatScreenState extends State<SubjectChatScreen>
 
     try {
       final response = await http.post(
-        Uri.parse(_apiUrl),
+        Uri.parse('http://192.168.18.185:5050/SubjectChat/api/chat/messages'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode(newMessage),
       );
 
-      if (response.statusCode != 201) {
+      if (response.statusCode == 200) {
+        final responseData = json.decode(response.body);
+        // Replace temporary message with actual message from server
+        setState(() {
+          messages.removeLast();
+          messages.add(responseData);
+        });
+        _scrollToBottom();
+      } else {
         throw Exception('Failed to send message');
       }
     } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Error sending message: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error sending message: $e')),
+      );
       setState(() {
         messages.removeLast();
       });
@@ -133,15 +178,15 @@ class _SubjectChatScreenState extends State<SubjectChatScreen>
         setState(() {
           _pickedFile = result.files.first;
         });
-        // You can now upload this file or attach it to the message
+        // TODO: Implement file upload
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('File selected: ${_pickedFile!.name}')),
         );
       }
     } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Error picking file: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error picking file: $e')),
+      );
     }
   }
 
@@ -158,55 +203,46 @@ class _SubjectChatScreenState extends State<SubjectChatScreen>
           children: [
             _buildChatHeader(theme, subjectColor),
             Expanded(
-              child:
-                  _isLoading
-                      ? Center(child: CircularProgressIndicator())
-                      : messages.isEmpty
-                      ? FadeTransition(
-                        opacity: _fadeAnimation,
-                        child: _buildEmptyState(theme),
-                      )
-                      : ListView.builder(
-                        controller: _scrollController,
-                        padding: EdgeInsets.only(top: 8, bottom: 80),
-                        itemCount: messages.length,
-                        itemBuilder:
-                            (context, index) => SlideTransition(
-                              position: Tween<Offset>(
-                                begin: Offset(0, 0.5),
-                                end: Offset.zero,
-                              ).animate(
-                                CurvedAnimation(
-                                  parent: _animationController,
-                                  curve: Interval(
-                                    0.1 * index,
-                                    1.0,
-                                    curve: Curves.easeOut,
-                                  ),
-                                ),
-                              ),
-                              child: _buildMessageBubble(
-                                messages[index],
-                                theme,
-                                subjectColor,
-                              ),
-                            ),
+              child: _isLoading
+                  ? Center(child: CircularProgressIndicator())
+                  : messages.isEmpty
+                  ? FadeTransition(
+                opacity: _fadeAnimation,
+                child: _buildEmptyState(theme),
+              )
+                  : ListView.builder(
+                controller: _scrollController,
+                padding: EdgeInsets.only(top: 8, bottom: 80),
+                itemCount: messages.length,
+                itemBuilder: (context, index) => SlideTransition(
+                  position: Tween<Offset>(
+                    begin: Offset(0, 0.5),
+                    end: Offset.zero,
+                  ).animate(
+                    CurvedAnimation(
+                      parent: _animationController,
+                      curve: Interval(
+                        0.1 * index,
+                        1.0,
+                        curve: Curves.easeOut,
                       ),
+                    ),
+                  ),
+                  child: _buildMessageBubble(
+                    messages[index],
+                    theme,
+                    subjectColor,
+                  ),
+                ),
+              ),
             ),
             _buildMessageInput(theme, subjectColor),
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          // Your navigation action
-        },
-        backgroundColor: subjectColor,
-        child: Icon(Icons.navigation),
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.miniEndFloat,
     );
   }
+
 
   Widget _buildChatHeader(ThemeData theme, Color subjectColor) {
     return Container(
