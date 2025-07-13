@@ -151,17 +151,31 @@ class _SubjectAttendanceScreenState extends State<SubjectAttendanceScreen> {
 
       if (response.statusCode == 200) {
         final List<dynamic> data = json.decode(response.body);
-        setState(() {
-          // Update attendance status based on fetched data
-          for (var record in data) {
-            attendanceStatus[record['rfid'].toString()] =
-                record['attendance_status'] ?? 'absent';
+
+        // Initialize with all absent first
+        final newStatus = <String, String>{};
+        for (var student in students) {
+          newStatus[student['rfid'].toString()] = 'absent';
+        }
+
+        // Update with fetched data
+        for (var record in data) {
+          final rfid = record['rfid']?.toString();
+          if (rfid != null && newStatus.containsKey(rfid)) {
+            newStatus[rfid] = record['attendance_status'] ?? 'absent';
           }
+        }
+
+        setState(() {
+          attendanceStatus = newStatus;
         });
       } else if (response.statusCode == 404) {
-        // No attendance records for this date, keep default 'absent' status
+        // No attendance records for this date
         setState(() {
-          attendanceStatus.updateAll((key, value) => 'absent');
+          attendanceStatus = {
+            for (var student in students)
+              student['rfid'].toString(): 'absent'
+          };
         });
       } else {
         throw Exception('Failed to load attendance: ${response.statusCode}');
@@ -169,6 +183,11 @@ class _SubjectAttendanceScreenState extends State<SubjectAttendanceScreen> {
     } catch (e) {
       setState(() {
         errorMessage = 'Error loading attendance: ${e.toString()}';
+        // Fallback to all absent if there's an error
+        attendanceStatus = {
+          for (var student in students)
+            student['rfid'].toString(): 'absent'
+        };
       });
     } finally {
       setState(() {

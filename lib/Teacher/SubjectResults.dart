@@ -17,112 +17,42 @@ class SubjectResultsScreen extends StatefulWidget {
 }
 
 class _SubjectResultsScreenState extends State<SubjectResultsScreen> {
-  List<Map<String, dynamic>> results = [];
   List<Map<String, dynamic>> assessments = [];
+  List<Map<String, dynamic>> quizzes = [];
   bool isLoading = true;
-  final String _apiUrl = 'https://your-api-endpoint.com/results';
+  final String _apiUrl = 'http://192.168.18.185:5050/SubjectAssessment/api';
 
   @override
   void initState() {
     super.initState();
-    _loadDummyData(); // Replace with _fetchResults() when API is ready
+    _fetchAssessments();
   }
 
-  Future<void> _fetchResults() async {
+  Future<void> _fetchAssessments() async {
     try {
       final response = await http.get(
-        Uri.parse('$_apiUrl?subject=${widget.subject['code']}'),
+        Uri.parse('$_apiUrl/assessments?subject_id=${widget.subject['subject_id']}'),
         headers: {'Content-Type': 'application/json'},
       );
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         setState(() {
-          results = List<Map<String, dynamic>>.from(data['results']);
           assessments = List<Map<String, dynamic>>.from(data['assessments']);
+          quizzes = List<Map<String, dynamic>>.from(data['quizzes']);
           isLoading = false;
         });
       } else {
-        throw Exception('Failed to load results');
+        throw Exception('Failed to load assessments');
       }
     } catch (e) {
       setState(() {
         isLoading = false;
       });
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Error loading results: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error loading assessments: $e')),
+      );
     }
-  }
-
-  void _loadDummyData() {
-    setState(() {
-      results = [
-        {
-          'student_id': '101',
-          'student_name': 'Alice Johnson',
-          'assignment_1': 85,
-          'assignment_2': 90,
-          'midterm': 78,
-          'final_exam': 0,
-          'total': 253,
-        },
-        {
-          'student_id': '102',
-          'student_name': 'Bob Smith',
-          'assignment_1': 72,
-          'assignment_2': 68,
-          'midterm': 65,
-          'final_exam': 0,
-          'total': 205,
-        },
-        {
-          'student_id': '103',
-          'student_name': 'Charlie Brown',
-          'assignment_1': 95,
-          'assignment_2': 88,
-          'midterm': 92,
-          'final_exam': 0,
-          'total': 275,
-        },
-      ];
-
-      assessments = [
-        {
-          'id': '1',
-          'title': 'Assignment 1',
-          'type': 'assignment',
-          'total_marks': 100,
-          'date': '2023-06-10',
-          'is_marked': true,
-        },
-        {
-          'id': '2',
-          'title': 'Assignment 2',
-          'type': 'assignment',
-          'total_marks': 100,
-          'date': '2023-06-24',
-          'is_marked': true,
-        },
-        {
-          'id': '3',
-          'title': 'Midterm Exam',
-          'type': 'exam',
-          'total_marks': 100,
-          'date': '2023-07-08',
-          'is_marked': true,
-        },
-        {
-          'id': '4',
-          'title': 'Final Exam',
-          'type': 'exam',
-          'total_marks': 100,
-          'date': '2023-07-30',
-          'is_marked': false,
-        },
-      ];
-      isLoading = false;
-    });
   }
 
   @override
@@ -135,7 +65,7 @@ class _SubjectResultsScreenState extends State<SubjectResultsScreen> {
       child: Scaffold(
         appBar: AppBar(
           title: Text(
-            '${widget.subject['name']} Results',
+            '${widget.subject['name']} Assessments',
             style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
           ),
           backgroundColor: subjectColor,
@@ -145,113 +75,160 @@ class _SubjectResultsScreenState extends State<SubjectResultsScreen> {
             isScrollable: true,
             indicatorColor: Colors.white,
             tabs: [
-              Tab(child: Text('Student Results', style: GoogleFonts.poppins())),
+              Tab(child: Text('Generate Reports', style: GoogleFonts.poppins())),
               Tab(child: Text('Assessments', style: GoogleFonts.poppins())),
             ],
           ),
         ),
-        body:
-            isLoading
-                ? Center(child: CircularProgressIndicator())
-                : TabBarView(
-                  children: [
-                    _buildResultsTab(theme, subjectColor),
-                    _buildAssessmentsTab(theme, subjectColor),
-                  ],
-                ),
+        body: isLoading
+            ? Center(child: CircularProgressIndicator())
+            : TabBarView(
+          children: [
+            _buildReportsTab(theme, subjectColor),
+            _buildAssessmentsTab(theme, subjectColor),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildResultsTab(ThemeData theme, Color subjectColor) {
-    final markedAssessments =
-        assessments.where((a) => a['is_marked'] == true).toList();
-    final averageScore =
-        results.isEmpty
-            ? 0
-            : results.map((r) => r['total']).reduce((a, b) => a + b) /
-                results.length;
-    final topStudent =
-        results.isEmpty
-            ? null
-            : results.reduce((a, b) => a['total'] > b['total'] ? a : b);
+  Widget _buildReportsTab(ThemeData theme, Color subjectColor) {
+    final assessmentTypes = [
+      'Monthly',
+      'Send Up',
+      'Mocks',
+      'Other',
+      'Test Session',
+      'Weekly',
+      'Half Book',
+      'Full Book'
+    ];
+    String selectedType = assessmentTypes.first;
 
     return SingleChildScrollView(
+      padding: EdgeInsets.all(16),
       child: Column(
         children: [
-          // Summary Section
-          Padding(
-            padding: EdgeInsets.all(16),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                _buildSummaryCard(
-                  'Students',
-                  results.length.toString(),
-                  Icons.people,
-                  subjectColor,
-                ),
-                _buildSummaryCard(
-                  'Avg Score',
-                  averageScore.toStringAsFixed(1),
-                  Icons.bar_chart,
-                  subjectColor,
-                ),
-                _buildSummaryCard(
-                  'Top Student',
-                  topStudent?['student_name'] ?? '-',
-                  Icons.star,
-                  subjectColor,
-                ),
-              ],
+          Card(
+            elevation: 4,
+            child: Padding(
+              padding: EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Generate Assessment Report',
+                    style: GoogleFonts.poppins(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  SizedBox(height: 20),
+                  DropdownButtonFormField<String>(
+                    value: selectedType,
+                    decoration: InputDecoration(
+                      labelText: 'Assessment Type',
+                      border: OutlineInputBorder(),
+                      filled: true,
+                    ),
+                    items: assessmentTypes
+                        .map((type) => DropdownMenuItem(
+                      value: type,
+                      child: Text(type),
+                    ))
+                        .toList(),
+                    onChanged: (value) {
+                      setState(() {
+                        selectedType = value!;
+                      });
+                    },
+                  ),
+                  SizedBox(height: 20),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        _generateReport(selectedType);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: subjectColor,
+                        padding: EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      child: Text(
+                        'Generate Report',
+                        style: GoogleFonts.poppins(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
-
-          // Results Table
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16),
-            child: DataTable(
-              columnSpacing: 24,
-              columns: [
-                DataColumn(
-                  label: Text(
-                    'Student',
-                    style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
-                  ),
-                ),
-                ...markedAssessments.map((assessment) {
-                  return DataColumn(
-                    label: Text(
-                      assessment['title'],
-                      style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
+          SizedBox(height: 20),
+          // Placeholder for generated report preview
+          Card(
+            elevation: 4,
+            child: Padding(
+              padding: EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Sample Report Preview',
+                    style: GoogleFonts.poppins(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
                     ),
-                  );
-                }),
-              ],
-              rows:
-                  results.map((student) {
-                    return DataRow(
-                      cells: [
-                        DataCell(
-                          Text(
-                            student['student_name'],
-                            style: GoogleFonts.poppins(),
-                          ),
-                        ),
-                        ...markedAssessments.map((assessment) {
-                          final key = assessment['title']
-                              .toLowerCase()
-                              .replaceAll(' ', '_');
-                          return DataCell(
-                            Text(
-                              student[key]?.toString() ?? '-',
-                              style: GoogleFonts.poppins(),
-                            ),
-                          );
-                        }),
-                      ],
-                    );
-                  }).toList(),
+                  ),
+                  SizedBox(height: 10),
+                  Text(
+                    'Monthly Assessment Report - July 2023',
+                    style: GoogleFonts.poppins(),
+                  ),
+                  SizedBox(height: 10),
+                  DataTable(
+                    columns: [
+                      DataColumn(label: Text('Student')),
+                      DataColumn(label: Text('Marks')),
+                      DataColumn(label: Text('Grade')),
+                    ],
+                    rows: [
+                      DataRow(cells: [
+                        DataCell(Text('Alice Johnson')),
+                        DataCell(Text('85/100')),
+                        DataCell(Text('A')),
+                      ]),
+                      DataRow(cells: [
+                        DataCell(Text('Bob Smith')),
+                        DataCell(Text('72/100')),
+                        DataCell(Text('B')),
+                      ]),
+                    ],
+                  ),
+                  SizedBox(height: 10),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        // Download functionality
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Report downloaded successfully')),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: subjectColor,
+                      ),
+                      child: Text('Download Report'),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ],
@@ -259,97 +236,24 @@ class _SubjectResultsScreenState extends State<SubjectResultsScreen> {
     );
   }
 
-  Widget _buildSummaryCard(
-    String title,
-    String value,
-    IconData icon,
-    Color color,
-  ) {
-    return Expanded(
-      child: Card(
-        elevation: 2,
-        child: Padding(
-          padding: EdgeInsets.all(12),
-          child: Column(
-            children: [
-              Icon(icon, size: 24, color: color),
-              SizedBox(height: 8),
-              Text(title, style: GoogleFonts.poppins(fontSize: 12)),
-              SizedBox(height: 4),
-              Text(
-                value,
-                style: GoogleFonts.poppins(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
+  Future<void> _generateReport(String type) async {
+    // In a real app, this would call your API
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Generating $type report...')),
     );
-  }
-
-  Widget _buildGradeIndicator(int total, Color subjectColor) {
-    String grade;
-    Color color;
-    IconData icon;
-
-    if (total >= 280) {
-      grade = 'A+';
-      color = Colors.green;
-      icon = Icons.sentiment_very_satisfied;
-    } else if (total >= 250) {
-      grade = 'A';
-      color = Colors.green;
-      icon = Icons.sentiment_satisfied;
-    } else if (total >= 220) {
-      grade = 'B+';
-      color = Colors.lightGreen;
-      icon = Icons.sentiment_neutral;
-    } else if (total >= 190) {
-      grade = 'B';
-      color = Colors.lightGreen;
-      icon = Icons.sentiment_neutral;
-    } else if (total >= 160) {
-      grade = 'C+';
-      color = Colors.orange;
-      icon = Icons.sentiment_dissatisfied;
-    } else if (total >= 130) {
-      grade = 'C';
-      color = Colors.orange;
-      icon = Icons.sentiment_dissatisfied;
-    } else {
-      grade = 'D';
-      color = Colors.red;
-      icon = Icons.sentiment_very_dissatisfied;
-    }
-
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, size: 18, color: color),
-        SizedBox(width: 4),
-        Container(
-          padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-          decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: color),
-          ),
-          child: Text(
-            grade,
-            style: GoogleFonts.poppins(
-              fontWeight: FontWeight.bold,
-              color: color,
-            ),
-          ),
-        ),
-      ],
+    await Future.delayed(Duration(seconds: 1));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('$type report generated successfully')),
     );
   }
 
   Widget _buildAssessmentsTab(ThemeData theme, Color subjectColor) {
+    // Combine assessments and quizzes
+    final allAssessments = [
+      ...assessments.map((a) => {...a, 'is_quiz': false}),
+      ...quizzes.map((q) => {...q, 'is_quiz': true}),
+    ]..sort((a, b) => b['created_at'].compareTo(a['created_at']));
+
     return Column(
       children: [
         Padding(
@@ -361,13 +265,12 @@ class _SubjectResultsScreenState extends State<SubjectResultsScreen> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder:
-                        (context) => CreateAssessmentScreen(
-                          subjectCode: widget.subject['code'],
-                          subjectColor: subjectColor,
-                        ),
+                    builder: (context) => CreateAssessmentScreen(
+                      subjectId: widget.subject['subject_id'],
+                      subjectColor: subjectColor,
+                    ),
                   ),
-                ).then((_) => _fetchResults());
+                ).then((_) => _fetchAssessments());
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: subjectColor,
@@ -377,7 +280,7 @@ class _SubjectResultsScreenState extends State<SubjectResultsScreen> {
                 ),
               ),
               child: Text(
-                'Add Announcement',
+                'Create Assessment',
                 style: GoogleFonts.poppins(
                   fontWeight: FontWeight.bold,
                   fontSize: 16,
@@ -389,55 +292,73 @@ class _SubjectResultsScreenState extends State<SubjectResultsScreen> {
         Expanded(
           child: ListView.builder(
             padding: EdgeInsets.symmetric(horizontal: 16),
-            itemCount: assessments.length,
+            itemCount: allAssessments.length,
             itemBuilder: (context, index) {
-              final assessment = assessments[index];
+              final assessment = allAssessments[index];
+              final isMarked = (assessment['is_marked'] == 1);
+
+              final isQuiz = assessment['is_quiz'] ?? false;
+
               return Card(
                 margin: EdgeInsets.only(bottom: 12),
                 child: ListTile(
                   title: Text(
-                    assessment['title'],
+                    isQuiz
+                        ? 'Quiz ${assessment['quiz_number']}'
+                        : assessment['title'].toString(),
                     style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
                   ),
+
                   subtitle: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Type: ${assessment['type']}'),
-                      Text('Date: ${assessment['date']}'),
+                      Text(
+                        isQuiz
+                            ? 'Quiz for ${assessment['monthly_assessment_title']}'
+                            : 'Type: ${assessment['assessment_type']}',
+                      ),
+                      Text(
+                        'Date: ${DateFormat('MMM d, y').format(
+                          DateFormat("EEE, dd MMM yyyy HH:mm:ss 'GMT'", 'en_US')
+                              .parse(assessment['created_at'], true)
+                              .toLocal(),
+                        )
+                        }',
+                      ),
+                      if (isQuiz)
+                        Text('Total Marks: ${assessment['total_marks'] ?? 15}'),
                     ],
                   ),
-                  trailing: Icon(
-                    assessment['is_marked']
-                        ? Icons.check_circle
-                        : Icons.pending,
-                    color:
-                        assessment['is_marked'] ? Colors.green : Colors.orange,
-                  ),
+                  trailing: isMarked
+                      ? Icon(Icons.check_circle, color: Colors.green)
+                      : Icon(Icons.pending, color: Colors.orange),
                   onTap: () {
-                    if (assessment['is_marked']) {
+                    if (isMarked) {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder:
-                              (context) => MarkedAssessmentsScreen(
-                                subjectCode: widget.subject['code'],
-                                subjectColor: subjectColor,
-                              ),
+                          builder: (context) => MarkedAssessmentsScreen(
+                            assessmentId: assessment[isQuiz ? 'quiz_id' : 'id'].toString(),
+                            isQuiz: isQuiz,
+                            subjectColor: subjectColor,
+                          ),
                         ),
                       );
                     } else {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder:
-                              (context) => EnterMarksScreen(
-                                assessmentId: assessment['id'],
-                                assessmentTitle: assessment['title'],
-                                totalMarks: assessment['total_marks'],
-                                subjectColor: subjectColor,
-                              ),
+                          builder: (context) => EnterMarksScreen(
+                            assessmentId: assessment[isQuiz ? 'quiz_id' : 'id'].toString(),
+                            assessmentTitle: isQuiz
+                                ? 'Quiz ${assessment['quiz_number']}'
+                                : assessment['title'],
+                            assessmentType: assessment['assessment_type'],
+                            subjectColor: subjectColor,
+                            isQuiz: isQuiz,
+                          ),
                         ),
-                      ).then((_) => _fetchResults());
+                      ).then((_) => _fetchAssessments());
                     }
                   },
                 ),

@@ -14,7 +14,7 @@ class SubjectDashboardScreen extends StatefulWidget {
   final Map<String, dynamic> subject;
   final String teacherId;
 
-  const SubjectDashboardScreen({super.key, required this.subject,required this.teacherId});
+  const SubjectDashboardScreen({super.key, required this.subject, required this.teacherId});
 
   @override
   _SubjectDashboardScreenState createState() => _SubjectDashboardScreenState();
@@ -43,6 +43,7 @@ class _SubjectDashboardScreenState extends State<SubjectDashboardScreen> {
     _screens = []; // Initialize empty list
     _fetchSubjectData();
   }
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -53,18 +54,17 @@ class _SubjectDashboardScreenState extends State<SubjectDashboardScreen> {
       SubjectQueriesScreen(subject: widget.subject),
       SubjectResultsScreen(subject: widget.subject),
       SubjectAttendanceScreen(subject: widget.subject),
-      // SubjectChatScreen(subject: widget.subject),
+      SubjectChatScreen(subject: widget.subject, teacherId: widget.teacherId),
     ];
   }
 
+
   @override
   Widget build(BuildContext context) {
-    final subjectColor =
-        widget.subject['color'] ?? Theme.of(context).primaryColor;
+    final subjectColor = widget.subject['color'] ?? Theme.of(context).primaryColor;
 
     return Scaffold(
-      appBar:
-      _currentIndex == 0
+      appBar: _currentIndex == 0
           ? AppBar(
         title: Text(
           widget.subject['name'],
@@ -77,7 +77,7 @@ class _SubjectDashboardScreenState extends State<SubjectDashboardScreen> {
         backgroundColor: subjectColor,
         centerTitle: true,
         elevation: 0,
-        shape: RoundedRectangleBorder(
+        shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(
             bottom: Radius.circular(20),
           ),
@@ -86,24 +86,26 @@ class _SubjectDashboardScreenState extends State<SubjectDashboardScreen> {
           : null,
       body: Stack(
         children: [
+          // Main screen content
           _screens.isNotEmpty
               ? _screens[_currentIndex]
               : const Center(child: CircularProgressIndicator()),
 
-          // Blur effect when menu is open
-          if (_isMenuOpen)
+          // Blur and overlay menu if open
+          if (_isMenuOpen) ...[
             BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 6.0, sigmaY: 6.0),
-              child: Container(color: Colors.black.withOpacity(0.1)),
+              child: Container(
+                color: Colors.black.withOpacity(0.1),
+              ),
             ),
-
-          _buildInfographicMenu(),
+            _buildInfographicMenu(),
+          ],
         ],
       ),
       floatingActionButton: _buildMainFAB(),
     );
   }
-
   Future<void> _fetchSubjectData() async {
     setState(() {
       isLoading = true;
@@ -118,23 +120,15 @@ class _SubjectDashboardScreenState extends State<SubjectDashboardScreen> {
         http.get(Uri.parse('$baseUrl/subject/${widget.subject['subject_id']}/assignments')),
         http.get(Uri.parse('$baseUrl/subject/${widget.subject['subject_id']}/queries')),
         http.get(Uri.parse('$baseUrl/subject/${widget.subject['subject_id']}/attendance')),
-        // http.get(Uri.parse('$baseUrl/subject/${widget.subject['subject_id']}/chat')),
-      ]);
-
-      // Check all responses
-      for (var response in responses) {
-        if (response.statusCode != 200) {
-          throw Exception('Failed to load data: ${response.statusCode}');
-        }
-      }
+      ], eagerError: true);
 
       // Parse responses
       setState(() {
-        subjectStats = json.decode(responses[0].body);
-        announcements = json.decode(responses[1].body);
-        assignments = json.decode(responses[2].body);
-        queries = json.decode(responses[3].body);
-        attendance = json.decode(responses[4].body);
+        subjectStats = _parseResponse(responses[0]);
+        announcements = _parseResponse(responses[1]) ?? [];
+        assignments = _parseResponse(responses[2]) ?? [];
+        queries = _parseResponse(responses[3]) ?? [];
+        attendance = _parseResponse(responses[4]) ?? [];
         isLoading = false;
       });
 
@@ -147,28 +141,39 @@ class _SubjectDashboardScreenState extends State<SubjectDashboardScreen> {
         SubjectAttendanceScreen(subject: widget.subject),
         SubjectChatScreen(subject: widget.subject, teacherId: widget.teacherId),
       ];
-
     } catch (e) {
       setState(() {
         errorMessage = 'Error loading data: ${e.toString()}';
         isLoading = false;
+
+        // Initialize with empty data to prevent UI from getting stuck
+        subjectStats = {};
+        announcements = [];
+        assignments = [];
+        queries = [];
+        attendance = [];
+
+        _screens = [
+          _buildOverviewScreen(),
+          SubjectAssignmentsScreen(subject: widget.subject),
+          SubjectQueriesScreen(subject: widget.subject),
+          SubjectResultsScreen(subject: widget.subject),
+          SubjectAttendanceScreen(subject: widget.subject),
+          SubjectChatScreen(subject: widget.subject, teacherId: widget.teacherId),
+        ];
       });
     }
   }
 
-  // @override
-  // void didChangeDependencies() {
-  //   super.didChangeDependencies();
-  //   if (_screens.isEmpty && !isLoading) {
-  //     _screens = [
-  //       _buildOverviewScreen(),
-  //       SubjectAssignmentsScreen(subject: widget.subject),
-  //       SubjectQueriesScreen(subject: widget.subject),
-  //       SubjectResultsScreen(subject: widget.subject),
-  //       SubjectAttendanceScreen(subject: widget.subject),
-  //     ];
-  //   }
-  // }
+  dynamic _parseResponse(http.Response response) {
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    } else if (response.statusCode == 404) {
+      return null; // or empty list/map depending on expected type
+    } else {
+      throw Exception('Failed to load data: ${response.statusCode}');
+    }
+  }
 
   Widget _buildOverviewScreen() {
     if (isLoading) {
@@ -190,7 +195,6 @@ class _SubjectDashboardScreenState extends State<SubjectDashboardScreen> {
         ),
       );
     }
-
 
     return SingleChildScrollView(
       padding: EdgeInsets.all(16),
@@ -233,17 +237,12 @@ class _SubjectDashboardScreenState extends State<SubjectDashboardScreen> {
     );
   }
 
-
-
-
-
   void _navigateToScreen(int index) {
     setState(() {
       _currentIndex = index;
       _isMenuOpen = false;
     });
   }
-
 
   Widget _buildInfographicMenu() {
     final List<Map<String, dynamic>> menuItems = [
@@ -326,55 +325,12 @@ class _SubjectDashboardScreenState extends State<SubjectDashboardScreen> {
       ),
     );
   }
-  Widget? _buildFloatingActionButton() {
-    final subjectColor =
-        widget.subject['color'] ?? Theme.of(context).primaryColor;
 
-    switch (_currentIndex) {
-      case 1: // Assignments
-        return FloatingActionButton(
-          backgroundColor: subjectColor,
-          child: Icon(Icons.add),
-          onPressed: () {
-            // Add new assignment
-          },
-        );
-      case 2: // Queries
-        return FloatingActionButton(
-          backgroundColor: subjectColor,
-          child: Icon(Icons.add_comment),
-          onPressed: () {
-            // Add new query
-          },
-        );
-      case 3: // Results
-        return FloatingActionButton(
-          backgroundColor: subjectColor,
-          child: Icon(Icons.download),
-          onPressed: () {
-            // Export results
-          },
-        );
-      case 4: // Attendance
-        return FloatingActionButton(
-          backgroundColor: subjectColor,
-          child: Icon(Icons.date_range),
-          onPressed: () {
-            // View attendance calendar
-          },
-        );
-
-      default:
-        return null;
-    }
-
-  }
   Widget _buildMainFAB() {
-    final subjectColor =
-        widget.subject['color'] ?? Theme.of(context).primaryColor;
+    final subjectColor = widget.subject['color'] ?? Theme.of(context).primaryColor;
 
     return FloatingActionButton(
-      shape: const CircleBorder(), // ensure perfectly rounded FAB
+      shape: const CircleBorder(),
       backgroundColor: subjectColor,
       elevation: 8,
       child: AnimatedSwitcher(
@@ -395,59 +351,19 @@ class _SubjectDashboardScreenState extends State<SubjectDashboardScreen> {
       },
     );
   }
-  Widget _buildMenuButton(String title, IconData icon, int index, Color color) {
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-
-    return Container(
-      margin: EdgeInsets.symmetric(vertical: 4),
-      child: ListTile(
-        leading: Container(
-          padding: EdgeInsets.all(6),
-          decoration: BoxDecoration(
-            color:
-            _currentIndex == index
-                ? color.withOpacity(0.2)
-                : Colors.transparent,
-            shape: BoxShape.circle,
-          ),
-          child: Icon(
-            icon,
-            color:
-            _currentIndex == index
-                ? color
-                : (isDarkMode ? Colors.grey[400] : Colors.grey[600]),
-            size: 22,
-          ),
-        ),
-        title: Text(
-          title,
-          style: GoogleFonts.poppins(
-            fontSize: 14,
-            color:
-            _currentIndex == index
-                ? color
-                : (isDarkMode ? Colors.white : Colors.black87),
-            fontWeight:
-            _currentIndex == index ? FontWeight.w600 : FontWeight.normal,
-          ),
-        ),
-        onTap: () => _navigateToScreen(index),
-        contentPadding: EdgeInsets.symmetric(horizontal: 12),
-        minLeadingWidth: 24,
-        tileColor:
-        _currentIndex == index
-            ? color.withOpacity(0.1)
-            : Colors.transparent,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-      ),
-    );
-  }
-
-
-  // ... [Keep all other existing helper methods like _buildMenuButton, _buildMainFAB, etc.]
 
   Widget _buildQuickStatsPanel() {
     final subjectColor = widget.subject['color'] ?? Theme.of(context).primaryColor;
+
+    // Safely parse attendance rate
+    double attendanceRate = 0.0;
+    if (subjectStats['attendance_rate'] != null) {
+      if (subjectStats['attendance_rate'] is String) {
+        attendanceRate = double.tryParse(subjectStats['attendance_rate']) ?? 0.0;
+      } else if (subjectStats['attendance_rate'] is num) {
+        attendanceRate = subjectStats['attendance_rate'].toDouble();
+      }
+    }
 
     return Container(
       padding: EdgeInsets.all(16),
@@ -485,7 +401,7 @@ class _SubjectDashboardScreenState extends State<SubjectDashboardScreen> {
                 Icons.assignment,
               ),
               _buildStatItem(
-                '${subjectStats['attendance_rate']?.toStringAsFixed(0) ?? '0'}%',
+                '${attendanceRate.toStringAsFixed(0)}%',
                 'Attendance',
                 Icons.calendar_today,
               ),
@@ -580,9 +496,16 @@ class _SubjectDashboardScreenState extends State<SubjectDashboardScreen> {
     }
 
     final subjectColor = widget.subject['color'] ?? Theme.of(context).primaryColor;
+    final studentCount = subjectStats['student_count'] is String
+        ? int.tryParse(subjectStats['student_count']) ?? 1
+        : (subjectStats['student_count'] ?? 1);
 
     return Column(
       children: assignments.take(2).map((assignment) {
+        final submittedCount = assignment['submitted_count'] is String
+            ? int.tryParse(assignment['submitted_count']) ?? 0
+            : (assignment['submitted_count'] ?? 0);
+
         return Column(
           children: [
             ListTile(
@@ -603,13 +526,12 @@ class _SubjectDashboardScreenState extends State<SubjectDashboardScreen> {
                   ),
                   SizedBox(height: 4),
                   LinearProgressIndicator(
-                    value: (assignment['submitted_count'] ?? 0) /
-                        (subjectStats['student_count'] ?? 1),
+                    value: submittedCount / studentCount,
                     backgroundColor: subjectColor.withOpacity(0.1),
                     valueColor: AlwaysStoppedAnimation<Color>(subjectColor),
                   ),
                   Text(
-                    '${assignment['submitted_count'] ?? 0}/${subjectStats['student_count'] ?? 0} submitted',
+                    '$submittedCount/$studentCount submitted',
                     style: GoogleFonts.poppins(fontSize: 12),
                   ),
                 ],
@@ -654,7 +576,7 @@ class _SubjectDashboardScreenState extends State<SubjectDashboardScreen> {
                 style: GoogleFonts.poppins(fontWeight: FontWeight.w500),
               ),
               subtitle: Text(
-                query['question']?.length > 30
+                (query['question']?.length ?? 0) > 30
                     ? '${query['question'].substring(0, 30)}...'
                     : query['question'] ?? 'No question',
                 style: GoogleFonts.poppins(),
@@ -692,7 +614,14 @@ class _SubjectDashboardScreenState extends State<SubjectDashboardScreen> {
     }
 
     final subjectColor = widget.subject['color'] ?? Theme.of(context).primaryColor;
-    final attendanceRate = subjectStats['attendance_rate'] ?? 0;
+    double attendanceRate = 0.0;
+    if (subjectStats['attendance_rate'] != null) {
+      if (subjectStats['attendance_rate'] is String) {
+        attendanceRate = double.tryParse(subjectStats['attendance_rate']) ?? 0.0;
+      } else if (subjectStats['attendance_rate'] is num) {
+        attendanceRate = subjectStats['attendance_rate'].toDouble();
+      }
+    }
 
     return Padding(
       padding: EdgeInsets.all(12),
@@ -725,11 +654,18 @@ class _SubjectDashboardScreenState extends State<SubjectDashboardScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: attendance.take(5).map((day) {
+              double dayRate = 0.0;
+              if (day['attendance_rate'] is String) {
+                dayRate = double.tryParse(day['attendance_rate']) ?? 0.0;
+              } else if (day['attendance_rate'] is num) {
+                dayRate = day['attendance_rate'].toDouble();
+              }
+
               return _buildMiniAttendanceStat(
                 _getDayName(day['day']),
-                '${day['attendance_rate']?.toStringAsFixed(0) ?? '0'}%',
-                day['attendance_rate'] >= 90 ? Icons.check : Icons.warning,
-                day['attendance_rate'] >= 90 ? Colors.green : Colors.orange,
+                '${dayRate.toStringAsFixed(0)}%',
+                dayRate >= 90 ? Icons.check : Icons.warning,
+                dayRate >= 90 ? Colors.green : Colors.orange,
               );
             }).toList(),
           ),
@@ -740,33 +676,40 @@ class _SubjectDashboardScreenState extends State<SubjectDashboardScreen> {
 
   String _formatTime(String? timestamp) {
     if (timestamp == null) return 'Unknown time';
-    final date = DateTime.parse(timestamp);
-    final now = DateTime.now();
-    final difference = now.difference(date);
+    try {
+      final date = DateTime.parse(timestamp);
+      final now = DateTime.now();
+      final difference = now.difference(date);
 
-    if (difference.inMinutes < 60) {
-      return '${difference.inMinutes}m ago';
-    } else if (difference.inHours < 24) {
-      return '${difference.inHours}h ago';
-    } else if (difference.inDays < 7) {
-      return '${difference.inDays}d ago';
-    } else {
-      return '${date.day}/${date.month}/${date.year}';
+      if (difference.inMinutes < 60) {
+        return '${difference.inMinutes}m ago';
+      } else if (difference.inHours < 24) {
+        return '${difference.inHours}h ago';
+      } else if (difference.inDays < 7) {
+        return '${difference.inDays}d ago';
+      } else {
+        return '${date.day}/${date.month}/${date.year}';
+      }
+    } catch (e) {
+      return 'Invalid date';
     }
   }
 
   String _formatDate(String? dateString) {
     if (dateString == null) return 'No date';
-    final date = DateTime.parse(dateString);
-    return '${date.day}/${date.month}/${date.year}';
+    try {
+      final date = DateTime.parse(dateString);
+      return '${date.day}/${date.month}/${date.year}';
+    } catch (e) {
+      return 'Invalid date';
+    }
   }
 
   String _getDayName(String? day) {
     if (day == null) return 'Day';
-    return day.substring(0, 3); // Returns first 3 letters (Mon, Tue, etc.)
+    return day.length >= 3 ? day.substring(0, 3) : day;
   }
 
-// ... [Keep all other existing methods]
   Widget _buildSectionPreview({
     required String title,
     required VoidCallback onViewAll,
@@ -792,9 +735,7 @@ class _SubjectDashboardScreenState extends State<SubjectDashboardScreen> {
                 child: Text(
                   'View All',
                   style: GoogleFonts.poppins(
-                    color:
-                    widget.subject['color'] ??
-                        Theme.of(context).primaryColor,
+                    color: widget.subject['color'] ?? Theme.of(context).primaryColor,
                   ),
                 ),
               ),
@@ -812,6 +753,7 @@ class _SubjectDashboardScreenState extends State<SubjectDashboardScreen> {
       ],
     );
   }
+
   Widget _buildMiniAttendanceStat(
       String day,
       String percent,
@@ -825,94 +767,6 @@ class _SubjectDashboardScreenState extends State<SubjectDashboardScreen> {
         Icon(icon, color: color, size: 16),
         Text(percent, style: GoogleFonts.poppins(fontSize: 12)),
       ],
-    );
-  }
-
-  Widget _buildAnnouncementsScreen() {
-    final subjectColor =
-        widget.subject['color'] ?? Theme.of(context).primaryColor;
-
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('All Announcements'),
-        backgroundColor: subjectColor,
-      ),
-      body: ListView(
-        padding: EdgeInsets.all(16),
-        children: [
-          _buildAnnouncementCard(
-            title: 'Exam Schedule Posted',
-            content: 'Final exams will begin next week on Monday',
-            time: '2h ago',
-            icon: Icons.announcement,
-            color: Colors.blue,
-          ),
-          SizedBox(height: 12),
-          _buildAnnouncementCard(
-            title: 'Assignment 3 Graded',
-            content: 'Grades for the last assignment are now available',
-            time: '1d ago',
-            icon: Icons.assignment,
-            color: Colors.green,
-          ),
-          SizedBox(height: 12),
-          _buildAnnouncementCard(
-            title: 'Course Materials Updated',
-            content: 'New reading materials have been uploaded for Chapter 4',
-            time: '3d ago',
-            icon: Icons.library_books,
-            color: Colors.orange,
-          ),
-        ],
-      ),
-    );
-  }
-  Widget _buildAnnouncementCard({
-    required String title,
-    required String content,
-    required String time,
-    required IconData icon,
-    required Color color,
-  }) {
-    return Card(
-      elevation: 3,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  padding: EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: color.withOpacity(0.2),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(icon, color: color),
-                ),
-                SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    title,
-                    style: GoogleFonts.poppins(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                    ),
-                  ),
-                ),
-                Text(
-                  time,
-                  style: GoogleFonts.poppins(color: Colors.grey, fontSize: 12),
-                ),
-              ],
-            ),
-            SizedBox(height: 12),
-            Text(content, style: GoogleFonts.poppins()),
-          ],
-        ),
-      ),
     );
   }
 
@@ -963,5 +817,4 @@ class _SubjectDashboardScreenState extends State<SubjectDashboardScreen> {
       ],
     );
   }
-
 }
