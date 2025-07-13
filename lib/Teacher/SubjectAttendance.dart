@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class SubjectAttendanceScreen extends StatefulWidget {
   final Map<String, dynamic> subject;
@@ -8,8 +10,7 @@ class SubjectAttendanceScreen extends StatefulWidget {
   const SubjectAttendanceScreen({super.key, required this.subject});
 
   @override
-  _SubjectAttendanceScreenState createState() =>
-      _SubjectAttendanceScreenState();
+  _SubjectAttendanceScreenState createState() => _SubjectAttendanceScreenState();
 }
 
 class _SubjectAttendanceScreenState extends State<SubjectAttendanceScreen> {
@@ -18,7 +19,10 @@ class _SubjectAttendanceScreenState extends State<SubjectAttendanceScreen> {
   bool isLoading = true;
   bool isSubmitting = false;
   DateTime selectedDate = DateTime.now();
+  String errorMessage = '';
 
+  // API Endpoints
+  final String baseUrl = 'http://192.168.18.185:5050/SubjectAttendance/api';
   // Dummy data for students
   final List<Map<String, dynamic>> _dummyStudents = [
     {'id': '101', 'name': 'Alice Johnson', 'avatar': '👩'},
@@ -72,25 +76,54 @@ class _SubjectAttendanceScreenState extends State<SubjectAttendanceScreen> {
       {'student_id': '110', 'status': 'absent'},
     ],
   };
-
   @override
   void initState() {
     super.initState();
-    _loadDummyData();
+    _fetchStudentsForSubject();
   }
 
-  void _loadDummyData() {
+  Future<void> _fetchStudentsForSubject() async {
     setState(() {
-      students = _dummyStudents;
-      // Initialize all as present by default
-      attendanceStatus = {
-        for (var student in students) student['id']: 'present',
-      };
-      isLoading = false;
+      isLoading = true;
+      errorMessage = '';
     });
-    _loadDummyAttendanceForDate();
-  }
 
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/subject/${widget.subject['subject_id']}/students'),
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+        setState(() {
+          students = data.map((student) {
+            return {
+              'rfid': student['rfid']?.toString() ?? '',
+              'name': student['student_name']?.toString() ?? 'Unknown Student',
+              'id': student['student_id']?.toString() ?? 'N/A',
+            };
+          }).toList();
+
+          // Initialize all as absent by default
+          attendanceStatus = {
+            for (var student in students)
+              student['rfid'].toString(): 'absent',
+          };
+        });
+        await _fetchAttendanceForDate();
+      } else {
+        throw Exception('Failed to load students: ${response.statusCode}');
+      }
+    } catch (e) {
+      setState(() {
+        errorMessage = 'Error loading students: ${e.toString()}';
+      });
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
   void _loadDummyAttendanceForDate() {
     final dateKey = DateFormat('yyyy-MM-dd').format(selectedDate);
     if (_dummyAttendanceData.containsKey(dateKey)) {
@@ -102,32 +135,117 @@ class _SubjectAttendanceScreenState extends State<SubjectAttendanceScreen> {
     }
   }
 
-  void _submitAttendance() {
-    setState(() => isSubmitting = true);
+  Future<void> _fetchAttendanceForDate() async {
+    if (students.isEmpty) return;
 
-    // Simulate API call delay
-    Future.delayed(Duration(seconds: 2), () {
-      setState(() => isSubmitting = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Attendance saved successfully!'),
-          backgroundColor: Colors.green,
-        ),
+    setState(() {
+      isLoading = true;
+      errorMessage = '';
+    });
+
+    try {
+      final dateStr = DateFormat('yyyy-MM-dd').format(selectedDate);
+      final response = await http.get(
+        Uri.parse('$baseUrl/subject/${widget.subject['subject_id']}/attendance?date=$dateStr'),
       );
 
-      // Update our dummy data with the new attendance
-      final dateKey = DateFormat('yyyy-MM-dd').format(selectedDate);
-      _dummyAttendanceData[dateKey] =
-          attendanceStatus.entries.map((entry) {
-            return {'student_id': entry.key, 'status': entry.value};
-          }).toList();
-    });
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+
+        // Initialize with all absent first
+        final newStatus = <String, String>{};
+        for (var student in students) {
+          newStatus[student['rfid'].toString()] = 'absent';
+        }
+
+        // Update with fetched data
+        for (var record in data) {
+          final rfid = record['rfid']?.toString();
+          if (rfid != null && newStatus.containsKey(rfid)) {
+            newStatus[rfid] = record['attendance_status'] ?? 'absent';
+          }
+        }
+
+        setState(() {
+          attendanceStatus = newStatus;
+        });
+      } else if (response.statusCode == 404) {
+        // No attendance records for this date
+        setState(() {
+          attendanceStatus = {
+            for (var student in students)
+              student['rfid'].toString(): 'absent'
+          };
+        });
+      } else {
+        throw Exception('Failed to load attendance: ${response.statusCode}');
+      }
+    } catch (e) {
+      setState(() {
+        errorMessage = 'Error loading attendance: ${e.toString()}';
+        // Fallback to all absent if there's an error
+        attendanceStatus = {
+          for (var student in students)
+            student['rfid'].toString(): 'absent'
+        };
+      });
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _submitAttendance() async {
+    setState(() => isSubmitting = true);
+
+    try {
+      final dateStr = DateFormat('yyyy-MM-dd').format(selectedDate);
+      final attendanceRecords = attendanceStatus.entries.map((entry) {
+        return {
+          'rfid': int.parse(entry.key),
+          'subject_id': widget.subject['subject_id'],
+          'date': dateStr,
+          'attendance_status': entry.value,
+          'time': DateFormat('HH:mm:ss').format(DateTime.now()),
+        };
+      }).toList();
+
+      final response = await http.post(
+        Uri.parse('$baseUrl/subject/${widget.subject['subject_id']}/attendance'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({
+          'date': dateStr,
+          'records': attendanceRecords,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Attendance saved successfully!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      } else {
+        throw Exception('Failed to save attendance: ${response.statusCode}');
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to save attendance: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      setState(() => isSubmitting = false);
+    }
   }
 
   void _changeDate(int days) {
     setState(() {
       selectedDate = selectedDate.add(Duration(days: days));
-      _loadDummyAttendanceForDate();
+      _fetchAttendanceForDate();
     });
   }
 
@@ -161,36 +279,58 @@ class _SubjectAttendanceScreenState extends State<SubjectAttendanceScreen> {
           borderRadius: BorderRadius.vertical(bottom: Radius.circular(20)),
         ),
       ),
-      body:
-          isLoading
-              ? Center(child: CircularProgressIndicator())
-              : Column(
-                children: [
-                  _buildDateSelector(theme, subjectColor),
-                  _buildAttendanceSummary(
-                    presentCount,
-                    absentCount,
+      body: isLoading
+          ? Center(child: CircularProgressIndicator())
+          : errorMessage.isNotEmpty
+          ? Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              errorMessage,
+              style: GoogleFonts.poppins(color: Colors.red),
+            ),
+            SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: _fetchStudentsForSubject,
+              child: Text('Retry'),
+            ),
+          ],
+        ),
+      )
+          : Column(
+        children: [
+          _buildDateSelector(theme, subjectColor),
+          _buildAttendanceSummary(
+            presentCount,
+            absentCount,
+            subjectColor,
+          ),
+          _buildQuickActions(theme, subjectColor),
+          Expanded(
+            child: students.isEmpty
+                ? Center(
+              child: Text(
+                'No students enrolled in this subject',
+                style: GoogleFonts.poppins(),
+              ),
+            )
+                : ListView.builder(
+              padding: EdgeInsets.symmetric(horizontal: 16),
+              itemCount: students.length,
+              itemBuilder: (context, index) =>
+                  _buildStudentCard(
+                    students[index],
+                    theme,
                     subjectColor,
                   ),
-                  _buildQuickActions(theme, subjectColor),
-                  Expanded(
-                    child: ListView.builder(
-                      padding: EdgeInsets.symmetric(horizontal: 16),
-                      itemCount: students.length,
-                      itemBuilder:
-                          (context, index) => _buildStudentCard(
-                            students[index],
-                            theme,
-                            subjectColor,
-                          ),
-                    ),
-                  ),
-                  _buildSubmitButton(theme, subjectColor),
-                ],
-              ),
+            ),
+          ),
+          _buildSubmitButton(theme, subjectColor),
+        ],
+      ),
     );
   }
-
   Widget _buildDateSelector(ThemeData theme, Color subjectColor) {
     return Container(
       margin: EdgeInsets.all(16),
@@ -211,6 +351,7 @@ class _SubjectAttendanceScreenState extends State<SubjectAttendanceScreen> {
         children: [
           IconButton(
             icon: Icon(Icons.chevron_left),
+            color: subjectColor,
             onPressed: () => _changeDate(-1),
           ),
           Column(
@@ -220,31 +361,51 @@ class _SubjectAttendanceScreenState extends State<SubjectAttendanceScreen> {
                 style: GoogleFonts.poppins(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
+                  color: theme.textTheme.titleLarge?.color,
                 ),
               ),
               Text(
                 DateFormat('MMMM d, y').format(selectedDate),
-                style: GoogleFonts.poppins(fontSize: 14),
+                style: GoogleFonts.poppins(
+                  fontSize: 14,
+                  color: theme.textTheme.bodyMedium?.color,
+                ),
               ),
             ],
           ),
           IconButton(
             icon: Icon(Icons.chevron_right),
+            color: subjectColor,
             onPressed: () => _changeDate(1),
           ),
           IconButton(
             icon: Icon(Icons.calendar_today),
+            color: subjectColor,
             onPressed: () async {
               final DateTime? picked = await showDatePicker(
                 context: context,
                 initialDate: selectedDate,
                 firstDate: DateTime(2023),
                 lastDate: DateTime(2025),
+                builder: (context, child) {
+                  return Theme(
+                    data: Theme.of(context).copyWith(
+                      colorScheme: ColorScheme.light(
+                        primary: subjectColor,
+                        onPrimary: Colors.white,
+                        surface: Colors.white,
+                        onSurface: Colors.black,
+                      ),
+                      dialogBackgroundColor: Colors.white,
+                    ),
+                    child: child!,
+                  );
+                },
               );
               if (picked != null && picked != selectedDate) {
                 setState(() {
                   selectedDate = picked;
-                  _loadDummyAttendanceForDate();
+                  _fetchAttendanceForDate();
                 });
               }
             },
@@ -372,11 +533,12 @@ class _SubjectAttendanceScreenState extends State<SubjectAttendanceScreen> {
   }
 
   Widget _buildStudentCard(
-    Map<String, dynamic> student,
-    ThemeData theme,
-    Color subjectColor,
-  ) {
-    final isPresent = attendanceStatus[student['id']] == 'present';
+      Map<String, dynamic> student,
+      ThemeData theme,
+      Color subjectColor,
+      ) {
+    // Use rfid instead of id since that's what we used as the key
+    final isPresent = attendanceStatus[student['rfid'].toString()] == 'present';
 
     return Card(
       elevation: 2,
@@ -389,7 +551,10 @@ class _SubjectAttendanceScreenState extends State<SubjectAttendanceScreen> {
             CircleAvatar(
               backgroundColor: subjectColor.withOpacity(0.2),
               radius: 20,
-              child: Text(student['avatar'], style: TextStyle(fontSize: 16)),
+              child: Text(
+                student['name'].isNotEmpty ? student['name'][0] : '?',
+                style: TextStyle(fontSize: 16),
+              ),
             ),
             SizedBox(width: 16),
             Expanded(
@@ -397,12 +562,12 @@ class _SubjectAttendanceScreenState extends State<SubjectAttendanceScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    student['name'],
+                    student['name'] ?? 'Unknown Student',
                     style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
                   ),
                   SizedBox(height: 2),
                   Text(
-                    'ID: ${student['id']}',
+                    'ID: ${student['id'] ?? 'N/A'}',
                     style: GoogleFonts.poppins(
                       fontSize: 12,
                       color: Colors.grey[600],
@@ -417,8 +582,8 @@ class _SubjectAttendanceScreenState extends State<SubjectAttendanceScreen> {
               isSelected: [isPresent, !isPresent],
               onPressed: (index) {
                 setState(() {
-                  attendanceStatus[student['id']] =
-                      index == 0 ? 'present' : 'absent';
+                  attendanceStatus[student['rfid'].toString()] =
+                  index == 0 ? 'present' : 'absent';
                 });
               },
               fillColor: isPresent ? Colors.green[50] : Colors.red[50],
