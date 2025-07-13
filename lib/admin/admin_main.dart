@@ -60,7 +60,17 @@ class AdminMain extends StatelessWidget {
     campusName: campusName,// Keep this if you need campusName
     );
     },
-        '/attendance': (context) => AttendanceDashboard(campusId: 1),
+        '/attendance': (context) {
+          final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+
+          final campusId = args?['campusID'] ?? 1; // Default to 1 if not provided
+          final campusName = args?['campusName'] ?? 'Campus $campusId'; // Default name
+
+          return AttendanceDashboard(
+            campusId: campusId,
+            campusName: campusName,
+          );
+        },
         '/announcements': (context) => AnnouncementCreator(campusID: 1),
         '/fees': (context) => FeeDashboard(),
         '/calendar': (context) => AcademicCalendarScreen(),
