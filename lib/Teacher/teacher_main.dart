@@ -46,152 +46,117 @@ class TeacherHomeScreen extends StatefulWidget {
   @override
   _TeacherHomeScreenState createState() => _TeacherHomeScreenState();
 }
+
 class _TeacherHomeScreenState extends State<TeacherHomeScreen> {
   int _currentIndex = 0;
-  // Static data - will be replaced by API calls
-  List<Map<String, dynamic>> announcements = [
-    {
-      'title': 'Staff Meeting Tomorrow',
-      'content': 'All teaching staff required at 3:00 PM in Conference Room A',
-      'time': '10:30 AM',
-      'isNew': true,
-      'icon': Icons.people,
-      'color': Color(0xFF7209B7),
-    },
-    {
-      'title': 'Curriculum Update',
-      'content': 'New mathematics curriculum guidelines available',
-      'time': 'Yesterday',
-      'isNew': false,
-      'icon': Icons.school,
-      'color': Color(0xFF4361EE),
-    },
-  ];
+  late Map<String, dynamic> teacherProfile = {};
+  late List<dynamic> todaysSchedule = [];
+  late List<dynamic> subjects = [];
+  int studentCount = 0;
+  int classCount = 0;
+  int taskCount = 0;
 
-  List<Map<String, dynamic>> todaysSchedule = [
-    {
-      'subject': 'Mathematics',
-      'time': '8:00 - 9:30 AM',
-      'class': 'Grade 10-A',
-      'room': 'Room 205',
-      'color': Color(0xFF4361EE),
-    },
-    {
-      'subject': 'Physics',
-      'time': '10:00 - 11:30 AM',
-      'class': 'Grade 11-B',
-      'room': 'Lab 3',
-      'color': Color(0xFF7209B7),
-    },
-  ];
-
-  List<Map<String, dynamic>> subjects = [
-    {
-      'name': 'Mathematics',
-      'code': 'MATH101',
-      'color': Color(0xFF4361EE),
-      'icon': Icons.calculate,
-    },
-    {
-      'name': 'Physics',
-      'code': 'PHYS202',
-      'color': Color(0xFF7209B7),
-      'icon': Icons.science,
-    },
-    {
-      'name': 'Computer Science',
-      'code': 'COMP110',
-      'color': Color(0xFF4CC9F0),
-      'icon': Icons.computer,
-    },
-  ];
-
-  // Teacher profile data
-  Map<String, dynamic> teacherProfile = {
-    'name': 'Dr. Asma Ali',
-    'email': 'robert.chen@university.edu',
-    'department': 'Mathematics, Physics & Computer ',
-    'avatar': 'assets/teacher_avatar.png', // Replace with actual asset
-  };
-
-  // API Endpoints - Replace with your Flask server URLs
-  final String baseUrl = 'http://your-flask-server.com/api';
-  final String announcementsEndpoint = '/announcements';
-  final String scheduleEndpoint = '/schedule';
-  final String subjectsEndpoint = '/subjects';
-  final String profileEndpoint = '/profile';
+  // API Endpoints - Replace with your actual Flask server URL
+  final String baseUrl = 'http://192.168.18.185:5050/Teacher/api';
 
   @override
   void initState() {
     super.initState();
-    // Uncomment these when your backend is ready
-    // _fetchAnnouncements();
-    // _fetchSchedule();
-    // _fetchSubjects();
-    // _fetchProfile();
+    _fetchTeacherData();
+    _fetchTodaysSchedule();
+    _fetchSubjects();
+    _fetchStats();
   }
 
-  // API Call Methods
-  Future<void> _fetchAnnouncements() async {
+  Future<void> _fetchTeacherData() async {
     try {
       final response = await http.get(
-        Uri.parse('$baseUrl$announcementsEndpoint'),
+        Uri.parse('$baseUrl/teacher/${widget.userId}'),
       );
       if (response.statusCode == 200) {
         setState(() {
-          announcements = List<Map<String, dynamic>>.from(
-            json.decode(response.body),
-          );
+          teacherProfile = json.decode(response.body);
+        });
+      } else {
+        setState(() {
+          teacherProfile = {
+            'name': 'NA',
+            'email': 'NA',
+            'department': 'NA',
+          };
         });
       }
     } catch (e) {
-      print('Error fetching announcements: $e');
-      // You might want to show an error message to the user
+      print('Error fetching teacher data: $e');
+      setState(() {
+        teacherProfile = {
+          'name': 'NA',
+          'email': 'NA',
+          'department': 'NA',
+        };
+      });
     }
   }
 
-  Future<void> _fetchSchedule() async {
+  Future<void> _fetchTodaysSchedule() async {
     try {
-      final response = await http.get(Uri.parse('$baseUrl$scheduleEndpoint'));
+      final response = await http.get(
+        Uri.parse('$baseUrl/teacher/${widget.userId}/schedule/today'),
+      );
       if (response.statusCode == 200) {
         setState(() {
-          todaysSchedule = List<Map<String, dynamic>>.from(
-            json.decode(response.body),
-          );
+          todaysSchedule = json.decode(response.body);
+        });
+      } else {
+        setState(() {
+          todaysSchedule = [];
         });
       }
     } catch (e) {
-      print('Error fetching schedule: $e');
+      print('Error fetching today\'s schedule: $e');
+      setState(() {
+        todaysSchedule = [];
+      });
     }
   }
 
   Future<void> _fetchSubjects() async {
     try {
-      final response = await http.get(Uri.parse('$baseUrl$subjectsEndpoint'));
+      final response = await http.get(
+        Uri.parse('$baseUrl/teacher/${widget.userId}/subjects'),
+      );
       if (response.statusCode == 200) {
         setState(() {
-          subjects = List<Map<String, dynamic>>.from(
-            json.decode(response.body),
-          );
+          subjects = json.decode(response.body);
+        });
+      } else {
+        setState(() {
+          subjects = [];
         });
       }
     } catch (e) {
       print('Error fetching subjects: $e');
+      setState(() {
+        subjects = [];
+      });
     }
   }
 
-  Future<void> _fetchProfile() async {
+  Future<void> _fetchStats() async {
     try {
-      final response = await http.get(Uri.parse('$baseUrl$profileEndpoint'));
+      final response = await http.get(
+        Uri.parse('$baseUrl/teacher/${widget.userId}/stats'),
+      );
       if (response.statusCode == 200) {
+        final data = json.decode(response.body);
         setState(() {
-          teacherProfile = Map<String, dynamic>.from(
-            json.decode(response.body),
-          );
+          studentCount = data['student_count'] ?? 0;
+          classCount = data['class_count'] ?? 0;
+          taskCount = data['task_count'] ?? 0;
         });
       }
     } catch (e) {
-      print('Error fetching profile: $e');
+      print('Error fetching stats: $e');
     }
   }
 
@@ -234,51 +199,41 @@ class _TeacherHomeScreenState extends State<TeacherHomeScreen> {
             _buildQuickStatsRow(),
             SizedBox(height: 24),
 
-            // Announcements Section
-            _buildSectionHeader(
-              context,
-              'Announcements',
-              'View All',
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder:
-                        (context) =>
-                        AnnouncementScreen(announcements: announcements),
-                  ),
-                );
-              },
-            ),
+            // Coming Soon Section (replaced announcements)
+            _buildSectionHeader(context, 'Coming Soon', ''),
             SizedBox(height: 12),
-            _buildAnnouncementsPanel(context),
+            _buildComingSoonPanel(context),
             SizedBox(height: 24),
 
             // Today's Schedule
             _buildSectionHeader(
               context,
               "Today's Schedule",
-              'View All',
-              onPressed: () {
+              todaysSchedule.isNotEmpty ? 'View All' : '',
+              onPressed: todaysSchedule.isNotEmpty ? () {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder:
-                        (context) => FullScheduleScreen(
-                      teacherId: '12345',
-                      schedule: todaysSchedule, subject: {},
+                    builder: (context) => FullScheduleScreen(
+                      teacherId: widget.userId,
+                      schedule: List<Map<String, dynamic>>.from(todaysSchedule),
+                      subject: {},
                     ),
                   ),
                 );
-              },
+              } : null,
             ),
             SizedBox(height: 12),
-            _buildScheduleList(context),
+            todaysSchedule.isNotEmpty
+                ? _buildScheduleList(context)
+                : _buildNoSchedulePlaceholder(),
             SizedBox(height: 24),
 
             _buildSectionHeader(context, 'Your Subjects', ''),
             SizedBox(height: 12),
-            _buildSubjectsGrid(),
+            subjects.isNotEmpty
+                ? _buildSubjectsGrid()
+                : _buildNoSubjectsPlaceholder(),
             SizedBox(height: 24),
           ],
         ),
@@ -330,7 +285,7 @@ class _TeacherHomeScreenState extends State<TeacherHomeScreen> {
                 ),
                 SizedBox(height: 4),
                 Text(
-                  teacherProfile['name'],
+                  teacherProfile['name'] ?? 'NA',
                   style: GoogleFonts.poppins(
                     fontSize: 22,
                     fontWeight: FontWeight.bold,
@@ -339,7 +294,7 @@ class _TeacherHomeScreenState extends State<TeacherHomeScreen> {
                 ),
                 SizedBox(height: 4),
                 Text(
-                  teacherProfile['department'],
+                  teacherProfile['department'] ?? 'NA',
                   style: GoogleFonts.poppins(
                     fontSize: 14,
                     color: Colors.white.withOpacity(0.9),
@@ -359,7 +314,7 @@ class _TeacherHomeScreenState extends State<TeacherHomeScreen> {
         Expanded(
           child: _buildStatCard(
             title: 'Classes',
-            value: '12',
+            value: classCount.toString(),
             icon: Icons.class_,
             color: Color(0xFF4361EE),
           ),
@@ -368,7 +323,7 @@ class _TeacherHomeScreenState extends State<TeacherHomeScreen> {
         Expanded(
           child: _buildStatCard(
             title: 'Students',
-            value: '240',
+            value: studentCount.toString(),
             icon: Icons.people_alt,
             color: Color(0xFF7209B7),
           ),
@@ -377,7 +332,7 @@ class _TeacherHomeScreenState extends State<TeacherHomeScreen> {
         Expanded(
           child: _buildStatCard(
             title: 'Tasks',
-            value: '5',
+            value: taskCount.toString(),
             icon: Icons.assignment,
             color: Color(0xFF4CC9F0),
           ),
@@ -385,6 +340,7 @@ class _TeacherHomeScreenState extends State<TeacherHomeScreen> {
       ],
     );
   }
+
 
   Widget _buildStatCard({
     required String title,
@@ -468,8 +424,9 @@ class _TeacherHomeScreenState extends State<TeacherHomeScreen> {
     );
   }
 
-  Widget _buildAnnouncementsPanel(BuildContext context) {
+  Widget _buildComingSoonPanel(BuildContext context) {
     return Container(
+      padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
@@ -481,82 +438,14 @@ class _TeacherHomeScreenState extends State<TeacherHomeScreen> {
           ),
         ],
       ),
-      child: Column(
-        children:
-        announcements
-            .map(
-              (announcement) => Column(
-            children: [
-              ListTile(
-                contentPadding: EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 12,
-                ),
-                leading: Container(
-                  width: 48,
-                  height: 48,
-                  decoration: BoxDecoration(
-                    color: announcement['color'].withOpacity(0.1),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    announcement['icon'],
-                    color: announcement['color'],
-                  ),
-                ),
-                title: Text(
-                  announcement['title'],
-                  style: GoogleFonts.poppins(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
-                  ),
-                ),
-                subtitle: Text(
-                  announcement['content'],
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.poppins(color: Colors.grey[600]),
-                ),
-                trailing: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text(
-                      announcement['time'],
-                      style: GoogleFonts.poppins(
-                        fontSize: 12,
-                        color: Colors.grey,
-                      ),
-                    ),
-                    if (announcement['isNew'])
-                      Container(
-                        margin: EdgeInsets.only(top: 4),
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 6,
-                          vertical: 2,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.red,
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Text(
-                          'NEW',
-                          style: GoogleFonts.poppins(
-                            color: Colors.white,
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-              if (announcement != announcements.last)
-                Divider(height: 1, indent: 16),
-            ],
+      child: Center(
+        child: Text(
+          'New features coming soon!',
+          style: GoogleFonts.poppins(
+            fontSize: 16,
+            color: Colors.grey[600],
           ),
-        )
-            .toList(),
+        ),
       ),
     );
   }
@@ -575,10 +464,9 @@ class _TeacherHomeScreenState extends State<TeacherHomeScreen> {
         ],
       ),
       child: Column(
-        children:
-        todaysSchedule
-            .map(
-              (schedule) => Column(
+        children: todaysSchedule.map((schedule) {
+          final subjectColor = _getColorForSubject(schedule['subject_id'] ?? 0);
+          return Column(
             children: [
               ListTile(
                 contentPadding: EdgeInsets.symmetric(
@@ -589,20 +477,20 @@ class _TeacherHomeScreenState extends State<TeacherHomeScreen> {
                   width: 48,
                   height: 48,
                   decoration: BoxDecoration(
-                    color: schedule['color'].withOpacity(0.1),
+                    color: subjectColor.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Icon(Icons.schedule, color: schedule['color']),
+                  child: Icon(Icons.schedule, color: subjectColor),
                 ),
                 title: Text(
-                  schedule['subject'],
+                  schedule['subject_name'] ?? 'NA',
                   style: GoogleFonts.poppins(
                     fontWeight: FontWeight.bold,
                     color: Colors.black87,
                   ),
                 ),
                 subtitle: Text(
-                  schedule['class'],
+                  schedule['year'] != null ? 'Grade ${schedule['year']}' : 'NA',
                   style: GoogleFonts.poppins(color: Colors.grey[600]),
                 ),
                 trailing: Column(
@@ -610,14 +498,14 @@ class _TeacherHomeScreenState extends State<TeacherHomeScreen> {
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     Text(
-                      schedule['time'],
+                      schedule['time'] ?? 'NA',
                       style: GoogleFonts.poppins(
                         fontWeight: FontWeight.bold,
-                        color: schedule['color'],
+                        color: subjectColor,
                       ),
                     ),
                     Text(
-                      schedule['room'],
+                      schedule['room'] ?? 'NA',
                       style: GoogleFonts.poppins(
                         fontSize: 12,
                         color: Colors.grey,
@@ -629,9 +517,33 @@ class _TeacherHomeScreenState extends State<TeacherHomeScreen> {
               if (schedule != todaysSchedule.last)
                 Divider(height: 1, indent: 16),
             ],
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  Widget _buildNoSchedulePlaceholder() {
+    return Container(
+      padding: EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 20,
+            spreadRadius: 2,
           ),
-        )
-            .toList(),
+        ],
+      ),
+      child: Center(
+        child: Text(
+          'No classes scheduled for today',
+          style: GoogleFonts.poppins(
+            color: Colors.grey[600],
+          ),
+        ),
       ),
     );
   }
@@ -649,12 +561,15 @@ class _TeacherHomeScreenState extends State<TeacherHomeScreen> {
       itemCount: subjects.length,
       itemBuilder: (context, index) {
         final subject = subjects[index];
+        final subjectColor = _getColorForSubject(subject['subject_id'] ?? index);
+        final icon = _getIconForSubject(subject['subject_name'] ?? '');
+
         return Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [
-                subject['color'].withOpacity(0.9),
-                subject['color'].withOpacity(0.7),
+                subjectColor.withOpacity(0.9),
+                subjectColor.withOpacity(0.7),
               ],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
@@ -676,8 +591,7 @@ class _TeacherHomeScreenState extends State<TeacherHomeScreen> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder:
-                        (context) => SubjectDashboardScreen(subject: subject),
+                    builder: (context) => SubjectDashboardScreen(subject: subject,teacherId: widget.userId,),
                   ),
                 );
               },
@@ -696,7 +610,7 @@ class _TeacherHomeScreenState extends State<TeacherHomeScreen> {
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Icon(
-                        subject['icon'],
+                        icon,
                         color: Colors.white,
                         size: 20,
                       ),
@@ -705,7 +619,7 @@ class _TeacherHomeScreenState extends State<TeacherHomeScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          subject['name'],
+                          subject['subject_name'] ?? 'NA',
                           style: GoogleFonts.poppins(
                             fontWeight: FontWeight.bold,
                             fontSize: 14,
@@ -716,7 +630,7 @@ class _TeacherHomeScreenState extends State<TeacherHomeScreen> {
                         ),
                         SizedBox(height: 2),
                         Text(
-                          subject['code'],
+                          subject['year'] != null ? 'Grade ${subject['year']}' : 'NA',
                           style: GoogleFonts.poppins(
                             color: Colors.white.withOpacity(0.9),
                             fontSize: 10,
@@ -731,6 +645,31 @@ class _TeacherHomeScreenState extends State<TeacherHomeScreen> {
           ),
         );
       },
+    );
+  }
+
+  Widget _buildNoSubjectsPlaceholder() {
+    return Container(
+      padding: EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 20,
+            spreadRadius: 2,
+          ),
+        ],
+      ),
+      child: Center(
+        child: Text(
+          'No subjects assigned',
+          style: GoogleFonts.poppins(
+            color: Colors.grey[600],
+          ),
+        ),
+      ),
     );
   }
 
@@ -760,10 +699,8 @@ class _TeacherHomeScreenState extends State<TeacherHomeScreen> {
               _currentIndex = index;
             });
 
-            // Handle navigation based on tab index
             switch (index) {
               case 0: // Home tab
-              // If already on home, do nothing
                 if (ModalRoute.of(context)?.settings.name != '/') {
                   Navigator.pushReplacementNamed(context, '/');
                 }
@@ -772,7 +709,7 @@ class _TeacherHomeScreenState extends State<TeacherHomeScreen> {
               case 1: // Subjects tab
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => SubjectsScreen()),
+                  MaterialPageRoute( builder: (context) => SubjectsScreen(teacherId: widget.userId)),
                 );
                 break;
 
@@ -780,10 +717,10 @@ class _TeacherHomeScreenState extends State<TeacherHomeScreen> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder:
-                        (context) => FullScheduleScreen(
-                      teacherId: '12345', // Replace with actual teacher ID
-                      schedule: todaysSchedule, subject: {}, // Pass your schedule data
+                    builder: (context) => FullScheduleScreen(
+                      teacherId: widget.userId,
+                      schedule: List<Map<String, dynamic>>.from(todaysSchedule),
+                      subject: {},
                     ),
                   ),
                 );
@@ -836,5 +773,33 @@ class _TeacherHomeScreenState extends State<TeacherHomeScreen> {
         ),
       ),
     );
+  }
+
+  Color _getColorForSubject(int subjectId) {
+    final colors = [
+      Color(0xFF4361EE),
+      Color(0xFF7209B7),
+      Color(0xFF4CC9F0),
+      Color(0xFF3A0CA3),
+      Color(0xFF4895EF),
+      Color(0xFF560BAD),
+    ];
+    return colors[subjectId % colors.length];
+  }
+
+  IconData _getIconForSubject(String subjectName) {
+    if (subjectName.toLowerCase().contains('math')) {
+      return Icons.calculate;
+    } else if (subjectName.toLowerCase().contains('physics')) {
+      return Icons.science;
+    } else if (subjectName.toLowerCase().contains('computer')) {
+      return Icons.computer;
+    } else if (subjectName.toLowerCase().contains('english')) {
+      return Icons.language;
+    } else if (subjectName.toLowerCase().contains('history')) {
+      return Icons.history_edu;
+    } else {
+      return Icons.school;
+    }
   }
 }

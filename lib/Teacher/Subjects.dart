@@ -5,74 +5,26 @@ import 'dart:convert';
 import 'SubjectDetails.dart';
 
 class SubjectsScreen extends StatefulWidget {
-  const SubjectsScreen({super.key});
+  final String teacherId;
+
+  const SubjectsScreen({super.key, required this.teacherId});
 
   @override
   _SubjectsScreenState createState() => _SubjectsScreenState();
 }
 
 class _SubjectsScreenState extends State<SubjectsScreen> {
-  // Static data - will be replaced by API calls
-  List<Map<String, dynamic>> subjects = [
-    {
-      'name': 'Mathematics',
-      'code': 'MATH101',
-      'color': Color(0xFF4361EE),
-      'icon': Icons.calculate,
-      'students': 45,
-      'classes': ['10-A', '10-B'],
-      'schedule': 'Mon/Wed 8:00-9:30',
-    },
-    {
-      'name': 'Physics',
-      'code': 'PHYS202',
-      'color': Color(0xFF7209B7),
-      'icon': Icons.science,
-      'students': 32,
-      'classes': ['11-A'],
-      'schedule': 'Tue/Thu 10:00-11:30',
-    },
-    {
-      'name': 'Computer Science',
-      'code': 'COMP110',
-      'color': Color(0xFF4CC9F0),
-      'icon': Icons.computer,
-      'students': 28,
-      'classes': ['12-A', '12-B'],
-      'schedule': 'Fri 1:00-3:00',
-    },
-    {
-      'name': 'Chemistry',
-      'code': 'CHEM201',
-      'color': Color(0xFFF72585),
-      'icon': Icons.science_outlined,
-      'students': 36,
-      'classes': ['11-B'],
-      'schedule': 'Mon/Wed 2:00-3:30',
-    },
-    {
-      'name': 'Biology',
-      'code': 'BIO101',
-      'color': Color(0xFF4895EF),
-      'icon': Icons.eco,
-      'students': 42,
-      'classes': ['10-C'],
-      'schedule': 'Tue/Thu 8:00-9:30',
-    },
-  ];
-
+  List<Map<String, dynamic>> subjects = [];
   bool isLoading = false;
   String errorMessage = '';
 
   // API Endpoints
-  final String baseUrl = 'http://your-flask-server.com/api';
-  final String subjectsEndpoint = '/teacher/subjects';
+  final String baseUrl = 'http://192.168.18.185:5050/Teacher/api';
 
   @override
   void initState() {
     super.initState();
-    // Uncomment when backend is ready
-    // _fetchSubjects();
+    _fetchSubjects();
   }
 
   Future<void> _fetchSubjects() async {
@@ -82,25 +34,27 @@ class _SubjectsScreenState extends State<SubjectsScreen> {
     });
 
     try {
-      final response = await http.get(Uri.parse('$baseUrl$subjectsEndpoint'));
+      final response = await http.get(
+        Uri.parse('$baseUrl/teacher/${widget.teacherId}/subjects'),
+      );
 
       if (response.statusCode == 200) {
         final List<dynamic> data = json.decode(response.body);
         setState(() {
-          subjects =
-              data
-                  .map(
-                    (item) => {
-                      'name': item['name'],
-                      'code': item['code'],
-                      'color': _parseColor(item['color']),
-                      'icon': _parseIcon(item['icon']),
-                      'students': item['students_count'],
-                      'classes': List<String>.from(item['classes']),
-                      'schedule': item['schedule'],
-                    },
-                  )
-                  .toList();
+          subjects = data.map((item) {
+            return {
+              'subject_id': item['subject_id'] ?? 'NA',
+              'name': item['subject_name'] ?? 'NA',
+              'code': item['subject_code'] ?? 'NA',
+              'color': _getColorForSubject(item['subject_id'] ?? 0),
+              'icon': _getIconForSubject(item['subject_name'] ?? ''),
+              'students': item['student_count'] ?? 0,
+              'classes': _parseClasses(item['classes'] ?? ''),
+              'schedule': _parseSchedule(item['schedule'] ?? []),
+              'year': item['year'] ?? 'NA',
+              'room': item['room'] ?? 'NA',
+            };
+          }).toList();
         });
       } else {
         setState(() {
@@ -118,34 +72,56 @@ class _SubjectsScreenState extends State<SubjectsScreen> {
     }
   }
 
-  Color _parseColor(String colorHex) {
-    try {
-      return Color(int.parse(colorHex.replaceFirst('#', '0xFF')));
-    } catch (e) {
-      return Color(0xFF4361EE); // Default color
+  Color _getColorForSubject(int subjectId) {
+    final colors = [
+      Color(0xFF4361EE),
+      Color(0xFF7209B7),
+      Color(0xFF4CC9F0),
+      Color(0xFFF72585),
+      Color(0xFF4895EF),
+    ];
+    return colors[subjectId % colors.length];
+  }
+
+  IconData _getIconForSubject(String subjectName) {
+    if (subjectName.toLowerCase().contains('math')) {
+      return Icons.calculate;
+    } else if (subjectName.toLowerCase().contains('physics')) {
+      return Icons.science;
+    } else if (subjectName.toLowerCase().contains('computer')) {
+      return Icons.computer;
+    } else if (subjectName.toLowerCase().contains('chemistry')) {
+      return Icons.science_outlined;
+    } else if (subjectName.toLowerCase().contains('biology')) {
+      return Icons.eco;
+    } else {
+      return Icons.school;
     }
   }
 
-  IconData _parseIcon(String iconName) {
-    switch (iconName) {
-      case 'science':
-        return Icons.science;
-      case 'computer':
-        return Icons.computer;
-      case 'calculate':
-        return Icons.calculate;
-      case 'eco':
-        return Icons.eco;
-      default:
-        return Icons.school;
+  List<String> _parseClasses(dynamic classesData) {
+    if (classesData is String) {
+      return [classesData];
+    } else if (classesData is List) {
+      return List<String>.from(classesData);
     }
+    return ['NA'];
+  }
+
+  String _parseSchedule(dynamic scheduleData) {
+    if (scheduleData is String) {
+      return scheduleData;
+    } else if (scheduleData is List && scheduleData.isNotEmpty) {
+      return scheduleData.join(', ');
+    }
+    return 'Schedule not available';
   }
 
   void _navigateToSubjectDetail(Map<String, dynamic> subject) {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => SubjectDashboardScreen(subject: subject),
+        builder: (context) => SubjectDashboardScreen(subject: subject,teacherId: widget.teacherId,),
       ),
     );
   }
@@ -176,39 +152,48 @@ class _SubjectsScreenState extends State<SubjectsScreen> {
           ),
         ],
       ),
-      body:
-          isLoading
-              ? Center(child: CircularProgressIndicator())
-              : errorMessage.isNotEmpty
-              ? Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      errorMessage,
-                      style: GoogleFonts.poppins(color: Colors.red),
-                    ),
-                    SizedBox(height: 16),
-                    ElevatedButton(
-                      onPressed: _fetchSubjects,
-                      child: Text('Retry'),
-                    ),
-                  ],
-                ),
-              )
-              : SingleChildScrollView(
-                padding: EdgeInsets.all(16),
-                child: Column(
-                  children: [
-                    // Summary Card
-                    _buildSummaryCard(context),
-                    SizedBox(height: 24),
+      body: isLoading
+          ? Center(child: CircularProgressIndicator())
+          : errorMessage.isNotEmpty
+          ? Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              errorMessage,
+              style: GoogleFonts.poppins(color: Colors.red),
+            ),
+            SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: _fetchSubjects,
+              child: Text('Retry'),
+            ),
+          ],
+        ),
+      )
+          : subjects.isEmpty
+          ? Center(
+        child: Text(
+          'No subjects assigned',
+          style: GoogleFonts.poppins(
+            fontSize: 16,
+            color: Colors.grey[600],
+          ),
+        ),
+      )
+          : SingleChildScrollView(
+        padding: EdgeInsets.all(16),
+        child: Column(
+          children: [
+            // Summary Card
+            _buildSummaryCard(context),
+            SizedBox(height: 24),
 
-                    // Subjects List
-                    _buildSubjectsList(),
-                  ],
-                ),
-              ),
+            // Subjects List
+            _buildSubjectsList(),
+          ],
+        ),
+      ),
     );
   }
 
@@ -216,11 +201,11 @@ class _SubjectsScreenState extends State<SubjectsScreen> {
     final totalSubjects = subjects.length;
     final int totalStudents = subjects.fold<int>(
       0,
-      (sum, subject) => sum + (subject['students'] as int),
+          (sum, subject) => sum + (subject['students'] as int),
     );
     final int totalClasses = subjects.fold<int>(
       0,
-      (sum, subject) => sum + (subject['classes'] as List).length,
+          (sum, subject) => sum + (subject['classes'] as List).length,
     );
 
     return Container(
@@ -372,6 +357,17 @@ class _SubjectsScreenState extends State<SubjectsScreen> {
                   SizedBox(width: 8),
                   Text(
                     subject['classes'].join(', '),
+                    style: GoogleFonts.poppins(color: Colors.grey[600]),
+                  ),
+                ],
+              ),
+              SizedBox(height: 8),
+              Row(
+                children: [
+                  Icon(Icons.school, size: 16, color: Colors.grey),
+                  SizedBox(width: 8),
+                  Text(
+                    'Grade ${subject['year']}',
                     style: GoogleFonts.poppins(color: Colors.grey[600]),
                   ),
                 ],

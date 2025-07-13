@@ -1,17 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:http/http.dart' as http;
+import 'package:newapp/Teacher/SubjectChat.dart';
+import 'dart:convert';
 import 'SubjectAssignments.dart';
 import 'SubjectQueries.dart';
 import 'SubjectResults.dart';
 import 'SubjectAttendance.dart';
-import 'SubjectChat.dart';
 import 'SubjectAnnouncementsScreen.dart';
 import 'dart:ui';
 
 class SubjectDashboardScreen extends StatefulWidget {
   final Map<String, dynamic> subject;
+  final String teacherId;
 
-  const SubjectDashboardScreen({super.key, required this.subject});
+  const SubjectDashboardScreen({super.key, required this.subject, required this.teacherId});
 
   @override
   _SubjectDashboardScreenState createState() => _SubjectDashboardScreenState();
@@ -22,10 +25,23 @@ class _SubjectDashboardScreenState extends State<SubjectDashboardScreen> {
   late List<Widget> _screens;
   bool _isMenuOpen = false;
 
+  // Data variables
+  Map<String, dynamic> subjectStats = {};
+  List<dynamic> announcements = [];
+  List<dynamic> assignments = [];
+  List<dynamic> queries = [];
+  List<dynamic> attendance = [];
+  bool isLoading = true;
+  String errorMessage = '';
+
+  // API Endpoints
+  final String baseUrl = 'http://192.168.18.185:5050/TeacherSubject/api';
+
   @override
   void initState() {
     super.initState();
     _screens = []; // Initialize empty list
+    _fetchSubjectData();
   }
 
   @override
@@ -38,11 +54,148 @@ class _SubjectDashboardScreenState extends State<SubjectDashboardScreen> {
       SubjectQueriesScreen(subject: widget.subject),
       SubjectResultsScreen(subject: widget.subject),
       SubjectAttendanceScreen(subject: widget.subject),
-      SubjectChatScreen(subject: widget.subject),
+      SubjectChatScreen(subject: widget.subject, teacherId: widget.teacherId),
     ];
   }
 
+
+  @override
+  Widget build(BuildContext context) {
+    final subjectColor = widget.subject['color'] ?? Theme.of(context).primaryColor;
+
+    return Scaffold(
+      appBar: _currentIndex == 0
+          ? AppBar(
+        title: Text(
+          widget.subject['name'],
+          style: GoogleFonts.poppins(
+            fontWeight: FontWeight.bold,
+            fontSize: 22,
+            color: Colors.white,
+          ),
+        ),
+        backgroundColor: subjectColor,
+        centerTitle: true,
+        elevation: 0,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(
+            bottom: Radius.circular(20),
+          ),
+        ),
+      )
+          : null,
+      body: Stack(
+        children: [
+          // Main screen content
+          _screens.isNotEmpty
+              ? _screens[_currentIndex]
+              : const Center(child: CircularProgressIndicator()),
+
+          // Blur and overlay menu if open
+          if (_isMenuOpen) ...[
+            BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 6.0, sigmaY: 6.0),
+              child: Container(
+                color: Colors.black.withOpacity(0.1),
+              ),
+            ),
+            _buildInfographicMenu(),
+          ],
+        ],
+      ),
+      floatingActionButton: _buildMainFAB(),
+    );
+  }
+  Future<void> _fetchSubjectData() async {
+    setState(() {
+      isLoading = true;
+      errorMessage = '';
+    });
+
+    try {
+      // Fetch all data in parallel
+      final responses = await Future.wait([
+        http.get(Uri.parse('$baseUrl/subject/${widget.subject['subject_id']}/stats')),
+        http.get(Uri.parse('$baseUrl/subject/${widget.subject['subject_id']}/announcements')),
+        http.get(Uri.parse('$baseUrl/subject/${widget.subject['subject_id']}/assignments')),
+        http.get(Uri.parse('$baseUrl/subject/${widget.subject['subject_id']}/queries')),
+        http.get(Uri.parse('$baseUrl/subject/${widget.subject['subject_id']}/attendance')),
+      ], eagerError: true);
+
+      // Parse responses
+      setState(() {
+        subjectStats = _parseResponse(responses[0]);
+        announcements = _parseResponse(responses[1]) ?? [];
+        assignments = _parseResponse(responses[2]) ?? [];
+        queries = _parseResponse(responses[3]) ?? [];
+        attendance = _parseResponse(responses[4]) ?? [];
+        isLoading = false;
+      });
+
+      // Initialize screens after data is loaded
+      _screens = [
+        _buildOverviewScreen(),
+        SubjectAssignmentsScreen(subject: widget.subject),
+        SubjectQueriesScreen(subject: widget.subject),
+        SubjectResultsScreen(subject: widget.subject),
+        SubjectAttendanceScreen(subject: widget.subject),
+        SubjectChatScreen(subject: widget.subject, teacherId: widget.teacherId),
+      ];
+    } catch (e) {
+      setState(() {
+        errorMessage = 'Error loading data: ${e.toString()}';
+        isLoading = false;
+
+        // Initialize with empty data to prevent UI from getting stuck
+        subjectStats = {};
+        announcements = [];
+        assignments = [];
+        queries = [];
+        attendance = [];
+
+        _screens = [
+          _buildOverviewScreen(),
+          SubjectAssignmentsScreen(subject: widget.subject),
+          SubjectQueriesScreen(subject: widget.subject),
+          SubjectResultsScreen(subject: widget.subject),
+          SubjectAttendanceScreen(subject: widget.subject),
+          SubjectChatScreen(subject: widget.subject, teacherId: widget.teacherId),
+        ];
+      });
+    }
+  }
+
+  dynamic _parseResponse(http.Response response) {
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    } else if (response.statusCode == 404) {
+      return null; // or empty list/map depending on expected type
+    } else {
+      throw Exception('Failed to load data: ${response.statusCode}');
+    }
+  }
+
   Widget _buildOverviewScreen() {
+    if (isLoading) {
+      return Center(child: CircularProgressIndicator());
+    }
+
+    if (errorMessage.isNotEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(errorMessage, style: TextStyle(color: Colors.red)),
+            SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: _fetchSubjectData,
+              child: Text('Retry'),
+            ),
+          ],
+        ),
+      );
+    }
+
     return SingleChildScrollView(
       padding: EdgeInsets.all(16),
       child: Column(
@@ -51,15 +204,12 @@ class _SubjectDashboardScreenState extends State<SubjectDashboardScreen> {
           SizedBox(height: 24),
           _buildSectionPreview(
             title: 'Recent Announcements',
-            onViewAll:
-                () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder:
-                        (context) =>
-                            SubjectAnnouncementsScreen(subject: widget.subject),
-                  ),
-                ),
+            onViewAll: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => SubjectAnnouncementsScreen(subject: widget.subject),
+              ),
+            ),
             child: _buildAnnouncementsPreview(),
           ),
           _buildSectionPreview(
@@ -141,98 +291,46 @@ class _SubjectDashboardScreenState extends State<SubjectDashboardScreen> {
         opacity: _isMenuOpen ? 1.0 : 0.0,
         duration: Duration(milliseconds: 300),
         child: Column(
-          children:
-              menuItems.map((item) {
-                return GestureDetector(
-                  onTap: () {
-                    _navigateToScreen(item['index']);
-                  },
-                  child: Container(
-                    margin: EdgeInsets.symmetric(vertical: 8),
-                    child: Row(
-                      children: [
-                        CircleAvatar(
-                          backgroundColor: item['color'],
-                          radius: 26,
-                          child: Icon(
-                            item['icon'],
-                            color: Colors.white,
-                            size: 24,
-                          ),
-                        ),
-                        SizedBox(width: 10),
-                        Text(
-                          item['title'],
-                          style: GoogleFonts.poppins(
-                            color: Colors.black87,
-                            fontWeight: FontWeight.w500,
-                            fontSize: 14,
-                          ),
-                        ),
-                      ],
+          children: menuItems.map((item) {
+            return GestureDetector(
+              onTap: () => _navigateToScreen(item['index']),
+              child: Container(
+                margin: EdgeInsets.symmetric(vertical: 8),
+                child: Row(
+                  children: [
+                    CircleAvatar(
+                      backgroundColor: item['color'],
+                      radius: 26,
+                      child: Icon(
+                        item['icon'],
+                        color: Colors.white,
+                        size: 24,
+                      ),
                     ),
-                  ),
-                );
-              }).toList(),
+                    SizedBox(width: 10),
+                    Text(
+                      item['title'],
+                      style: GoogleFonts.poppins(
+                        color: Colors.black87,
+                        fontWeight: FontWeight.w500,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }).toList(),
         ),
-      ),
-    );
-  }
-
-  Widget _buildMenuButton(String title, IconData icon, int index, Color color) {
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-
-    return Container(
-      margin: EdgeInsets.symmetric(vertical: 4),
-      child: ListTile(
-        leading: Container(
-          padding: EdgeInsets.all(6),
-          decoration: BoxDecoration(
-            color:
-                _currentIndex == index
-                    ? color.withOpacity(0.2)
-                    : Colors.transparent,
-            shape: BoxShape.circle,
-          ),
-          child: Icon(
-            icon,
-            color:
-                _currentIndex == index
-                    ? color
-                    : (isDarkMode ? Colors.grey[400] : Colors.grey[600]),
-            size: 22,
-          ),
-        ),
-        title: Text(
-          title,
-          style: GoogleFonts.poppins(
-            fontSize: 14,
-            color:
-                _currentIndex == index
-                    ? color
-                    : (isDarkMode ? Colors.white : Colors.black87),
-            fontWeight:
-                _currentIndex == index ? FontWeight.w600 : FontWeight.normal,
-          ),
-        ),
-        onTap: () => _navigateToScreen(index),
-        contentPadding: EdgeInsets.symmetric(horizontal: 12),
-        minLeadingWidth: 24,
-        tileColor:
-            _currentIndex == index
-                ? color.withOpacity(0.1)
-                : Colors.transparent,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       ),
     );
   }
 
   Widget _buildMainFAB() {
-    final subjectColor =
-        widget.subject['color'] ?? Theme.of(context).primaryColor;
+    final subjectColor = widget.subject['color'] ?? Theme.of(context).primaryColor;
 
     return FloatingActionButton(
-      shape: const CircleBorder(), // ensure perfectly rounded FAB
+      shape: const CircleBorder(),
       backgroundColor: subjectColor,
       elevation: 8,
       child: AnimatedSwitcher(
@@ -254,99 +352,18 @@ class _SubjectDashboardScreenState extends State<SubjectDashboardScreen> {
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final subjectColor =
-        widget.subject['color'] ?? Theme.of(context).primaryColor;
-
-    return Scaffold(
-      appBar:
-          _currentIndex == 0
-              ? AppBar(
-                title: Text(
-                  widget.subject['name'],
-                  style: GoogleFonts.poppins(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 22,
-                    color: Colors.white,
-                  ),
-                ),
-                backgroundColor: subjectColor,
-                centerTitle: true,
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.vertical(
-                    bottom: Radius.circular(20),
-                  ),
-                ),
-              )
-              : null,
-      body: Stack(
-        children: [
-          _screens.isNotEmpty
-              ? _screens[_currentIndex]
-              : const Center(child: CircularProgressIndicator()),
-
-          // Blur effect when menu is open
-          if (_isMenuOpen)
-            BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 6.0, sigmaY: 6.0),
-              child: Container(color: Colors.black.withOpacity(0.1)),
-            ),
-
-          _buildInfographicMenu(),
-        ],
-      ),
-      floatingActionButton: _buildMainFAB(),
-    );
-  }
-
-  Widget? _buildFloatingActionButton() {
-    final subjectColor =
-        widget.subject['color'] ?? Theme.of(context).primaryColor;
-
-    switch (_currentIndex) {
-      case 1: // Assignments
-        return FloatingActionButton(
-          backgroundColor: subjectColor,
-          child: Icon(Icons.add),
-          onPressed: () {
-            // Add new assignment
-          },
-        );
-      case 2: // Queries
-        return FloatingActionButton(
-          backgroundColor: subjectColor,
-          child: Icon(Icons.add_comment),
-          onPressed: () {
-            // Add new query
-          },
-        );
-      case 3: // Results
-        return FloatingActionButton(
-          backgroundColor: subjectColor,
-          child: Icon(Icons.download),
-          onPressed: () {
-            // Export results
-          },
-        );
-      case 4: // Attendance
-        return FloatingActionButton(
-          backgroundColor: subjectColor,
-          child: Icon(Icons.date_range),
-          onPressed: () {
-            // View attendance calendar
-          },
-        );
-      default:
-        return null;
-    }
-  }
-
   Widget _buildQuickStatsPanel() {
-    final subjectColor =
-        widget.subject['color'] ?? Theme.of(context).primaryColor;
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final subjectColor = widget.subject['color'] ?? Theme.of(context).primaryColor;
+
+    // Safely parse attendance rate
+    double attendanceRate = 0.0;
+    if (subjectStats['attendance_rate'] != null) {
+      if (subjectStats['attendance_rate'] is String) {
+        attendanceRate = double.tryParse(subjectStats['attendance_rate']) ?? 0.0;
+      } else if (subjectStats['attendance_rate'] is num) {
+        attendanceRate = subjectStats['attendance_rate'].toDouble();
+      }
+    }
 
     return Container(
       padding: EdgeInsets.all(16),
@@ -373,9 +390,21 @@ class _SubjectDashboardScreenState extends State<SubjectDashboardScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _buildStatItem('45', 'Students', Icons.people),
-              _buildStatItem('5', 'Assignments', Icons.assignment),
-              _buildStatItem('92%', 'Attendance', Icons.calendar_today),
+              _buildStatItem(
+                subjectStats['student_count']?.toString() ?? '0',
+                'Students',
+                Icons.people,
+              ),
+              _buildStatItem(
+                subjectStats['assignment_count']?.toString() ?? '0',
+                'Assignments',
+                Icons.assignment,
+              ),
+              _buildStatItem(
+                '${attendanceRate.toStringAsFixed(0)}%',
+                'Attendance',
+                Icons.calendar_today,
+              ),
             ],
           ),
           SizedBox(height: 12),
@@ -415,6 +444,272 @@ class _SubjectDashboardScreenState extends State<SubjectDashboardScreen> {
     );
   }
 
+  Widget _buildAnnouncementsPreview() {
+    if (announcements.isEmpty) {
+      return Padding(
+        padding: EdgeInsets.all(16),
+        child: Text(
+          'No recent announcements',
+          style: GoogleFonts.poppins(color: Colors.grey),
+        ),
+      );
+    }
+
+    return Column(
+      children: announcements.take(2).map((announcement) {
+        return Column(
+          children: [
+            ListTile(
+              leading: CircleAvatar(
+                backgroundColor: Colors.blue[50],
+                child: Icon(Icons.announcement, color: Colors.blue),
+              ),
+              title: Text(
+                announcement['title'] ?? 'No title',
+                style: GoogleFonts.poppins(fontWeight: FontWeight.w500),
+              ),
+              subtitle: Text(
+                announcement['content'] ?? 'No content',
+                style: GoogleFonts.poppins(),
+              ),
+              trailing: Text(
+                _formatTime(announcement['created_at']),
+                style: GoogleFonts.poppins(color: Colors.grey, fontSize: 12),
+              ),
+            ),
+            if (announcement != announcements.last) Divider(height: 1),
+          ],
+        );
+      }).toList(),
+    );
+  }
+
+  Widget _buildAssignmentsPreview() {
+    if (assignments.isEmpty) {
+      return Padding(
+        padding: EdgeInsets.all(16),
+        child: Text(
+          'No upcoming assignments',
+          style: GoogleFonts.poppins(color: Colors.grey),
+        ),
+      );
+    }
+
+    final subjectColor = widget.subject['color'] ?? Theme.of(context).primaryColor;
+    final studentCount = subjectStats['student_count'] is String
+        ? int.tryParse(subjectStats['student_count']) ?? 1
+        : (subjectStats['student_count'] ?? 1);
+
+    return Column(
+      children: assignments.take(2).map((assignment) {
+        final submittedCount = assignment['submitted_count'] is String
+            ? int.tryParse(assignment['submitted_count']) ?? 0
+            : (assignment['submitted_count'] ?? 0);
+
+        return Column(
+          children: [
+            ListTile(
+              leading: CircleAvatar(
+                backgroundColor: Colors.orange[50],
+                child: Icon(Icons.assignment, color: Colors.orange),
+              ),
+              title: Text(
+                assignment['title'] ?? 'No title',
+                style: GoogleFonts.poppins(fontWeight: FontWeight.w500),
+              ),
+              subtitle: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Due: ${_formatDate(assignment['due_date'])}',
+                    style: GoogleFonts.poppins(),
+                  ),
+                  SizedBox(height: 4),
+                  LinearProgressIndicator(
+                    value: submittedCount / studentCount,
+                    backgroundColor: subjectColor.withOpacity(0.1),
+                    valueColor: AlwaysStoppedAnimation<Color>(subjectColor),
+                  ),
+                  Text(
+                    '$submittedCount/$studentCount submitted',
+                    style: GoogleFonts.poppins(fontSize: 12),
+                  ),
+                ],
+              ),
+            ),
+            if (assignment != assignments.last) Divider(height: 1),
+          ],
+        );
+      }).toList(),
+    );
+  }
+
+  Widget _buildQueriesPreview() {
+    if (queries.isEmpty) {
+      return Padding(
+        padding: EdgeInsets.all(16),
+        child: Text(
+          'No pending queries',
+          style: GoogleFonts.poppins(color: Colors.grey),
+        ),
+      );
+    }
+
+    return Column(
+      children: queries.take(2).map((query) {
+        return Column(
+          children: [
+            ListTile(
+              leading: CircleAvatar(
+                backgroundColor: query['status'] == 'answered'
+                    ? Colors.green[50]
+                    : Colors.red[50],
+                child: Icon(
+                  Icons.question_answer,
+                  color: query['status'] == 'answered'
+                      ? Colors.green
+                      : Colors.red,
+                ),
+              ),
+              title: Text(
+                query['student_name'] ?? 'Student',
+                style: GoogleFonts.poppins(fontWeight: FontWeight.w500),
+              ),
+              subtitle: Text(
+                (query['question']?.length ?? 0) > 30
+                    ? '${query['question'].substring(0, 30)}...'
+                    : query['question'] ?? 'No question',
+                style: GoogleFonts.poppins(),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              trailing: Chip(
+                label: Text(
+                  query['status'] == 'answered' ? 'Answered' : 'Pending',
+                  style: GoogleFonts.poppins(
+                      fontSize: 12,
+                      color: Colors.white),
+                ),
+                backgroundColor: query['status'] == 'answered'
+                    ? Colors.green
+                    : Colors.red,
+              ),
+            ),
+            if (query != queries.last) Divider(height: 1),
+          ],
+        );
+      }).toList(),
+    );
+  }
+
+  Widget _buildAttendancePreview() {
+    if (attendance.isEmpty) {
+      return Padding(
+        padding: EdgeInsets.all(16),
+        child: Text(
+          'No attendance data available',
+          style: GoogleFonts.poppins(color: Colors.grey),
+        ),
+      );
+    }
+
+    final subjectColor = widget.subject['color'] ?? Theme.of(context).primaryColor;
+    double attendanceRate = 0.0;
+    if (subjectStats['attendance_rate'] != null) {
+      if (subjectStats['attendance_rate'] is String) {
+        attendanceRate = double.tryParse(subjectStats['attendance_rate']) ?? 0.0;
+      } else if (subjectStats['attendance_rate'] is num) {
+        attendanceRate = subjectStats['attendance_rate'].toDouble();
+      }
+    }
+
+    return Padding(
+      padding: EdgeInsets.all(12),
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'This Week',
+                style: GoogleFonts.poppins(fontWeight: FontWeight.w500),
+              ),
+              Text(
+                '${attendanceRate.toStringAsFixed(0)}%',
+                style: GoogleFonts.poppins(
+                  fontWeight: FontWeight.bold,
+                  color: subjectColor,
+                  fontSize: 18,
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 8),
+          LinearProgressIndicator(
+            value: attendanceRate / 100,
+            backgroundColor: subjectColor.withOpacity(0.1),
+            valueColor: AlwaysStoppedAnimation<Color>(subjectColor),
+          ),
+          SizedBox(height: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: attendance.take(5).map((day) {
+              double dayRate = 0.0;
+              if (day['attendance_rate'] is String) {
+                dayRate = double.tryParse(day['attendance_rate']) ?? 0.0;
+              } else if (day['attendance_rate'] is num) {
+                dayRate = day['attendance_rate'].toDouble();
+              }
+
+              return _buildMiniAttendanceStat(
+                _getDayName(day['day']),
+                '${dayRate.toStringAsFixed(0)}%',
+                dayRate >= 90 ? Icons.check : Icons.warning,
+                dayRate >= 90 ? Colors.green : Colors.orange,
+              );
+            }).toList(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _formatTime(String? timestamp) {
+    if (timestamp == null) return 'Unknown time';
+    try {
+      final date = DateTime.parse(timestamp);
+      final now = DateTime.now();
+      final difference = now.difference(date);
+
+      if (difference.inMinutes < 60) {
+        return '${difference.inMinutes}m ago';
+      } else if (difference.inHours < 24) {
+        return '${difference.inHours}h ago';
+      } else if (difference.inDays < 7) {
+        return '${difference.inDays}d ago';
+      } else {
+        return '${date.day}/${date.month}/${date.year}';
+      }
+    } catch (e) {
+      return 'Invalid date';
+    }
+  }
+
+  String _formatDate(String? dateString) {
+    if (dateString == null) return 'No date';
+    try {
+      final date = DateTime.parse(dateString);
+      return '${date.day}/${date.month}/${date.year}';
+    } catch (e) {
+      return 'Invalid date';
+    }
+  }
+
+  String _getDayName(String? day) {
+    if (day == null) return 'Day';
+    return day.length >= 3 ? day.substring(0, 3) : day;
+  }
+
   Widget _buildSectionPreview({
     required String title,
     required VoidCallback onViewAll,
@@ -440,9 +735,7 @@ class _SubjectDashboardScreenState extends State<SubjectDashboardScreen> {
                 child: Text(
                   'View All',
                   style: GoogleFonts.poppins(
-                    color:
-                        widget.subject['color'] ??
-                        Theme.of(context).primaryColor,
+                    color: widget.subject['color'] ?? Theme.of(context).primaryColor,
                   ),
                 ),
               ),
@@ -457,6 +750,22 @@ class _SubjectDashboardScreenState extends State<SubjectDashboardScreen> {
           child: Padding(padding: EdgeInsets.all(8), child: child),
         ),
         SizedBox(height: 16),
+      ],
+    );
+  }
+
+  Widget _buildMiniAttendanceStat(
+      String day,
+      String percent,
+      IconData icon,
+      Color color,
+      ) {
+    return Column(
+      children: [
+        Text(day, style: GoogleFonts.poppins(fontSize: 12)),
+        SizedBox(height: 4),
+        Icon(icon, color: color, size: 16),
+        Text(percent, style: GoogleFonts.poppins(fontSize: 12)),
       ],
     );
   }
@@ -506,323 +815,6 @@ class _SubjectDashboardScreenState extends State<SubjectDashboardScreen> {
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildAnnouncementsPreview() {
-    return Column(
-      children: [
-        ListTile(
-          leading: CircleAvatar(
-            backgroundColor: Colors.blue[50],
-            child: Icon(Icons.announcement, color: Colors.blue),
-          ),
-          title: Text(
-            'Exam Schedule Posted',
-            style: GoogleFonts.poppins(fontWeight: FontWeight.w500),
-          ),
-          subtitle: Text(
-            'Final exams will begin next week on Monday',
-            style: GoogleFonts.poppins(),
-          ),
-          trailing: Text(
-            '2h ago',
-            style: GoogleFonts.poppins(color: Colors.grey, fontSize: 12),
-          ),
-        ),
-        Divider(height: 1),
-        ListTile(
-          leading: CircleAvatar(
-            backgroundColor: Colors.green[50],
-            child: Icon(Icons.assignment, color: Colors.green),
-          ),
-          title: Text(
-            'Assignment 3 Graded',
-            style: GoogleFonts.poppins(fontWeight: FontWeight.w500),
-          ),
-          subtitle: Text(
-            'Grades for the last assignment are now available',
-            style: GoogleFonts.poppins(),
-          ),
-          trailing: Text(
-            '1d ago',
-            style: GoogleFonts.poppins(color: Colors.grey, fontSize: 12),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildAssignmentsPreview() {
-    final subjectColor =
-        widget.subject['color'] ?? Theme.of(context).primaryColor;
-
-    return Column(
-      children: [
-        ListTile(
-          leading: CircleAvatar(
-            backgroundColor: Colors.orange[50],
-            child: Icon(Icons.assignment, color: Colors.orange),
-          ),
-          title: Text(
-            'Linear Algebra Homework',
-            style: GoogleFonts.poppins(fontWeight: FontWeight.w500),
-          ),
-          subtitle: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Due: Jun 15, 2023', style: GoogleFonts.poppins()),
-              SizedBox(height: 4),
-              LinearProgressIndicator(
-                value: 0.7,
-                backgroundColor: subjectColor.withOpacity(0.1),
-                valueColor: AlwaysStoppedAnimation<Color>(subjectColor),
-              ),
-              Text('32/45 submitted', style: GoogleFonts.poppins(fontSize: 12)),
-            ],
-          ),
-        ),
-        Divider(height: 1),
-        ListTile(
-          leading: CircleAvatar(
-            backgroundColor: Colors.purple[50],
-            child: Icon(Icons.assignment, color: Colors.purple),
-          ),
-          title: Text(
-            'Midterm Project',
-            style: GoogleFonts.poppins(fontWeight: FontWeight.w500),
-          ),
-          subtitle: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Due: Jun 30, 2023', style: GoogleFonts.poppins()),
-              SizedBox(height: 4),
-              LinearProgressIndicator(
-                value: 0.3,
-                backgroundColor: subjectColor.withOpacity(0.1),
-                valueColor: AlwaysStoppedAnimation<Color>(subjectColor),
-              ),
-              Text('12/45 submitted', style: GoogleFonts.poppins(fontSize: 12)),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildQueriesPreview() {
-    return Column(
-      children: [
-        ListTile(
-          leading: CircleAvatar(
-            backgroundColor: Colors.red[50],
-            child: Icon(Icons.question_answer, color: Colors.red),
-          ),
-          title: Text(
-            'Alice Johnson',
-            style: GoogleFonts.poppins(fontWeight: FontWeight.w500),
-          ),
-          subtitle: Text(
-            'Clarification on problem 3 in homework',
-            style: GoogleFonts.poppins(),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          trailing: Chip(
-            label: Text(
-              'Pending',
-              style: GoogleFonts.poppins(fontSize: 12, color: Colors.white),
-            ),
-            backgroundColor: Colors.red,
-          ),
-        ),
-        Divider(height: 1),
-        ListTile(
-          leading: CircleAvatar(
-            backgroundColor: Colors.green[50],
-            child: Icon(Icons.question_answer, color: Colors.green),
-          ),
-          title: Text(
-            'Bob Smith',
-            style: GoogleFonts.poppins(fontWeight: FontWeight.w500),
-          ),
-          subtitle: Text(
-            'Extension request for assignment',
-            style: GoogleFonts.poppins(),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          trailing: Chip(
-            label: Text(
-              'Answered',
-              style: GoogleFonts.poppins(fontSize: 12, color: Colors.white),
-            ),
-            backgroundColor: Colors.green,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildAttendancePreview() {
-    final subjectColor =
-        widget.subject['color'] ?? Theme.of(context).primaryColor;
-
-    return Padding(
-      padding: EdgeInsets.all(12),
-      child: Column(
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'This Week',
-                style: GoogleFonts.poppins(fontWeight: FontWeight.w500),
-              ),
-              Text(
-                '92%',
-                style: GoogleFonts.poppins(
-                  fontWeight: FontWeight.bold,
-                  color: subjectColor,
-                  fontSize: 18,
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 8),
-          LinearProgressIndicator(
-            value: 0.92,
-            backgroundColor: subjectColor.withOpacity(0.1),
-            valueColor: AlwaysStoppedAnimation<Color>(subjectColor),
-          ),
-          SizedBox(height: 16),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              _buildMiniAttendanceStat(
-                'Mon',
-                '100%',
-                Icons.check,
-                Colors.green,
-              ),
-              _buildMiniAttendanceStat('Tue', '95%', Icons.check, Colors.green),
-              _buildMiniAttendanceStat('Wed', '89%', Icons.check, Colors.green),
-              _buildMiniAttendanceStat('Thu', '92%', Icons.check, Colors.green),
-              _buildMiniAttendanceStat(
-                'Fri',
-                '85%',
-                Icons.warning,
-                Colors.orange,
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMiniAttendanceStat(
-    String day,
-    String percent,
-    IconData icon,
-    Color color,
-  ) {
-    return Column(
-      children: [
-        Text(day, style: GoogleFonts.poppins(fontSize: 12)),
-        SizedBox(height: 4),
-        Icon(icon, color: color, size: 16),
-        Text(percent, style: GoogleFonts.poppins(fontSize: 12)),
-      ],
-    );
-  }
-
-  Widget _buildAnnouncementsScreen() {
-    final subjectColor =
-        widget.subject['color'] ?? Theme.of(context).primaryColor;
-
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('All Announcements'),
-        backgroundColor: subjectColor,
-      ),
-      body: ListView(
-        padding: EdgeInsets.all(16),
-        children: [
-          _buildAnnouncementCard(
-            title: 'Exam Schedule Posted',
-            content: 'Final exams will begin next week on Monday',
-            time: '2h ago',
-            icon: Icons.announcement,
-            color: Colors.blue,
-          ),
-          SizedBox(height: 12),
-          _buildAnnouncementCard(
-            title: 'Assignment 3 Graded',
-            content: 'Grades for the last assignment are now available',
-            time: '1d ago',
-            icon: Icons.assignment,
-            color: Colors.green,
-          ),
-          SizedBox(height: 12),
-          _buildAnnouncementCard(
-            title: 'Course Materials Updated',
-            content: 'New reading materials have been uploaded for Chapter 4',
-            time: '3d ago',
-            icon: Icons.library_books,
-            color: Colors.orange,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildAnnouncementCard({
-    required String title,
-    required String content,
-    required String time,
-    required IconData icon,
-    required Color color,
-  }) {
-    return Card(
-      elevation: 3,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  padding: EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: color.withOpacity(0.2),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(icon, color: color),
-                ),
-                SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    title,
-                    style: GoogleFonts.poppins(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                    ),
-                  ),
-                ),
-                Text(
-                  time,
-                  style: GoogleFonts.poppins(color: Colors.grey, fontSize: 12),
-                ),
-              ],
-            ),
-            SizedBox(height: 12),
-            Text(content, style: GoogleFonts.poppins()),
-          ],
-        ),
-      ),
     );
   }
 }
