@@ -40,6 +40,12 @@ class AdminDashboard extends StatelessWidget {
         'gradient': [Colors.greenAccent, Colors.teal]
       },
       {
+        'title': 'Download Reports',  // New button added here
+        'icon': Icons.download_outlined,
+        'route': '/downloadReports',
+        'gradient': [Colors.deepOrangeAccent, Colors.redAccent]
+      },
+      {
         'title': 'Finance',
         'icon': Icons.monetization_on_outlined,
         'route': '/fees',
@@ -159,8 +165,15 @@ class AdminDashboard extends StatelessWidget {
   Widget _buildFuturisticCard(BuildContext context, Map<String, dynamic> option) {
     return InkWell(
       onTap: () {
-        Navigator.pushNamed(context, option['route'],
-            arguments: {'campusID': campusID});
+        Navigator.pushNamed(
+          context,
+          option['route'],
+          arguments: {
+            'campusID': campusID,
+            'campusName': campusName,
+          },
+        );
+
       },
       child: Container(
         decoration: BoxDecoration(

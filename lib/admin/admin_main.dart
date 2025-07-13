@@ -21,8 +21,7 @@ import 'package:newapp/admin/shared_list.dart';
 import 'package:newapp/admin/subjects.dart';
 import 'AcademicCalendar.dart';
 import 'AdminDashboard.dart';
-
-
+import 'DownloadReportsScreen.dart';
 
 class AdminMain extends StatelessWidget {
   final String userId;
@@ -50,6 +49,17 @@ class AdminMain extends StatelessWidget {
         '/alumniList': (context) => SharedList(type: 'alumni', campusID: 1),
         '/subjects': (context) => SubjectDashboard(campusId: 1),
         '/result': (context) => ResultListScreen(campusId: 1),
+    '/downloadReports': (context) {
+    final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+
+    final campusID = args?['campusID'] ?? 0;
+    final campusName = args?['campusName'] ?? 'Unknown';
+
+    return  DownloadReportsScreen (
+    campusID: campusID,    // Keep this if you need campusID
+    campusName: campusName,// Keep this if you need campusName
+    );
+    },
         '/attendance': (context) => AttendanceDashboard(campusId: 1),
         '/announcements': (context) => AnnouncementCreator(campusID: 1),
         '/fees': (context) => FeeDashboard(),
