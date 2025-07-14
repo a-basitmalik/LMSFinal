@@ -19,7 +19,7 @@ class _SubjectsScreenState extends State<SubjectsScreen> {
   String errorMessage = '';
 
   // API Endpoints
-  final String baseUrl = 'http://192.168.18.185:5050/Teacher/api';
+  final String baseUrl = 'http://193.203.162.232:5050/Teacher/api';
 
   @override
   void initState() {

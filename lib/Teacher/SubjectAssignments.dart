@@ -22,7 +22,7 @@ class _SubjectAssignmentsScreenState extends State<SubjectAssignmentsScreen> {
   List<dynamic> assignments = [];
   bool isLoading = true;
   String errorMessage = '';
-  final String _baseUrl = 'http://192.168.18.185:5050/SubjectAssignment/api';
+  final String _baseUrl = 'http://193.203.162.232:5050/SubjectAssignment/api';
   bool _showAssignmentDialog = false;
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _titleController = TextEditingController();

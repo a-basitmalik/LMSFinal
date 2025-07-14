@@ -35,7 +35,7 @@ class _SubjectDashboardScreenState extends State<SubjectDashboardScreen> {
   String errorMessage = '';
 
   // API Endpoints
-  final String baseUrl = 'http://192.168.18.185:5050/TeacherSubject/api';
+  final String baseUrl = 'http://193.203.162.232:5050/TeacherSubject/api';
 
   @override
   void initState() {

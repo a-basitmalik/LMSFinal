@@ -22,7 +22,7 @@ class _SubjectAttendanceScreenState extends State<SubjectAttendanceScreen> {
   String errorMessage = '';
 
   // API Endpoints
-  final String baseUrl = 'http://192.168.18.185:5050/SubjectAttendance/api';
+  final String baseUrl = 'http://193.203.162.232:5050/SubjectAttendance/api';
   // Dummy data for students
   final List<Map<String, dynamic>> _dummyStudents = [
     {'id': '101', 'name': 'Alice Johnson', 'avatar': '👩'},

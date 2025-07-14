@@ -20,7 +20,7 @@ class _SubjectResultsScreenState extends State<SubjectResultsScreen> {
   List<Map<String, dynamic>> assessments = [];
   List<Map<String, dynamic>> quizzes = [];
   bool isLoading = true;
-  final String _apiUrl = 'http://192.168.18.185:5050/SubjectAssessment/api';
+  final String _apiUrl = 'http://193.203.162.232:5050/SubjectAssessment/api';
 
   @override
   void initState() {

@@ -26,7 +26,7 @@ class _SubjectChatScreenState extends State<SubjectChatScreen> {
   bool _isLoading = true;
   String _errorMessage = '';
   int? _roomId;
-  final String _baseUrl = 'http://192.168.18.185:5050/SubjectChat';
+  final String _baseUrl = 'http://193.203.162.232:5050/SubjectChat';
   bool _showAssignmentDialog = false;
   final _assignmentFormKey = GlobalKey<FormState>();
   final TextEditingController _titleController = TextEditingController();

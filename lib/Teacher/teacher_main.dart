@@ -57,7 +57,7 @@ class _TeacherHomeScreenState extends State<TeacherHomeScreen> {
   int taskCount = 0;
 
   // API Endpoints - Replace with your actual Flask server URL
-  final String baseUrl = 'http://192.168.18.185:5050/Teacher/api';
+  final String baseUrl = 'http://193.203.162.232:5050/Teacher/api';
 
   @override
   void initState() {

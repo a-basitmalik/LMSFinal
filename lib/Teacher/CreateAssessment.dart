@@ -36,7 +36,7 @@ class _CreateAssessmentScreenState extends State<CreateAssessmentScreen> {
   bool _isLoading = false;
   DateTime? _selectedDate;
 
-  final String baseUrl = 'http://192.168.18.185:5050/SubjectAssessment/api';
+  final String baseUrl = 'http://193.203.162.232:5050/SubjectAssessment/api';
   final String createAssessmentEndpoint = '/assessments';
 
   @override

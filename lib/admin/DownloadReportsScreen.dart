@@ -76,14 +76,13 @@ class _DownloadReportsScreenState extends State<DownloadReportsScreen> {
   }
 
 /* ───────────────────────────  FETCH SUBJECTS  ─────────────────────────── */
-
   Future<void> _fetchSubjects() async {
     setState(() => _isLoadingSubjects = true);
 
     try {
-      final host = kIsWeb ? '127.0.0.1' : '10.0.2.2';
-      final uri  = Uri.http(
-        '$host:5050',
+      // 10.0.2.2 is used by the Android Emulator to access host machine
+      final uri = Uri.http(
+        '193.203.162.232:5050',
         '/ReportDownload/subjects',
         {'campusid': widget.campusID.toString()},
       );
@@ -91,9 +90,9 @@ class _DownloadReportsScreenState extends State<DownloadReportsScreen> {
       final resp = await http.get(uri);
 
       if (resp.statusCode == 200) {
-        final raw = jsonDecode(resp.body) as List;
+        final raw = jsonDecode(resp.body) as List<dynamic>;
         final subjects = raw
-            .map((e) => Subject.fromJson(Map<String, dynamic>.from(e as Map)))
+            .map((e) => Subject.fromJson(e as Map<String, dynamic>))
             .toList();
 
         setState(() => _subjects = subjects);
@@ -106,7 +105,6 @@ class _DownloadReportsScreenState extends State<DownloadReportsScreen> {
       if (mounted) setState(() => _isLoadingSubjects = false);
     }
   }
-
 /* ──────────────────────────  SUBJECT DROPDOWN  ────────────────────────── */
 
   Widget _buildSubjectDropdown() {
@@ -143,7 +141,7 @@ class _DownloadReportsScreenState extends State<DownloadReportsScreen> {
 
     try {
       final resp = await http.post(
-        Uri.parse('http://127.0.0.1:5050/ReportDownload/subject-report'),
+        Uri.parse('http://193.203.162.232:5050/ReportDownload/subject-report'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'campusid': widget.campusID,
@@ -196,7 +194,7 @@ class _DownloadReportsScreenState extends State<DownloadReportsScreen> {
 
     try {
       final response = await http.post(
-        Uri.parse('http://127.0.0.1:5050/ReportDownload/assessment-report'),
+        Uri.parse('http://193.203.162.232:5050/ReportDownload/assessment-report'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'campusid': widget.campusID,
@@ -249,7 +247,7 @@ class _DownloadReportsScreenState extends State<DownloadReportsScreen> {
 
     try {
       final response = await http.post(
-        Uri.parse('http://127.0.0.1:5050/ReportDownload/all-monthlies-with-quizzes'),
+        Uri.parse('http://1193.203.162.232:5050/ReportDownload/all-monthlies-with-quizzes'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'campusid': widget.campusID,
@@ -298,7 +296,7 @@ class _DownloadReportsScreenState extends State<DownloadReportsScreen> {
 
     try {
       final response = await http.post(
-        Uri.parse('http://127.0.0.1:5050/ReportDownload/all-subjects-assessments'),
+        Uri.parse('http://193.203.162.232:5050/ReportDownload/all-subjects-assessments'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'campusid': widget.campusID,

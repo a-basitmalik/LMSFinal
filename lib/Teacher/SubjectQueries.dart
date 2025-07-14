@@ -33,7 +33,7 @@ class _SubjectQueriesScreenState extends State<SubjectQueriesScreen> {
 
     try {
       final response = await http.get(
-        Uri.parse('http://192.168.18.185:5050/SubjectQuery/api/subjects/${widget.subject['subject_id']}/queries'),
+        Uri.parse('http://193.203.162.232:5050/SubjectQuery/api/subjects/${widget.subject['subject_id']}/queries'),
         headers: {'Authorization': 'Bearer YOUR_ACCESS_TOKEN'},
       );
 
@@ -90,7 +90,7 @@ class _SubjectQueriesScreenState extends State<SubjectQueriesScreen> {
 
     try {
       final response = await http.post(
-        Uri.parse('http://192.168.18.185:5050/SubjectQuery/api/queries/$queryId/respond'),
+        Uri.parse('http://193.203.162.232:5050/SubjectQuery/api/queries/$queryId/respond'),
         headers: {
           'Authorization': 'Bearer YOUR_ACCESS_TOKEN',
           'Content-Type': 'application/json',
