@@ -857,7 +857,7 @@ class _ReportsScreenState extends State<ReportsScreen> with SingleTickerProvider
       // Make API call to generate report
       final response = await http.get(
         Uri.parse(
-          'http://192.168.0.17:5050/attendance/generate_${reportType}_excel?campus_id=$campusId$yearParam',
+          'http://193.203.162.232:5050/attendance/generate_${reportType}_excel?campus_id=$campusId$yearParam',
         ),
       );
 
