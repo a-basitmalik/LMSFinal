@@ -247,7 +247,7 @@ class _DownloadReportsScreenState extends State<DownloadReportsScreen> {
 
     try {
       final response = await http.post(
-        Uri.parse('http://1193.203.162.232:5050/ReportDownload/all-monthlies-with-quizzes'),
+        Uri.parse('http://193.203.162.232:5050/ReportDownload/all-monthlies-with-quizzes'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'campusid': widget.campusID,
