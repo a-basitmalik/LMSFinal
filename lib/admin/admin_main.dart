@@ -1,4 +1,6 @@
 import 'dart:convert';
+import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:newapp/admin/AddStudent.dart';
 import 'package:newapp/admin/alumni_profile_view.dart';
 import 'package:newapp/admin/FineList.dart';
@@ -8,19 +10,15 @@ import 'package:newapp/admin/shared_list.dart';
 import 'package:newapp/admin/TrackPayment.dart';
 import 'package:newapp/admin/ViewAttendance.dart';
 import 'package:newapp/admin/FeeDashboard.dart';
+import 'package:newapp/admin/Announcement.dart';
+import 'package:newapp/admin/results_list.dart';
+import 'package:newapp/admin/subjects.dart';
 import 'package:newapp/Teacher/AnnouncementsScreen.dart';
 import 'package:newapp/Teacher/teacher_main.dart';
 
-
-import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'package:newapp/admin/Announcement.dart';
-import 'package:newapp/admin/AttendanceDashboard.dart';
-import 'package:newapp/admin/results_list.dart';
-import 'package:newapp/admin/shared_list.dart';
-import 'package:newapp/admin/subjects.dart';
 import 'AcademicCalendar.dart';
 import 'AdminDashboard.dart';
+import 'AdminRoutes.dart';
 import 'DownloadReportsScreen.dart';
 
 class AdminMain extends StatelessWidget {
@@ -36,45 +34,13 @@ class AdminMain extends StatelessWidget {
       theme: ThemeData(
         useMaterial3: true,
         colorScheme: ColorScheme.dark(
-
           primary: Colors.blueAccent,
           secondary: Colors.tealAccent,
           surface: Color(0xFF121212),
         ),
       ),
       home: SelectCampus(userId: userId),
-      routes: {
-        '/studentList': (context) => SharedList(type: 'students', campusID: 1),
-        '/teacherList': (context) => SharedList(type: 'teachers', campusID: 1),
-        '/alumniList': (context) => SharedList(type: 'alumni', campusID: 1),
-        '/subjects': (context) => SubjectDashboard(campusId: 1),
-        '/result': (context) => ResultListScreen(campusId: 1),
-    '/downloadReports': (context) {
-    final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
-
-    final campusID = args?['campusID'] ?? 0;
-    final campusName = args?['campusName'] ?? 'Unknown';
-
-    return  DownloadReportsScreen (
-    campusID: campusID,    // Keep this if you need campusID
-    campusName: campusName,// Keep this if you need campusName
-    );
-    },
-        '/attendance': (context) {
-          final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
-
-          final campusId = args?['campusID'] ?? 1; // Default to 1 if not provided
-          final campusName = args?['campusName'] ?? 'Campus $campusId'; // Default name
-
-          return AttendanceDashboard(
-            campusId: campusId,
-            campusName: campusName,
-          );
-        },
-        '/announcements': (context) => AnnouncementCreator(campusID: 1),
-        '/fees': (context) => FeeDashboard(),
-        '/calendar': (context) => AcademicCalendarScreen(),
-      },
+      onGenerateRoute: AdminRoutes.generateRoute,
     );
   }
 }
@@ -138,11 +104,10 @@ class _SelectCampusState extends State<SelectCampus> {
     Navigator.push(
       context,
       PageRouteBuilder(
-        pageBuilder: (_, __, ___) =>
-            AdminDashboard(
-              campusID: campusID,
-              campusName: campusName,
-            ),
+        pageBuilder: (_, __, ___) => AdminDashboard(
+          campusID: campusID,
+          campusName: campusName,
+        ),
         transitionsBuilder: (_, animation, __, child) {
           return FadeTransition(
             opacity: animation,

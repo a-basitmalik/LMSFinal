@@ -1,10 +1,16 @@
 import 'package:flutter/material.dart';
 
+import 'AdminRoutes.dart';
+
 class AdminDashboard extends StatelessWidget {
   final int campusID;
   final String campusName;
 
-  const AdminDashboard({required this.campusID, required this.campusName, Key? key}) : super(key: key);
+  const AdminDashboard({
+    required this.campusID,
+    required this.campusName,
+    Key? key,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -40,7 +46,7 @@ class AdminDashboard extends StatelessWidget {
         'gradient': [Colors.greenAccent, Colors.teal]
       },
       {
-        'title': 'Download Reports',  // New button added here
+        'title': 'Download Reports',
         'icon': Icons.download_outlined,
         'route': '/downloadReports',
         'gradient': [Colors.deepOrangeAccent, Colors.redAccent]
@@ -71,6 +77,21 @@ class AdminDashboard extends StatelessWidget {
       },
     ];
 
+    void navigateTo(String route) {
+      Navigator.push(
+        context,
+        AdminRoutes.generateRoute(
+          RouteSettings(
+            name: route,
+            arguments: {
+              'campusID': campusID,
+              'campusName': campusName,
+            },
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: Colors.black,
       body: SafeArea(
@@ -79,7 +100,7 @@ class AdminDashboard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Futuristic Header
+              // Header Section
               Row(
                 children: [
                   Icon(Icons.admin_panel_settings_outlined,
@@ -123,7 +144,11 @@ class AdminDashboard extends StatelessWidget {
                     childAspectRatio: 1,
                   ),
                   itemBuilder: (context, index) {
-                    return _buildFuturisticCard(context, managementOptions[index]);
+                    return _buildDashboardCard(
+                      context,
+                      managementOptions[index],
+                          () => navigateTo(managementOptions[index]['route']),
+                    );
                   },
                 ),
               ),
@@ -162,19 +187,13 @@ class AdminDashboard extends StatelessWidget {
     );
   }
 
-  Widget _buildFuturisticCard(BuildContext context, Map<String, dynamic> option) {
+  Widget _buildDashboardCard(
+      BuildContext context,
+      Map<String, dynamic> option,
+      VoidCallback onTap,
+      ) {
     return InkWell(
-      onTap: () {
-        Navigator.pushNamed(
-          context,
-          option['route'],
-          arguments: {
-            'campusID': campusID,
-            'campusName': campusName,
-          },
-        );
-
-      },
+      onTap: onTap,
       child: Container(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(20),

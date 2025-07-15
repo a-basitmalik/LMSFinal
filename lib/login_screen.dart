@@ -7,6 +7,8 @@ import 'package:newapp/admin/admin_main.dart';
 import 'package:newapp/Student/student_main.dart';
 import 'package:newapp/Teacher/teacher_main.dart';
 
+import 'admin/AdminDashboard.dart';
+
 class LoginScreen extends StatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
 
@@ -83,21 +85,49 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
     );
   }
 
-  void _redirectBasedOnRole(String role, String userId) {
-    final routes = {
-      'admin': AdminMain(userId: userId),
-      'campus_admin': AdminMain(userId: userId),
-      'teacher': TeacherMain(userId: userId),
-      'student': StudentMain(userId: userId),
-    };
+  void _redirectBasedOnRole(String role, String userId) async {
+    if (role == 'campus_admin') {
+      try {
+        // Fetch campus details for campus admin
+        final response = await http.post(
+          Uri.parse('http://193.203.162.232:5050/auth/api/getCampusDetails'),
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({'caid': userId}),
+        );
 
-    Navigator.pushReplacement(
-      context,
-      PageRouteBuilder(
-        pageBuilder: (_, __, ___) => routes[role] ?? _buildUnknownRoleScreen(role),
-        transitionsBuilder: (_, a, __, c) => FadeTransition(opacity: a, child: c),
-      ),
-    );
+        final data = jsonDecode(response.body);
+
+        if (response.statusCode == 200 && data['status'] == 'success') {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => AdminDashboard(
+                campusID: data['campus_id'],
+                campusName: data['campus_name'],
+              ),
+            ),
+          );
+        } else {
+          _showErrorSnackbar('Failed to fetch campus details');
+        }
+      } catch (e) {
+        _showErrorSnackbar('Error: ${e.toString()}');
+      }
+    } else {
+      final routes = {
+        'admin': AdminMain(userId: userId),
+        'teacher': TeacherMain(userId: userId),
+        'student': StudentMain(userId: userId),
+      };
+
+      Navigator.pushReplacement(
+        context,
+        PageRouteBuilder(
+          pageBuilder: (_, __, ___) => routes[role] ?? _buildUnknownRoleScreen(role),
+          transitionsBuilder: (_, a, __, c) => FadeTransition(opacity: a, child: c),
+        ),
+      );
+    }
   }
 
   Widget _buildUnknownRoleScreen(String role) => Scaffold(
