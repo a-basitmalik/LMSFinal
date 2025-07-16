@@ -32,7 +32,7 @@ class _PlannerDetailScreenState extends State<PlannerDetailScreen> {
     setState(() => _isLoading = true);
     try {
       final response = await http.get(
-        Uri.parse('http://192.168.18.185:5050/Planner/attachments?planner_id=${widget.planner.plannerId}'),
+        Uri.parse('http://193.203.162.232:5050/Planner/attachments?planner_id=${widget.planner.plannerId}'),
         headers: {'Content-Type': 'application/json'},
       );
 
@@ -61,7 +61,7 @@ class _PlannerDetailScreenState extends State<PlannerDetailScreen> {
     setState(() => _isLoading = true);
     try {
       final response = await http.delete(
-        Uri.parse('http://192.168.18.185:5050/Planner/planners/${widget.planner.plannerId}'),
+        Uri.parse('http://193.203.162.232:5050/Planner/planners/${widget.planner.plannerId}'),
         headers: {'Content-Type': 'application/json'},
       );
 
@@ -119,7 +119,7 @@ class _PlannerDetailScreenState extends State<PlannerDetailScreen> {
     setState(() => _isLoading = true);
     try {
       final response = await http.delete(
-        Uri.parse('http://192.168.18.185:5050/Planner/attachments/$attachmentId'),
+        Uri.parse('http://193.203.162.232:5050/Planner/attachments/$attachmentId'),
         headers: {'Content-Type': 'application/json'},
       );
 
@@ -162,7 +162,7 @@ class _PlannerDetailScreenState extends State<PlannerDetailScreen> {
 
         var request = http.MultipartRequest(
           'POST',
-          Uri.parse('http://192.168.18.185:5050/Planner/attachments'),
+          Uri.parse('http://193.203.162.232:5050/Planner/attachments'),
         );
 
         request.fields['planner_id'] = widget.planner.plannerId.toString();
@@ -326,7 +326,7 @@ class _PlannerDetailScreenState extends State<PlannerDetailScreen> {
     setState(() => _isLoading = true);
     try {
       final response = await http.put(
-        Uri.parse('http://192.168.18.185:5050/Planner/planners/${widget.planner.plannerId}'),
+        Uri.parse('http://193.203.162.232:5050/Planner/planners/${widget.planner.plannerId}'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
           'title': title ?? widget.planner.title,

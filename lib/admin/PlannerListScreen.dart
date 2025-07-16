@@ -33,7 +33,7 @@ class _PlannerListScreenState extends State<PlannerListScreen> {
       setState(() => _isLoading = true);
 
       final response = await http.get(
-        Uri.parse('http://192.168.18.185:5050/Planner/planners?campus_id=${widget.campusID}'),
+        Uri.parse('http://193.203.162.232:5050/Planner/planners?campus_id=${widget.campusID}'),
         headers: {'Content-Type': 'application/json'},
       );
 

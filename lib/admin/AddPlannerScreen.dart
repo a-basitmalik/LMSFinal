@@ -62,7 +62,7 @@ class _AddPlannerScreenState extends State<AddPlannerScreen> {
     setState(() => _isLoadingSubjects = true);
     try {
       final response = await http.get(
-        Uri.parse('http://192.168.18.185:5050/Planner/subjects?campus_id=${widget.campusID}'),
+        Uri.parse('http://193.203.162.232:5050/Planner/subjects?campus_id=${widget.campusID}'),
         headers: {'Content-Type': 'application/json'},
       );
 
@@ -270,7 +270,7 @@ class _AddPlannerScreenState extends State<AddPlannerScreen> {
 
       // First create the planner
       final response = await http.post(
-        Uri.parse('http://192.168.18.185:5050/Planner/planners'),
+        Uri.parse('http://193.203.162.232:5050/Planner/planners'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
           'title': _titleController.text,
@@ -318,7 +318,7 @@ class _AddPlannerScreenState extends State<AddPlannerScreen> {
       for (final file in _attachments) {
         var request = http.MultipartRequest(
           'POST',
-          Uri.parse('http://192.168.18.185:5050/Planner/attachments'),
+          Uri.parse('http://193.203.162.232:5050/Planner/attachments'),
         );
 
         request.fields['planner_id'] = plannerId.toString();
