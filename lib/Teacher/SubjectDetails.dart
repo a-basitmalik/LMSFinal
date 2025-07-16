@@ -245,6 +245,7 @@ class _SubjectDashboardScreenState extends State<SubjectDashboardScreen> {
   }
 
   Widget _buildInfographicMenu() {
+
     final List<Map<String, dynamic>> menuItems = [
       {
         'title': 'Overview',
@@ -282,6 +283,7 @@ class _SubjectDashboardScreenState extends State<SubjectDashboardScreen> {
         'index': 5,
         'color': Colors.teal,
       },
+
     ];
 
     return Positioned(

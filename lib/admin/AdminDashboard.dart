@@ -75,6 +75,12 @@ class AdminDashboard extends StatelessWidget {
         'route': '/calendar',
         'gradient': [Colors.lightGreenAccent, Colors.green]
       },
+      {
+        'title': 'Lesson Planner',
+        'icon': Icons.calendar_today_outlined,
+        'route': '/planner',
+        'gradient': [Colors.deepPurpleAccent, Colors.purple]
+      },
     ];
 
     void navigateTo(String route) {

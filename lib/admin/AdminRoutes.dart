@@ -16,6 +16,8 @@ import 'package:newapp/admin/subjects.dart';
 import 'package:newapp/admin/DownloadReportsScreen.dart';
 import 'package:newapp/admin/AcademicCalendar.dart';
 
+import 'PlannerListScreen.dart';
+
 class AdminRoutes {
   static Route<dynamic> generateRoute(RouteSettings settings) {
     final args = settings.arguments as Map<String, dynamic>?;
@@ -60,6 +62,12 @@ class AdminRoutes {
       case '/announcements':
         return MaterialPageRoute(
           builder: (_) => AnnouncementCreator(campusID: campusID),
+        );
+      case '/planner':
+        return MaterialPageRoute(
+          builder: (_) => PlannerListScreen(
+            campusID: args!['campusID'],
+          ),
         );
       case '/fees':
         return MaterialPageRoute(builder: (_) => FeeDashboard());
