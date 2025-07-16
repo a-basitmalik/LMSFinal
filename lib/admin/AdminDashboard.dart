@@ -41,37 +41,37 @@ class _AdminDashboardState extends State<AdminDashboard> with SingleTickerProvid
       {
         'title': 'Student',
         'icon': Icons.school_outlined,
-        'route': '/admin/studentList',
+        'route': '/studentList',
         'color': Colors.blueAccent,
       },
       {
         'title': 'Faculty',
         'icon': Icons.person_outlined,
-        'route': '/admin/teacherList',
+        'route': '/teacherList',
         'color': Colors.purpleAccent,
       },
       {
         'title': 'Attendance',
         'icon': Icons.fingerprint_outlined,
-        'route': '/admin/attendance',
+        'route': '/attendance',
         'color': Colors.greenAccent,
       },
       {
         'title': 'Finance',
         'icon': Icons.monetization_on_outlined,
-        'route': '/admin/fees',
+        'route': '/fees',
         'color': Colors.orangeAccent,
       },
       {
         'title': 'Alumni',
         'icon': Icons.people_alt_outlined,
-        'route': '/admin/alumniList',
+        'route': '/alumniList',
         'color': Colors.redAccent,
       },
       {
         'title': 'Calendar',
         'icon': Icons.date_range_outlined,
-        'route': '/admin/calendar',
+        'route': '/calendar',
         'color': Colors.tealAccent,
       },
     ];
@@ -161,7 +161,7 @@ class _AdminDashboardState extends State<AdminDashboard> with SingleTickerProvid
                       onTap: () {
                         Navigator.pushNamed(
                           context,
-                          '/admin/announcements',
+                          '/announcements',
                           arguments: {
                             'campusID': widget.campusID,
                             'campusName': widget.campusName,
@@ -184,7 +184,7 @@ class _AdminDashboardState extends State<AdminDashboard> with SingleTickerProvid
                               onTap: () {
                                 Navigator.pushNamed(
                                   context,
-                                  '/admin/announcements',
+                                  '/announcements',
                                   arguments: {
                                     'campusID': widget.campusID,
                                     'campusName': widget.campusName,
@@ -204,7 +204,7 @@ class _AdminDashboardState extends State<AdminDashboard> with SingleTickerProvid
                       onTap: () {
                         Navigator.pushNamed(
                           context,
-                          '/admin/subjects',
+                          '/subjects',
                           arguments: {
                             'campusID': widget.campusID,
                             'campusName': widget.campusName,
@@ -242,7 +242,7 @@ class _AdminDashboardState extends State<AdminDashboard> with SingleTickerProvid
                       onTap: () {
                         Navigator.pushNamed(
                           context,
-                          '/admin/downloadReports',
+                          '/downloadReports',
                           arguments: {
                             'campusID': widget.campusID,
                             'campusName': widget.campusName,
@@ -622,7 +622,7 @@ class _AdminDashboardState extends State<AdminDashboard> with SingleTickerProvid
   void _navigateToReports(BuildContext context, int tabIndex) {
     Navigator.pushNamed(
       context,
-      '/admin/downloadReports',
+      '/downloadReports',
       arguments: {
         'campusID': widget.campusID,
         'campusName': widget.campusName,
@@ -634,7 +634,7 @@ class _AdminDashboardState extends State<AdminDashboard> with SingleTickerProvid
   void _navigateToCurriculum(BuildContext context, String section) {
     Navigator.pushNamed(
       context,
-      '/admin/subjects',
+      '/subjects',
       arguments: {
         'campusID': widget.campusID,
         'campusName': widget.campusName,
@@ -643,6 +643,7 @@ class _AdminDashboardState extends State<AdminDashboard> with SingleTickerProvid
     );
   }
 }
+
 class GlassCard extends StatelessWidget {
   final Widget? child;
   final Color? borderColor;

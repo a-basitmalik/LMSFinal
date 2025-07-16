@@ -1,8 +1,14 @@
 // lib/admin/admin_routes.dart
 
 import 'package:flutter/material.dart';
+import 'package:newapp/admin/AddStudent.dart';
+import 'package:newapp/admin/alumni_profile_view.dart';
+import 'package:newapp/admin/FineList.dart';
 import 'package:newapp/admin/AttendanceDashboard.dart';
+import 'package:newapp/admin/MarkAttendance.dart';
 import 'package:newapp/admin/shared_list.dart';
+import 'package:newapp/admin/TrackPayment.dart';
+import 'package:newapp/admin/ViewAttendance.dart';
 import 'package:newapp/admin/FeeDashboard.dart';
 import 'package:newapp/admin/Announcement.dart';
 import 'package:newapp/admin/results_list.dart';
