@@ -369,31 +369,33 @@ class _PlannerDetailScreenState extends State<PlannerDetailScreen> {
         : plannedDate;
 
     return Scaffold(
-      backgroundColor: Color(0xFF0A0A1A),
+      backgroundColor: const Color(0xFF0A0A1A),
       appBar: AppBar(
-        title: Text('PLAN DETAILS'),
+        title: const Text('PLAN DETAILS'),
         backgroundColor: Colors.transparent,
         elevation: 0,
         actions: [
           IconButton(
-            icon: Icon(Icons.edit, color: Colors.cyanAccent),
+            icon: const Icon(Icons.edit, color: Colors.cyanAccent),
             onPressed: _showEditDialog,
           ),
           IconButton(
-            icon: Icon(Icons.delete, color: Colors.red),
+            icon: const Icon(Icons.delete, color: Colors.red),
             onPressed: _confirmDelete,
           ),
         ],
       ),
       body: _isLoading
-          ? Center(child: CircularProgressIndicator(color: Colors.cyanAccent))
+          ? const Center(
+        child: CircularProgressIndicator(color: Colors.cyanAccent),
+      )
           : SingleChildScrollView(
-        padding: EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Card(
-              color: Color(0xFF1A1A2E),
+              color: const Color(0xFF1A1A2E),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
                 side: BorderSide(
@@ -411,23 +413,21 @@ class _PlannerDetailScreenState extends State<PlannerDetailScreen> {
                       children: [
                         Text(
                           widget.planner.subjectName ?? 'No Subject',
-                          style: TextStyle(
+                          style: const TextStyle(
                             color: Colors.cyanAccent,
                             fontSize: 16,
                           ),
                         ),
                         Container(
-                          padding: EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 4),
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                           decoration: BoxDecoration(
                             color: Colors.cyanAccent.withOpacity(0.1),
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                                color: Colors.cyanAccent, width: 1),
+                            border: Border.all(color: Colors.cyanAccent, width: 1),
                           ),
                           child: Text(
                             DateFormat('h:mm a').format(plannedDate),
-                            style: TextStyle(
+                            style: const TextStyle(
                               color: Colors.cyanAccent,
                               fontSize: 12,
                             ),
@@ -435,46 +435,46 @@ class _PlannerDetailScreenState extends State<PlannerDetailScreen> {
                         ),
                       ],
                     ),
-                    SizedBox(height: 16),
+                    const SizedBox(height: 16),
                     Text(
                       widget.planner.title ?? 'Untitled Plan',
-                      style: TextStyle(
+                      style: const TextStyle(
                         color: Colors.white,
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    SizedBox(height: 16),
+                    const SizedBox(height: 16),
                     Text(
                       widget.planner.description ?? 'No description provided',
-                      style: TextStyle(
+                      style: const TextStyle(
                         color: Colors.white70,
                         fontSize: 16,
                       ),
                     ),
-                    SizedBox(height: 24),
-                    Divider(color: Colors.white24),
-                    SizedBox(height: 16),
+                    const SizedBox(height: 24),
+                    const Divider(color: Colors.white24),
+                    const SizedBox(height: 16),
                     if (widget.planner.teacherName != null) ...[
                       _buildDetailRow(
                         icon: Icons.person_outline,
                         label: 'Teacher',
                         value: widget.planner.teacherName!,
                       ),
-                      SizedBox(height: 8),
+                      const SizedBox(height: 8),
                     ],
                     _buildDetailRow(
                       icon: Icons.calendar_today,
                       label: 'Date',
                       value: DateFormat('MMMM d, y').format(plannedDate),
                     ),
-                    SizedBox(height: 8),
+                    const SizedBox(height: 8),
                     _buildDetailRow(
                       icon: Icons.access_time,
                       label: 'Time',
                       value: DateFormat('h:mm a').format(plannedDate),
                     ),
-                    SizedBox(height: 8),
+                    const SizedBox(height: 8),
                     _buildDetailRow(
                       icon: Icons.schedule,
                       label: 'Created',
@@ -484,8 +484,8 @@ class _PlannerDetailScreenState extends State<PlannerDetailScreen> {
                 ),
               ),
             ),
-            SizedBox(height: 24),
-            Text(
+            const SizedBox(height: 24),
+            const Text(
               'ATTACHMENTS',
               style: TextStyle(
                 color: Colors.white70,
@@ -493,59 +493,72 @@ class _PlannerDetailScreenState extends State<PlannerDetailScreen> {
                 fontWeight: FontWeight.bold,
               ),
             ),
-            SizedBox(height: 8),
-            _hasAttachments
-                ? ListView.builder(
-              shrinkWrap: true,
-              physics: NeverScrollableScrollPhysics(),
-              itemCount: _attachments.length,
-              itemBuilder: (context, index) {
-                final attachment = _attachments[index];
-                return Card(
-                  color: Color(0xFF1A1A2E),
-                  margin: EdgeInsets.only(bottom: 8),
-                  child: ListTile(
-                    leading: Icon(
-                      _getAttachmentIcon(attachment['type']),
-                      color: Colors.cyanAccent,
-                    ),
-                    title: Text(
-                      attachment['name'],
-                      style: TextStyle(color: Colors.white),
-                    ),
-                    subtitle: Text(
-                      '${attachment['size'] ?? ''}',
-                      style: TextStyle(color: Colors.white70),
-                    ),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        IconButton(
-                          icon: Icon(Icons.download, color: Colors.cyanAccent),
-                          onPressed: () {
-                            // Handle download
-                          },
+            const SizedBox(height: 8),
+            if (_hasAttachments)
+              Column(
+                children: [
+                  ListView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: _attachments.length,
+                    itemBuilder: (context, index) {
+                      final attachment = _attachments[index];
+                      return Card(
+                        color: const Color(0xFF1A1A2E),
+                        margin: const EdgeInsets.only(bottom: 8),
+                        child: ListTile(
+                          leading: Icon(
+                            _getAttachmentIcon(attachment['type']),
+                            color: Colors.cyanAccent,
+                          ),
+                          title: Text(
+                            attachment['name'] ?? 'Unnamed file',
+                            style: const TextStyle(color: Colors.white),
+                          ),
+                          subtitle: Text(
+                            attachment['size']?.toString() ?? '',
+                            style: const TextStyle(color: Colors.white70),
+                          ),
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.download, color: Colors.cyanAccent),
+                                onPressed: () {
+                                  // Handle download
+                                },
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.delete, color: Colors.red),
+                                onPressed: () {
+                                  if (attachment['attachment_id'] != null) {
+                                    _deleteAttachment(attachment['attachment_id']);
+                                  }
+                                },
+                              ),
+                            ],
+                          ),
                         ),
-                        IconButton(
-                          icon: Icon(Icons.delete, color: Colors.red),
-                          onPressed: () {
-                            _deleteAttachment(attachment['attachment_id']);
-                          },
-                        ),
-                      ],
-                    ),
+                      );
+                    },
                   ),
-                );
-              },
-            )
-                : _buildAddAttachmentButton(),
-            if (!_hasAttachments) SizedBox(height: 16),
-            if (!_hasAttachments) _buildAddAttachmentButton(),
+                  const SizedBox(height: 8),
+                  _buildAddAttachmentButton(),
+                ],
+              )
+            else
+              Column(
+                children: [
+                  _buildAddAttachmentButton(),
+                  const SizedBox(height: 16),
+                ],
+              ),
           ],
         ),
       ),
     );
   }
+
 
   Widget _buildDetailRow({
     required IconData icon,
@@ -597,7 +610,9 @@ class _PlannerDetailScreenState extends State<PlannerDetailScreen> {
     );
   }
 
-  IconData _getAttachmentIcon(String type) {
+  IconData _getAttachmentIcon(String? type) {
+    if (type == null) return Icons.insert_drive_file;
+
     switch (type.toLowerCase()) {
       case 'pdf':
         return Icons.picture_as_pdf;
@@ -605,6 +620,7 @@ class _PlannerDetailScreenState extends State<PlannerDetailScreen> {
       case 'docx':
         return Icons.description;
       case 'jpg':
+      case 'jpeg':
       case 'png':
       case 'gif':
         return Icons.image;

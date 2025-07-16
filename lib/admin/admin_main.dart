@@ -1,25 +1,8 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:newapp/admin/AddStudent.dart';
-import 'package:newapp/admin/alumni_profile_view.dart';
-import 'package:newapp/admin/FineList.dart';
-import 'package:newapp/admin/AttendanceDashboard.dart';
-import 'package:newapp/admin/MarkAttendance.dart';
-import 'package:newapp/admin/shared_list.dart';
-import 'package:newapp/admin/TrackPayment.dart';
-import 'package:newapp/admin/ViewAttendance.dart';
-import 'package:newapp/admin/FeeDashboard.dart';
-import 'package:newapp/admin/Announcement.dart';
-import 'package:newapp/admin/results_list.dart';
-import 'package:newapp/admin/subjects.dart';
-import 'package:newapp/Teacher/AnnouncementsScreen.dart';
-import 'package:newapp/Teacher/teacher_main.dart';
-
-import 'AcademicCalendar.dart';
 import 'AdminDashboard.dart';
 import 'AdminRoutes.dart';
-import 'DownloadReportsScreen.dart';
 
 class AdminMain extends StatelessWidget {
   final String userId;

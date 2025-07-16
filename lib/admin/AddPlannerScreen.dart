@@ -260,6 +260,7 @@ class _AddPlannerScreenState extends State<AddPlannerScreen> {
     setState(() => _isSubmitting = true);
 
     try {
+      // Prepare the planned date time
       final plannedDateTime = DateTime(
         _selectedDate.year,
         _selectedDate.month,
@@ -268,8 +269,8 @@ class _AddPlannerScreenState extends State<AddPlannerScreen> {
         _selectedTime.minute,
       );
 
-      // First create the planner
-      final response = await http.post(
+      // Step 1: Create the planner first
+      final plannerResponse = await http.post(
         Uri.parse('http://193.203.162.232:5050/Planner/planners'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
@@ -281,26 +282,67 @@ class _AddPlannerScreenState extends State<AddPlannerScreen> {
         }),
       );
 
-      if (response.statusCode == 201) {
-        final plannerData = json.decode(response.body);
-        final plannerId = plannerData['planner_id'];
-
-        // Upload attachments if any
-        if (_attachments.isNotEmpty) {
-          await _uploadAttachments(plannerId);
-        }
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Planner created successfully'),
-            backgroundColor: Colors.green,
-          ),
-        );
-        Navigator.pop(context, true);
-      } else {
-        final errorData = json.decode(response.body);
+      if (plannerResponse.statusCode != 201) {
+        final errorData = json.decode(plannerResponse.body);
         throw Exception(errorData['error'] ?? 'Failed to create planner');
       }
+
+      final plannerData = json.decode(plannerResponse.body);
+      final plannerId = plannerData['planner_id'];
+
+      // Step 2: Upload attachments only if planner was created successfully
+      if (_attachments.isNotEmpty) {
+        bool allUploadsSuccessful = true;
+        List<String> uploadErrors = [];
+
+        // Process each attachment sequentially
+        for (final file in _attachments) {
+          try {
+            var request = http.MultipartRequest(
+              'POST',
+              Uri.parse('http://193.203.162.232:5050/Planner/attachments'),
+            );
+
+            request.fields['planner_id'] = plannerId.toString();
+            request.files.add(
+              await http.MultipartFile.fromPath(
+                'file',
+                file.path,
+                filename: file.path.split('/').last,
+              ),
+            );
+
+            var response = await request.send();
+            if (response.statusCode != 201) {
+              allUploadsSuccessful = false;
+              uploadErrors.add('Failed to upload ${file.path.split('/').last}');
+            }
+          } catch (e) {
+            allUploadsSuccessful = false;
+            uploadErrors.add('Error uploading ${file.path.split('/').last}: ${e.toString()}');
+          }
+        }
+
+        if (!allUploadsSuccessful) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Some attachments failed to upload: ${uploadErrors.join(", ")}'),
+              backgroundColor: Colors.orange,
+              duration: Duration(seconds: 5),
+            ),
+          );
+        }
+      }
+
+      // Show success message and return
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Planner created successfully'),
+          backgroundColor: Colors.green,
+        ),
+      );
+      Navigator.pop(context, true);
+
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -312,7 +354,6 @@ class _AddPlannerScreenState extends State<AddPlannerScreen> {
       setState(() => _isSubmitting = false);
     }
   }
-
   Future<void> _uploadAttachments(int plannerId) async {
     try {
       for (final file in _attachments) {
