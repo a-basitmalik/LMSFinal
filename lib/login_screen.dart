@@ -101,6 +101,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
+
               builder: (context) => AdminDashboard(
                 campusID: data['campus_id'],
                 campusName: data['campus_name'],

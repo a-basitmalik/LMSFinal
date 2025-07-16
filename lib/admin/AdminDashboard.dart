@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'AdminRoutes.dart';
 
 class AdminDashboard extends StatefulWidget {
   final int campusID;
@@ -34,6 +35,32 @@ class _AdminDashboardState extends State<AdminDashboard> with SingleTickerProvid
     _controller.dispose();
     super.dispose();
   }
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      onGenerateRoute: AdminRoutes.generateRoute,
+      home: _AdminDashboardContent(
+        campusID: widget.campusID,
+        campusName: widget.campusName,
+        animation: _animation,
+      ),
+    );
+  }
+}
+
+class _AdminDashboardContent extends StatelessWidget {
+  final int campusID;
+  final String campusName;
+  final Animation<double> animation;
+
+  const _AdminDashboardContent({
+    required this.campusID,
+    required this.campusName,
+    required this.animation,
+    Key? key,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -81,7 +108,7 @@ class _AdminDashboardState extends State<AdminDashboard> with SingleTickerProvid
       body: Stack(
         children: [
           CustomPaint(
-            painter: _ParticlePainter(animation: _animation),
+            painter: _ParticlePainter(animation: animation),
             size: Size.infinite,
           ),
           SafeArea(
@@ -96,7 +123,7 @@ class _AdminDashboardState extends State<AdminDashboard> with SingleTickerProvid
                         AnimatedCircularProgress(
                           value: 0.75,
                           color: Colors.cyanAccent,
-                          animation: _animation,
+                          animation: animation,
                         ),
                         const SizedBox(width: 16),
                         Expanded(
@@ -120,7 +147,7 @@ class _AdminDashboardState extends State<AdminDashboard> with SingleTickerProvid
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                widget.campusName.toUpperCase(),
+                                campusName.toUpperCase(),
                                 style: TextStyle(
                                   color: Colors.white,
                                   fontSize: 22,
@@ -163,8 +190,8 @@ class _AdminDashboardState extends State<AdminDashboard> with SingleTickerProvid
                           context,
                           '/announcements',
                           arguments: {
-                            'campusID': widget.campusID,
-                            'campusName': widget.campusName,
+                            'campusID': campusID,
+                            'campusName': campusName,
                           },
                         );
                       },
@@ -186,8 +213,8 @@ class _AdminDashboardState extends State<AdminDashboard> with SingleTickerProvid
                                   context,
                                   '/announcements',
                                   arguments: {
-                                    'campusID': widget.campusID,
-                                    'campusName': widget.campusName,
+                                    'campusID': campusID,
+                                    'campusName': campusName,
                                   },
                                 );
                               },
@@ -206,8 +233,8 @@ class _AdminDashboardState extends State<AdminDashboard> with SingleTickerProvid
                           context,
                           '/subjects',
                           arguments: {
-                            'campusID': widget.campusID,
-                            'campusName': widget.campusName,
+                            'campusID': campusID,
+                            'campusName': campusName,
                           },
                         );
                       },
@@ -244,8 +271,8 @@ class _AdminDashboardState extends State<AdminDashboard> with SingleTickerProvid
                           context,
                           '/downloadReports',
                           arguments: {
-                            'campusID': widget.campusID,
-                            'campusName': widget.campusName,
+                            'campusID': campusID,
+                            'campusName': campusName,
                             'initialTab': 0,
                           },
                         );
@@ -386,8 +413,8 @@ class _AdminDashboardState extends State<AdminDashboard> with SingleTickerProvid
               context,
               option['route'],
               arguments: {
-                'campusID': widget.campusID,
-                'campusName': widget.campusName,
+                'campusID': campusID,
+                'campusName': campusName,
               },
             );
           },
@@ -624,8 +651,8 @@ class _AdminDashboardState extends State<AdminDashboard> with SingleTickerProvid
       context,
       '/downloadReports',
       arguments: {
-        'campusID': widget.campusID,
-        'campusName': widget.campusName,
+        'campusID': campusID,
+        'campusName': campusName,
         'initialTab': tabIndex,
       },
     );
@@ -636,14 +663,13 @@ class _AdminDashboardState extends State<AdminDashboard> with SingleTickerProvid
       context,
       '/subjects',
       arguments: {
-        'campusID': widget.campusID,
-        'campusName': widget.campusName,
+        'campusID': campusID,
+        'campusName': campusName,
         'initialSection': section,
       },
     );
   }
 }
-
 class GlassCard extends StatelessWidget {
   final Widget? child;
   final Color? borderColor;

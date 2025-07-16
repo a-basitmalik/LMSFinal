@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'package:newapp/Teacher/SubjectChat.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'dart:convert';
 import 'SubjectAssignments.dart';
 import 'SubjectQueries.dart';
@@ -9,12 +10,17 @@ import 'SubjectResults.dart';
 import 'SubjectAttendance.dart';
 import 'SubjectAnnouncementsScreen.dart';
 import 'dart:ui';
+import 'package:intl/intl.dart';
 
 class SubjectDashboardScreen extends StatefulWidget {
   final Map<String, dynamic> subject;
   final String teacherId;
 
-  const SubjectDashboardScreen({super.key, required this.subject, required this.teacherId});
+  const SubjectDashboardScreen({
+    super.key,
+    required this.subject,
+    required this.teacherId,
+  });
 
   @override
   _SubjectDashboardScreenState createState() => _SubjectDashboardScreenState();
@@ -31,6 +37,7 @@ class _SubjectDashboardScreenState extends State<SubjectDashboardScreen> {
   List<dynamic> assignments = [];
   List<dynamic> queries = [];
   List<dynamic> attendance = [];
+  List<dynamic> planners = [];
   bool isLoading = true;
   String errorMessage = '';
 
@@ -58,6 +65,77 @@ class _SubjectDashboardScreenState extends State<SubjectDashboardScreen> {
     ];
   }
 
+  Future<void> _fetchSubjectData() async {
+    setState(() {
+      isLoading = true;
+      errorMessage = '';
+    });
+
+    try {
+      // Fetch all data in parallel
+      final responses = await Future.wait([
+        http.get(Uri.parse('$baseUrl/subject/${widget.subject['subject_id']}/stats')),
+        http.get(Uri.parse('$baseUrl/subject/${widget.subject['subject_id']}/announcements')),
+        http.get(Uri.parse('$baseUrl/subject/${widget.subject['subject_id']}/assignments')),
+        http.get(Uri.parse('$baseUrl/subject/${widget.subject['subject_id']}/queries')),
+        http.get(Uri.parse('$baseUrl/subject/${widget.subject['subject_id']}/attendance')),
+        http.get(Uri.parse('http://192.168.18.185:5050/SubjectPlanner/subject/${widget.subject['subject_id']}/planners')),
+      ], eagerError: true);
+
+      // Parse responses
+      setState(() {
+        subjectStats = _parseResponse(responses[0]);
+        announcements = _parseResponse(responses[1]) ?? [];
+        assignments = _parseResponse(responses[2]) ?? [];
+        queries = _parseResponse(responses[3]) ?? [];
+        attendance = _parseResponse(responses[4]) ?? [];
+        planners = _parseResponse(responses[5]) ?? [];
+        isLoading = false;
+      });
+
+      // Initialize screens after data is loaded
+      _screens = [
+        _buildOverviewScreen(),
+        SubjectAssignmentsScreen(subject: widget.subject),
+        SubjectQueriesScreen(subject: widget.subject),
+        SubjectResultsScreen(subject: widget.subject),
+        SubjectAttendanceScreen(subject: widget.subject),
+        SubjectChatScreen(subject: widget.subject, teacherId: widget.teacherId),
+      ];
+    } catch (e) {
+      setState(() {
+        errorMessage = 'Error loading data: ${e.toString()}';
+        isLoading = false;
+
+        // Initialize with empty data to prevent UI from getting stuck
+        subjectStats = {};
+        announcements = [];
+        assignments = [];
+        queries = [];
+        attendance = [];
+        planners = [];
+
+        _screens = [
+          _buildOverviewScreen(),
+          SubjectAssignmentsScreen(subject: widget.subject),
+          SubjectQueriesScreen(subject: widget.subject),
+          SubjectResultsScreen(subject: widget.subject),
+          SubjectAttendanceScreen(subject: widget.subject),
+          SubjectChatScreen(subject: widget.subject, teacherId: widget.teacherId),
+        ];
+      });
+    }
+  }
+
+  dynamic _parseResponse(http.Response response) {
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    } else if (response.statusCode == 404) {
+      return null; // or empty list/map depending on expected type
+    } else {
+      throw Exception('Failed to load data: ${response.statusCode}');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -106,74 +184,6 @@ class _SubjectDashboardScreenState extends State<SubjectDashboardScreen> {
       floatingActionButton: _buildMainFAB(),
     );
   }
-  Future<void> _fetchSubjectData() async {
-    setState(() {
-      isLoading = true;
-      errorMessage = '';
-    });
-
-    try {
-      // Fetch all data in parallel
-      final responses = await Future.wait([
-        http.get(Uri.parse('$baseUrl/subject/${widget.subject['subject_id']}/stats')),
-        http.get(Uri.parse('$baseUrl/subject/${widget.subject['subject_id']}/announcements')),
-        http.get(Uri.parse('$baseUrl/subject/${widget.subject['subject_id']}/assignments')),
-        http.get(Uri.parse('$baseUrl/subject/${widget.subject['subject_id']}/queries')),
-        http.get(Uri.parse('$baseUrl/subject/${widget.subject['subject_id']}/attendance')),
-      ], eagerError: true);
-
-      // Parse responses
-      setState(() {
-        subjectStats = _parseResponse(responses[0]);
-        announcements = _parseResponse(responses[1]) ?? [];
-        assignments = _parseResponse(responses[2]) ?? [];
-        queries = _parseResponse(responses[3]) ?? [];
-        attendance = _parseResponse(responses[4]) ?? [];
-        isLoading = false;
-      });
-
-      // Initialize screens after data is loaded
-      _screens = [
-        _buildOverviewScreen(),
-        SubjectAssignmentsScreen(subject: widget.subject),
-        SubjectQueriesScreen(subject: widget.subject),
-        SubjectResultsScreen(subject: widget.subject),
-        SubjectAttendanceScreen(subject: widget.subject),
-        SubjectChatScreen(subject: widget.subject, teacherId: widget.teacherId),
-      ];
-    } catch (e) {
-      setState(() {
-        errorMessage = 'Error loading data: ${e.toString()}';
-        isLoading = false;
-
-        // Initialize with empty data to prevent UI from getting stuck
-        subjectStats = {};
-        announcements = [];
-        assignments = [];
-        queries = [];
-        attendance = [];
-
-        _screens = [
-          _buildOverviewScreen(),
-          SubjectAssignmentsScreen(subject: widget.subject),
-          SubjectQueriesScreen(subject: widget.subject),
-          SubjectResultsScreen(subject: widget.subject),
-          SubjectAttendanceScreen(subject: widget.subject),
-          SubjectChatScreen(subject: widget.subject, teacherId: widget.teacherId),
-        ];
-      });
-    }
-  }
-
-  dynamic _parseResponse(http.Response response) {
-    if (response.statusCode == 200) {
-      return json.decode(response.body);
-    } else if (response.statusCode == 404) {
-      return null; // or empty list/map depending on expected type
-    } else {
-      throw Exception('Failed to load data: ${response.statusCode}');
-    }
-  }
 
   Widget _buildOverviewScreen() {
     if (isLoading) {
@@ -201,6 +211,8 @@ class _SubjectDashboardScreenState extends State<SubjectDashboardScreen> {
       child: Column(
         children: [
           _buildQuickStatsPanel(),
+          SizedBox(height: 24),
+          _buildTodaysPlannerSection(),
           SizedBox(height: 24),
           _buildSectionPreview(
             title: 'Recent Announcements',
@@ -233,6 +245,153 @@ class _SubjectDashboardScreenState extends State<SubjectDashboardScreen> {
             child: _buildChatPreview(),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildTodaysPlannerSection() {
+    final today = DateTime.now();
+    final todayPlanners = planners.where((planner) {
+      final plannerDate = DateTime.parse(planner['planned_date']);
+      return plannerDate.year == today.year &&
+          plannerDate.month == today.month &&
+          plannerDate.day == today.day;
+    }).toList();
+
+    if (todayPlanners.isEmpty) {
+      return _buildSectionPreview(
+        title: "Today's Planner",
+        onViewAll: () => _showAllPlanners(),
+        child: Padding(
+          padding: EdgeInsets.all(16),
+          child: Text(
+            'No planner for today',
+            style: GoogleFonts.poppins(color: Colors.grey),
+          ),
+        ),
+      );
+    }
+
+    return _buildSectionPreview(
+      title: "Today's Planner",
+      onViewAll: () => _showAllPlanners(),
+      child: Column(
+        children: todayPlanners.take(2).map((planner) {
+          return Column(
+            children: [
+              ListTile(
+                leading: CircleAvatar(
+                  backgroundColor: Colors.purple[50],
+                  child: Icon(Icons.calendar_today, color: Colors.purple),
+                ),
+                title: Text(
+                  planner['title'] ?? 'No title',
+                  style: GoogleFonts.poppins(fontWeight: FontWeight.w500),
+                ),
+                subtitle: Text(
+                  planner['description'] != null &&
+                      planner['description'].isNotEmpty
+                      ? planner['description'].length > 50
+                      ? '${planner['description'].substring(0, 50)}...'
+                      : planner['description']
+                      : 'No description',
+                  style: GoogleFonts.poppins(),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                trailing: IconButton(
+                  icon: Icon(Icons.arrow_forward),
+                  onPressed: () => _showPlannerDetails(planner),
+                ),
+              ),
+              if (planner != todayPlanners.last) Divider(height: 1),
+            ],
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  void _showAllPlanners() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (context) {
+        return Container(
+          padding: EdgeInsets.all(16),
+          height: MediaQuery.of(context).size.height * 0.8,
+          child: Column(
+            children: [
+              Text(
+                'All Planners',
+                style: GoogleFonts.poppins(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              SizedBox(height: 16),
+              Expanded(
+                child: ListView.builder(
+                  itemCount: planners.length,
+                  itemBuilder: (context, index) {
+                    final planner = planners[index];
+                    return Card(
+                      margin: EdgeInsets.only(bottom: 8),
+                      child: ListTile(
+                        leading: CircleAvatar(
+                          backgroundColor: Colors.purple[50],
+                          child: Icon(Icons.calendar_today, color: Colors.purple),
+                        ),
+                        title: Text(
+                          planner['title'] ?? 'No title',
+                          style: GoogleFonts.poppins(fontWeight: FontWeight.w500),
+                        ),
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              DateFormat('MMM dd, yyyy').format(
+                                  DateTime.parse(planner['planned_date'])),
+                              style: GoogleFonts.poppins(fontSize: 12),
+                            ),
+                            SizedBox(height: 4),
+                            Text(
+                              planner['description'] != null &&
+                                  planner['description'].isNotEmpty
+                                  ? planner['description'].length > 50
+                                  ? '${planner['description'].substring(0, 50)}...'
+                                  : planner['description']
+                                  : 'No description',
+                              style: GoogleFonts.poppins(),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
+                        trailing: IconButton(
+                          icon: Icon(Icons.arrow_forward),
+                          onPressed: () => _showPlannerDetails(planner),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _showPlannerDetails(Map<String, dynamic> planner) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => PlannerDetailsScreen(
+          planner: planner,
+          subjectColor: widget.subject['color'] ?? Theme.of(context).primaryColor,
+        ),
       ),
     );
   }
@@ -817,6 +976,179 @@ class _SubjectDashboardScreenState extends State<SubjectDashboardScreen> {
           ),
         ),
       ],
+    );
+  }
+}
+
+
+
+class PlannerDetailsScreen extends StatelessWidget {
+  final Map<String, dynamic> planner;
+  final Color subjectColor;
+
+  const PlannerDetailsScreen({
+    Key? key,
+    required this.planner,
+    required this.subjectColor,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    final attachments = planner['attachments'] ?? [];
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Planner Details'),
+        backgroundColor: subjectColor,
+      ),
+      body: SingleChildScrollView(
+        padding: EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              planner['title'] ?? 'No title',
+              style: GoogleFonts.poppins(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            SizedBox(height: 8),
+            Row(
+              children: [
+                Icon(Icons.calendar_today, size: 16, color: Colors.grey),
+                SizedBox(width: 8),
+                Text(
+                  DateFormat('MMM dd, yyyy').format(
+                      DateTime.parse(planner['planned_date'])),
+                  style: GoogleFonts.poppins(
+                    fontSize: 16,
+                    color: Colors.grey,
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 24),
+            Text(
+              'Description',
+              style: GoogleFonts.poppins(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            SizedBox(height: 8),
+            Text(
+              planner['description'] ?? 'No description',
+              style: GoogleFonts.poppins(fontSize: 16),
+            ),
+            SizedBox(height: 24),
+            if (attachments.isNotEmpty) ...[
+              Text(
+                'Attachments',
+                style: GoogleFonts.poppins(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              SizedBox(height: 8),
+              Column(
+                children: attachments.map<Widget>((attachment) {
+                  return Card(
+                    margin: EdgeInsets.only(bottom: 8),
+                    child: ListTile(
+                      leading: Icon(
+                        _getFileIcon(attachment['file_name']),
+                        color: subjectColor,
+                      ),
+                      title: Text(
+                        attachment['file_name'],
+                        style: GoogleFonts.poppins(),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      trailing: IconButton(
+                        icon: Icon(Icons.download),
+                        onPressed: () => _openAttachment(attachment, context),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  IconData _getFileIcon(String fileName) {
+    final extension = fileName
+        .split('.')
+        .last
+        .toLowerCase();
+    switch (extension) {
+      case 'pdf':
+        return Icons.picture_as_pdf;
+      case 'doc':
+      case 'docx':
+        return Icons.description;
+      case 'xls':
+      case 'xlsx':
+        return Icons.table_chart;
+      case 'ppt':
+      case 'pptx':
+        return Icons.slideshow;
+      case 'jpg':
+      case 'jpeg':
+      case 'png':
+      case 'gif':
+        return Icons.image;
+      default:
+        return Icons.insert_drive_file;
+    }
+  }
+
+  void _openAttachment(Map<String, dynamic> attachment,
+      BuildContext parentContext) async {
+    final url = attachment['file_url'];
+    if (url == null || url.isEmpty) {
+      ScaffoldMessenger.of(parentContext).showSnackBar(
+        SnackBar(content: Text('Attachment URL is invalid')),
+      );
+      return;
+    }
+
+    showDialog(
+      context: parentContext,
+      builder: (dialogContext) =>
+          AlertDialog(
+            title: Text('Open Attachment'),
+            content: Text(
+                'Would you like to download or view ${attachment['file_name']}?'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext),
+                child: Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () async {
+                  Navigator.pop(dialogContext);
+                  ScaffoldMessenger.of(parentContext).showSnackBar(
+                    SnackBar(content: Text('Opening attachment...')),
+                  );
+
+                  final uri = Uri.parse(url);
+                  if (await canLaunchUrl(uri)) {
+                    await launchUrl(uri, mode: LaunchMode.externalApplication);
+                  } else {
+                    ScaffoldMessenger.of(parentContext).showSnackBar(
+                      SnackBar(content: Text('Could not launch attachment')),
+                    );
+                  }
+                },
+                child: Text('Open'),
+              ),
+            ],
+          ),
     );
   }
 }
