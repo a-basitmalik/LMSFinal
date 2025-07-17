@@ -84,22 +84,10 @@ class _AdminDashboardContent extends StatelessWidget {
         'color': Colors.greenAccent,
       },
       {
-        'title': 'Finance',
+        'title': 'Fine',
         'icon': Icons.monetization_on_outlined,
         'route': '/fees',
-        'color': Colors.orangeAccent,
-      },
-      {
-        'title': 'Alumni',
-        'icon': Icons.people_alt_outlined,
-        'route': '/alumniList',
         'color': Colors.redAccent,
-      },
-      {
-        'title': 'Calendar',
-        'icon': Icons.date_range_outlined,
-        'route': '/calendar',
-        'color': Colors.tealAccent,
       },
     ];
 
@@ -240,26 +228,152 @@ class _AdminDashboardContent extends StatelessWidget {
                       },
                     ),
                     const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _buildAnimatedCurriculumOption(
-                            icon: Icons.medical_services,
-                            label: 'Pre Medical',
-                            color: Colors.blueAccent,
-                            onTap: () => _navigateToCurriculum(context, 'Pre Medical'),
-                          ),
+    SingleChildScrollView(
+    scrollDirection: Axis.horizontal,
+    padding: const EdgeInsets.only(bottom: 8),
+    child: Row(
+    children: [
+    _buildAnimatedCurriculumOption(
+    icon: Icons.medical_services,
+    label: 'Pre-Medical',
+    color: Colors.blueAccent,
+    onTap: () => _navigateToCurriculum(context, 'Pre-Medical'),
+    ),
+    _buildAnimatedCurriculumOption(
+    icon: Icons.engineering,
+    label: 'Pre-Engineering',
+    color: Colors.blueAccent,
+    onTap: () => _navigateToCurriculum(context, 'Pre-Engineering'),
+    ),
+    _buildAnimatedCurriculumOption(
+    icon: Icons.science,
+    label: 'ICS (Physics)',
+    color: Colors.blueAccent,
+    onTap: () => _navigateToCurriculum(context, 'ICS (Physics)'),
+    ),
+    _buildAnimatedCurriculumOption(
+    icon: Icons.bar_chart,
+    label: 'ICS (Stats)',
+    color: Colors.blueAccent,
+    onTap: () => _navigateToCurriculum(context, 'ICS (Stats)'),
+    ),
+    _buildAnimatedCurriculumOption(
+    icon: Icons.bubble_chart,
+    label: 'General Science',
+    color: Colors.blueAccent,
+    onTap: () => _navigateToCurriculum(context, 'General Science'),
+    ),
+    _buildAnimatedCurriculumOption(
+    icon: Icons.account_balance_wallet,
+    label: 'I.COM (Part-I)',
+    color: Colors.blueAccent,
+    onTap: () => _navigateToCurriculum(context, 'I.COM (Part-I)'),
+    ),
+    _buildAnimatedCurriculumOption(
+    icon: Icons.account_balance,
+    label: 'I.COM (Part-II)',
+    color: Colors.blueAccent,
+    onTap: () => _navigateToCurriculum(context, 'I.COM (Part-II)'),
+    ),
+    _buildAnimatedCurriculumOption(
+    icon: Icons.people,
+    label: 'Humanities (F.A.)',
+    color: Colors.blueAccent,
+    onTap: () => _navigateToCurriculum(context, 'Humanities (F.A.)'),
+    ),
+    ].map((widget) => Padding(
+    padding: const EdgeInsets.only(right: 16),
+    child: SizedBox(width: 150, child: widget),
+    )).toList(),
+    ),
+    ),
+                    const SizedBox(height: 32),
+                    // New Planner Section
+                    _buildSectionHeader(
+                      icon: Icons.event_note_rounded,
+                      title: 'LESSON PLANNER',
+                      iconColor: Colors.orangeAccent,
+                      onTap: () {
+                        Navigator.pushNamed(
+                          context,
+                          '/planner',
+                          arguments: {
+                            'campusID': campusID,
+                            'campusName': campusName,
+                          },
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    GlassCard(
+                      borderRadius: 20,
+                      borderColor: Colors.orangeAccent.withOpacity(0.3),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          children: [
+                            _buildAnimatedButton(
+                              icon: Icons.add_rounded,
+                              label: 'CREATE NEW PLAN',
+                              color: Colors.orangeAccent,
+                              onTap: () {
+                                Navigator.pushNamed(
+                                  context,
+                                  '/planner',
+                                  arguments: {
+                                    'campusID': campusID,
+                                    'campusName': campusName,
+                                  },
+                                );
+                              },
+                            ),
+                            const SizedBox(height: 12),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: _buildPlannerOption(
+                                    icon: Icons.today_rounded,
+                                    label: 'Today\'s',
+                                    subLabel: 'Plans',
+                                    color: Colors.orangeAccent,
+                                    onTap: () {
+                                      Navigator.pushNamed(
+                                        context,
+                                        '/planner',
+                                        arguments: {
+                                          'campusID': campusID,
+                                          'campusName': campusName,
+                                        },
+                                      );
+                                    },
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: _buildPlannerOption(
+                                    icon: Icons.calendar_month_rounded,
+                                    label: 'View',
+                                    subLabel: 'Calendar',
+                                    color: Colors.orangeAccent,
+                                    onTap: () {
+                                      Navigator.pushNamed(
+                                        context,
+                                        '/calendar',
+                                        arguments: {
+                                          'campusID': campusID,
+                                          'campusName': campusName,
+                                        },
+                                      );
+                                    },
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            _buildPlannerStatsRow(),
+                          ],
                         ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: _buildAnimatedCurriculumOption(
-                            icon: Icons.computer,
-                            label: 'Computer',
-                            color: Colors.blueAccent,
-                            onTap: () => _navigateToCurriculum(context, 'Computer'),
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
                     const SizedBox(height: 32),
                     _buildSectionHeader(
@@ -326,31 +440,147 @@ class _AdminDashboardContent extends StatelessWidget {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {},
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        child: Container(
-          width: 56,
-          height: 56,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            gradient: LinearGradient(
-              colors: [
-                Colors.cyanAccent.withOpacity(0.8),
-                Colors.blueAccent.withOpacity(0.8),
-              ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            boxShadow: [
-              BoxShadow(
-                  color: Colors.cyanAccent.withOpacity(0.4),
-                  blurRadius: 10,
-                  spreadRadius: 2)
-            ],
+    );
+  }
+
+  Widget _buildPlannerStatsRow() {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        gradient: LinearGradient(
+          colors: [
+            Colors.orangeAccent.withOpacity(0.1),
+            Colors.orangeAccent.withOpacity(0.05),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        border: Border.all(
+          color: Colors.orangeAccent.withOpacity(0.3),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          _buildPlannerStatItem(
+            icon: Icons.event_available,
+            value: '24',
+            label: 'Completed',
           ),
-          child: const Icon(Icons.add, color: Colors.white),
+          _buildPlannerStatItem(
+            icon: Icons.event_busy,
+            value: '5',
+            label: 'Pending',
+          ),
+          _buildPlannerStatItem(
+            icon: Icons.event,
+            value: '12',
+            label: 'Upcoming',
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPlannerStatItem({
+    required IconData icon,
+    required String value,
+    required String label,
+  }) {
+    return Column(
+      children: [
+        Row(
+          children: [
+            Icon(icon, size: 16, color: Colors.orangeAccent.withOpacity(0.8)),
+            const SizedBox(width: 4),
+            Text(
+              value,
+              style: TextStyle(
+                color: Colors.orangeAccent,
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 4),
+        Text(
+          label,
+          style: TextStyle(
+            color: Colors.white.withOpacity(0.7),
+            fontSize: 10,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPlannerOption({
+    required IconData icon,
+    required String label,
+    required String subLabel,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+      child: GlassCard(
+        borderRadius: 12,
+        borderColor: color.withOpacity(0.5),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.all(12.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: LinearGradient(
+                      colors: [
+                        color.withOpacity(0.3),
+                        color.withOpacity(0.1),
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    border: Border.all(
+                      color: color.withOpacity(0.5),
+                      width: 1.5,
+                    ),
+                  ),
+                  child: Icon(
+                    icon,
+                    color: color,
+                    size: 18,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  label,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                Text(
+                  subLabel,
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.7),
+                    fontSize: 10,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );

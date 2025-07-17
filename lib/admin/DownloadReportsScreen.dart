@@ -26,8 +26,10 @@ class DownloadReportsScreen extends StatefulWidget {
 }
 
 class _DownloadReportsScreenState extends State<DownloadReportsScreen>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   late TabController _tabController;
+  late AnimationController _animationController;
+  late Animation<double> _fadeAnimation;
   bool _isLoading = false;
   bool _isLoadingSubjects = false;
   List<Subject> _subjects = [];
@@ -43,16 +45,30 @@ class _DownloadReportsScreenState extends State<DownloadReportsScreen>
   void initState() {
     super.initState();
     _tabController = TabController(
-        length: 4,
-        vsync: this,
-        initialIndex: widget.initialTab
+      length: 4,
+      vsync: this,
+      initialIndex: widget.initialTab,
     );
+
+    _animationController = AnimationController(
+      vsync: this,
+      duration: Duration(milliseconds: 1500),
+    )..repeat(reverse: true);
+
+    _fadeAnimation = Tween<double>(begin: 0.8, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _animationController,
+        curve: Curves.easeInOut,
+      ),
+    );
+
     _fetchSubjects();
   }
 
   @override
   void dispose() {
     _tabController.dispose();
+    _animationController.dispose();
     _yearController.dispose();
     super.dispose();
   }
@@ -81,324 +97,464 @@ class _DownloadReportsScreenState extends State<DownloadReportsScreen>
     }
   }
 
-  // Keep all your existing report generation methods (_generateSubjectReport, etc.)
-  // They remain exactly the same as in your original code
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
-      body: SafeArea(
-        child: Column(
-          children: [
-            // App Bar with Tabs
-            Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    Colors.blueAccent.withOpacity(0.2),
-                    Colors.cyanAccent.withOpacity(0.2),
-                  ],
+      body: Stack(
+        children: [
+          // Animated Background
+          AnimatedBuilder(
+            animation: _animationController,
+            builder: (context, child) {
+              return Container(
+                decoration: BoxDecoration(
+                  gradient: RadialGradient(
+                    center: Alignment.center,
+                    radius: 1.5,
+                    colors: [
+                      Colors.blue.shade900.withOpacity(_fadeAnimation.value * 0.3),
+                      Colors.indigo.shade900.withOpacity(_fadeAnimation.value * 0.3),
+                      Colors.black,
+                    ],
+                    stops: [0.1, 0.5, 1.0],
+                  ),
                 ),
-              ),
-              child: Column(
-                children: [
-                  AppBar(
-                    title: Text(
-                      '${widget.campusName} Reports',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
+              );
+            },
+          ),
+
+          CustomScrollView(
+            slivers: [
+              SliverAppBar(
+                expandedHeight: 100, // Reduced height
+                floating: false,
+                pinned: true,
+                backgroundColor: Colors.transparent,
+                elevation: 0,
+                flexibleSpace: FlexibleSpaceBar(
+                  title: AnimatedBuilder(
+                    animation: _animationController,
+                    builder: (context, child) {
+                      return Text(
+                        'GENERATE REPORTS', // Changed to just "GENERATE REPORTS"
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 2,
+                          shadows: [
+                            Shadow(
+                              blurRadius: 10 * _fadeAnimation.value,
+                              color: Colors.cyanAccent.withOpacity(_fadeAnimation.value),
+                            ),
+                          ],
+                          color: Colors.white.withOpacity(_fadeAnimation.value),
+                        ),
+                      );
+                    },
+                  ),
+                  centerTitle: true,
+                  background: Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          Colors.blue.shade900.withOpacity(0.7),
+                          Colors.indigo.shade800.withOpacity(0.7),
+                          Colors.purple.shade900.withOpacity(0.7),
+                        ],
                       ),
                     ),
-                    backgroundColor: Colors.transparent,
-                    elevation: 0,
                   ),
-                  TabBar(
-                    controller: _tabController,
-                    indicatorColor: Colors.cyanAccent,
-                    labelColor: Colors.cyanAccent,
-                    unselectedLabelColor: Colors.white70,
-                    tabs: const [
-                      Tab(text: 'Subject'),
-                      Tab(text: 'Assessment'),
-                      Tab(text: 'Monthly + Quizzes'),
-                      Tab(text: 'All Subjects'),
-                    ],
+                ),
+              ),
+
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 16.0), // Added top padding
+                  child: GlassCard(
+                    margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    child: TabBar(
+                      controller: _tabController,
+                      indicator: BoxDecoration(
+                        borderRadius: BorderRadius.circular(12),
+                        gradient: LinearGradient(
+                          colors: [
+                            Colors.cyanAccent.withOpacity(0.8),
+                            Colors.blueAccent.withOpacity(0.8),
+                          ],
+                        ),
+                      ),
+                      labelColor: Colors.black,
+                      unselectedLabelColor: Colors.white70,
+                      tabs: const [
+                        Tab(text: 'SUBJECT'),
+                        Tab(text: 'ASSESSMENT'),
+                        Tab(text: 'MONTHLY QUIZZES'),
+                        Tab(text: 'ALL SUBJECTS'),
+                      ],
+                    ),
                   ),
-                ],
+                ),
+              ),
+
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: AnimatedSwitcher(
+                    duration: Duration(milliseconds: 300),
+                    child: _buildCurrentTab(),
+                  ),
+                ),
+              ),
+            ],
+          ),
+
+          if (_isLoading)
+            Center(
+              child: CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(Colors.cyanAccent),
               ),
             ),
-            // Tab Content
-            Expanded(
-              child: TabBarView(
-                controller: _tabController,
-                children: [
-                  _buildSubjectReportTab(),
-                  _buildAssessmentReportTab(),
-                  _buildMonthlyWithQuizzesTab(),
-                  _buildAllSubjectsReportTab(),
-                ],
-              ),
-            ),
-          ],
-        ),
+        ],
       ),
     );
   }
 
+  Widget _buildCurrentTab() {
+    switch (_tabController.index) {
+      case 0:
+        return _buildSubjectReportTab();
+      case 1:
+        return _buildAssessmentReportTab();
+      case 2:
+        return _buildMonthlyWithQuizzesTab();
+      case 3:
+        return _buildAllSubjectsReportTab();
+      default:
+        return Container();
+    }
+  }
+
   Widget _buildSubjectReportTab() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(
-            'Subject Report',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        GlassCard(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Row(
+              children: [
+                Icon(Icons.assignment, color: Colors.cyanAccent, size: 28),
+                SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'SUBJECT REPORT',
+                        style: TextStyle(
+                          color: Colors.cyanAccent,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1.2,
+                        ),
+                      ),
+                      SizedBox(height: 4),
+                      Text(
+                        'All assessment types with quiz data',
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.7),
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 20),
-          _buildSubjectDropdown(),
-          const SizedBox(height: 16),
-          _buildYearField(),
-          const SizedBox(height: 24),
-          _buildGenerateButton(
-            'Generate Subject Report',
-            _generateSubjectReport,
-          ),
-          const SizedBox(height: 20),
-          Text(
-            'Includes all assessment types for the selected subject with quiz data',
-            style: TextStyle(
-              color: Colors.white70,
-              fontSize: 14,
-            ),
-          ),
-        ],
-      ),
+        ),
+        SizedBox(height: 16),
+        _buildSubjectDropdown(),
+        SizedBox(height: 16),
+        _buildYearField(),
+        SizedBox(height: 24),
+        _buildGenerateButton(
+          'GENERATE REPORT',
+          _generateSubjectReport,
+        ),
+      ],
     );
   }
 
   Widget _buildAssessmentReportTab() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(
-            'Assessment Report',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        GlassCard(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Row(
+              children: [
+                Icon(Icons.assessment, color: Colors.cyanAccent, size: 28),
+                SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'ASSESSMENT REPORT',
+                        style: TextStyle(
+                          color: Colors.cyanAccent,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1.2,
+                        ),
+                      ),
+                      SizedBox(height: 4),
+                      Text(
+                        'Selected assessment type for subject',
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.7),
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 20),
-          _buildSubjectDropdown(),
-          const SizedBox(height: 16),
-          _buildYearField(),
-          const SizedBox(height: 16),
-          _buildAssessmentTypeDropdown(),
-          const SizedBox(height: 24),
-          _buildGenerateButton(
-            'Generate Assessment Report',
-            _generateAssessmentReport,
-          ),
-          const SizedBox(height: 20),
-          Text(
-            'Includes all assessments of selected type for the specified subject',
-            style: TextStyle(
-              color: Colors.white70,
-              fontSize: 14,
-            ),
-          ),
-        ],
-      ),
+        ),
+        SizedBox(height: 16),
+        _buildSubjectDropdown(),
+        SizedBox(height: 16),
+        _buildYearField(),
+        SizedBox(height: 16),
+        _buildAssessmentTypeDropdown(),
+        SizedBox(height: 24),
+        _buildGenerateButton(
+          'GENERATE REPORT',
+          _generateAssessmentReport,
+        ),
+      ],
     );
   }
 
   Widget _buildMonthlyWithQuizzesTab() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(
-            'Monthly with Quizzes',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        GlassCard(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Row(
+              children: [
+                Icon(Icons.quiz, color: Colors.cyanAccent, size: 28),
+                SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'MONTHLY QUIZZES',
+                        style: TextStyle(
+                          color: Colors.cyanAccent,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1.2,
+                        ),
+                      ),
+                      SizedBox(height: 4),
+                      Text(
+                        'Monthly assessments with quiz data',
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.7),
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 20),
-          _buildYearField(),
-          const SizedBox(height: 24),
-          _buildGenerateButton(
-            'Generate Monthly with Quizzes',
-            _generateMonthlyWithQuizzesReport,
-          ),
-          const SizedBox(height: 20),
-          Text(
-            'Includes all monthly assessments with quiz data for all subjects',
-            style: TextStyle(
-              color: Colors.white70,
-              fontSize: 14,
-            ),
-          ),
-        ],
-      ),
+        ),
+        SizedBox(height: 16),
+        _buildYearField(),
+        SizedBox(height: 24),
+        _buildGenerateButton(
+          'GENERATE REPORT',
+          _generateMonthlyWithQuizzesReport,
+        ),
+      ],
     );
   }
 
   Widget _buildAllSubjectsReportTab() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(
-            'All Subjects Report',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        GlassCard(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Row(
+              children: [
+                Icon(Icons.library_books, color: Colors.cyanAccent, size: 28),
+                SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'ALL SUBJECTS',
+                        style: TextStyle(
+                          color: Colors.cyanAccent,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1.2,
+                        ),
+                      ),
+                      SizedBox(height: 4),
+                      Text(
+                        'Selected assessment type for all subjects',
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.7),
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 20),
-          _buildYearField(),
-          const SizedBox(height: 16),
-          _buildAssessmentTypeDropdown(),
-          const SizedBox(height: 24),
-          _buildGenerateButton(
-            'Generate All Subjects Report',
-            _generateAllSubjectsReport,
-          ),
-          const SizedBox(height: 20),
-          Text(
-            'Includes all assessments of selected type for all subjects',
-            style: TextStyle(
-              color: Colors.white70,
-              fontSize: 14,
-            ),
-          ),
-        ],
-      ),
+        ),
+        SizedBox(height: 16),
+        _buildYearField(),
+        SizedBox(height: 16),
+        _buildAssessmentTypeDropdown(),
+        SizedBox(height: 24),
+        _buildGenerateButton(
+          'GENERATE REPORT',
+          _generateAllSubjectsReport,
+        ),
+      ],
     );
   }
 
   Widget _buildSubjectDropdown() {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.blueAccent.withOpacity(0.3)),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Colors.white.withOpacity(0.1),
-            Colors.white.withOpacity(0.05),
-          ],
-        ),
-      ),
+    return GlassCard(
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12),
-        child: DropdownButtonFormField<Subject>(
-          value: _selectedSubject,
-          isExpanded: true,
-          decoration: const InputDecoration(
-            labelText: 'Subject',
-            labelStyle: TextStyle(color: Colors.white70),
-            border: InputBorder.none,
-          ),
-          style: const TextStyle(color: Colors.white),
-          dropdownColor: Colors.grey[900],
-          hint: _isLoadingSubjects
-              ? const Text('Loading subjects...', style: TextStyle(color: Colors.white70))
-              : const Text('Select a subject', style: TextStyle(color: Colors.white70)),
-          items: _subjects.map((s) {
-            return DropdownMenuItem<Subject>(
-              value: s,
-              child: Text('${s.name} (ID: ${s.id})', style: const TextStyle(color: Colors.white)),
-            );
-          }).toList(),
-          onChanged: (newSubj) => setState(() => _selectedSubject = newSubj),
-          validator: (v) => v == null ? 'Please select a subject' : null,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'SUBJECT',
+              style: TextStyle(
+                color: Colors.white.withOpacity(0.7),
+                fontSize: 12,
+              ),
+            ),
+            DropdownButtonFormField<Subject>(
+              decoration: InputDecoration(
+                border: InputBorder.none,
+                isDense: true,
+              ),
+              items: _subjects.map((subject) {
+                return DropdownMenuItem<Subject>(
+                  value: subject,
+                  child: Text(
+                    '${subject.name} (ID: ${subject.id})',
+                    style: TextStyle(color: Colors.white),
+                  ),
+                );
+              }).toList(),
+              onChanged: (subject) {
+                setState(() {
+                  _selectedSubject = subject;
+                });
+              },
+              validator: (value) {
+                if (value == null) {
+                  return 'Please select a subject';
+                }
+                return null;
+              },
+              hint: _isLoadingSubjects
+                  ? Text('Loading subjects...', style: TextStyle(color: Colors.white70))
+                  : Text('Select subject', style: TextStyle(color: Colors.white70)),
+              dropdownColor: Colors.grey[900],
+              icon: Icon(Icons.arrow_drop_down, color: Colors.white),
+              value: _selectedSubject,
+            ),
+          ],
         ),
       ),
     );
   }
 
   Widget _buildYearField() {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.blueAccent.withOpacity(0.3)),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Colors.white.withOpacity(0.1),
-            Colors.white.withOpacity(0.05),
-          ],
-        ),
-      ),
-      child: TextFormField(
-        controller: _yearController,
-        style: const TextStyle(color: Colors.white),
-        decoration: const InputDecoration(
-          labelText: 'Year',
-          labelStyle: TextStyle(color: Colors.white70),
-          border: InputBorder.none,
-          contentPadding: EdgeInsets.symmetric(horizontal: 16),
-        ),
-        keyboardType: TextInputType.number,
-      ),
+    return GlassInputField(
+      controller: _yearController,
+      label: 'YEAR',
+      icon: Icons.calendar_today,
+      keyboardType: TextInputType.number,
+      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+      validator: (value) {
+        if (value == null || value.isEmpty) {
+          return 'Please enter year';
+        }
+        return null;
+      },
     );
   }
 
   Widget _buildAssessmentTypeDropdown() {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.blueAccent.withOpacity(0.3)),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Colors.white.withOpacity(0.1),
-            Colors.white.withOpacity(0.05),
-          ],
-        ),
-      ),
+    return GlassCard(
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12),
-        child: DropdownButtonFormField<String>(
-          value: _selectedAssessmentType,
-          style: const TextStyle(color: Colors.white),
-          dropdownColor: Colors.grey[900],
-          decoration: const InputDecoration(
-            labelText: 'Assessment Type',
-            labelStyle: TextStyle(color: Colors.white70),
-            border: InputBorder.none,
-          ),
-          items: _assessmentTypes.map((String value) {
-            return DropdownMenuItem<String>(
-              value: value,
-              child: Text(value),
-            );
-          }).toList(),
-          onChanged: (newValue) => setState(() => _selectedAssessmentType = newValue),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'ASSESSMENT TYPE',
+              style: TextStyle(
+                color: Colors.white.withOpacity(0.7),
+                fontSize: 12,
+              ),
+            ),
+            DropdownButtonFormField<String>(
+              decoration: InputDecoration(
+                border: InputBorder.none,
+                isDense: true,
+              ),
+              items: _assessmentTypes.map((type) {
+                return DropdownMenuItem<String>(
+                  value: type,
+                  child: Text(
+                    type,
+                    style: TextStyle(color: Colors.white),
+                  ),
+                );
+              }).toList(),
+              onChanged: (type) {
+                setState(() {
+                  _selectedAssessmentType = type;
+                });
+              },
+              hint: Text(
+                'Select assessment type',
+                style: TextStyle(color: Colors.white70),
+              ),
+              dropdownColor: Colors.grey[900],
+              icon: Icon(Icons.arrow_drop_down, color: Colors.white),
+              value: _selectedAssessmentType,
+            ),
+          ],
         ),
       ),
     );
@@ -408,17 +564,13 @@ class _DownloadReportsScreenState extends State<DownloadReportsScreen>
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
-        gradient: LinearGradient(
-          colors: [
-            Colors.blueAccent.withOpacity(0.8),
-            Colors.cyanAccent.withOpacity(0.8),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+        border: Border.all(
+          color: Colors.white.withOpacity(0.5),
+          width: 1.5,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.blueAccent.withOpacity(0.4),
+            color: Colors.cyanAccent.withOpacity(0.2),
             blurRadius: 10,
             spreadRadius: 2,
           ),
@@ -428,6 +580,7 @@ class _DownloadReportsScreenState extends State<DownloadReportsScreen>
         onPressed: _isLoading ? null : onPressed,
         style: ElevatedButton.styleFrom(
           backgroundColor: Colors.transparent,
+          foregroundColor: Colors.white,
           shadowColor: Colors.transparent,
           padding: const EdgeInsets.symmetric(vertical: 16),
           shape: RoundedRectangleBorder(
@@ -438,14 +591,17 @@ class _DownloadReportsScreenState extends State<DownloadReportsScreen>
             ? const CircularProgressIndicator(color: Colors.white)
             : Text(
           text,
-          style: const TextStyle(fontSize: 16),
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            letterSpacing: 1.1,
+          ),
         ),
       ),
     );
   }
 
-  // Include all your report generation methods here
-
+  // Keep all your existing report generation methods (_generateSubjectReport, etc.)
   Future<void> _generateSubjectReport() async {
     if (_selectedSubject == null || _yearController.text.isEmpty) {
       _showToast('Please select a subject and year');
@@ -493,7 +649,6 @@ class _DownloadReportsScreenState extends State<DownloadReportsScreen>
       if (mounted) setState(() => _isLoading = false);
     }
   }
-
 
   Future<void> _generateAssessmentReport() async {
     if (_selectedSubject == null ||
@@ -650,43 +805,6 @@ class _DownloadReportsScreenState extends State<DownloadReportsScreen>
     }
   }
 
-
-  Future<void> _handleFileDownload(List<int> bytes, String fileName) async {
-    try {
-      if (kIsWeb) {
-        // Web implementation
-        final blob = html.Blob([bytes]);
-        final url = html.Url.createObjectUrlFromBlob(blob);
-        final anchor = html.AnchorElement(href: url)
-          ..setAttribute('download', fileName)
-          ..click();
-
-        // Clean up
-        html.Url.revokeObjectUrl(url);
-        _showToast('Download started! Check your downloads folder');
-      } else {
-        // Mobile implementation
-        final directory = await getDownloadsDirectory() ??
-            await getApplicationDocumentsDirectory();
-        final filePath = '${directory.path}/$fileName';
-        final file = File(filePath);
-
-        await file.writeAsBytes(bytes, flush: true);
-        await OpenFile.open(filePath);
-
-        _showToast('File saved to: $filePath');
-      }
-    } catch (e) {
-      _showToast('Error saving file: ${e.toString()}');
-      debugPrint('File download error: $e');
-
-      // Fallback for web if the download doesn't start automatically
-      if (kIsWeb) {
-        _showToast('If download didn\'t start, right-click and "Save as"');
-      }
-    }
-  }
-
   void _showToast(String message) {
     Fluttertoast.showToast(
       msg: message,
@@ -723,4 +841,105 @@ class Subject {
 
   @override
   String toString() => '$name ($id)';
+}
+
+class GlassCard extends StatelessWidget {
+  final Widget child;
+  final double? width;
+  final double? height;
+  final double borderRadius;
+  final Color? borderColor;
+  final EdgeInsetsGeometry? margin;
+  final EdgeInsetsGeometry? padding;
+
+  const GlassCard({
+    Key? key,
+    required this.child,
+    this.width,
+    this.height,
+    this.borderRadius = 16,
+    this.borderColor,
+    this.margin,
+    this.padding,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: width,
+      height: height,
+      margin: margin,
+      padding: padding,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(borderRadius),
+        border: Border.all(
+          color: borderColor ?? Colors.white.withOpacity(0.2),
+          width: 1,
+        ),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Colors.white.withOpacity(0.1),
+            Colors.white.withOpacity(0.05),
+          ],
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.2),
+            blurRadius: 10,
+            spreadRadius: 2,
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(borderRadius),
+        child: child,
+      ),
+    );
+  }
+}
+
+class GlassInputField extends StatelessWidget {
+  final TextEditingController controller;
+  final String label;
+  final IconData icon;
+  final bool obscureText;
+  final TextInputType? keyboardType;
+  final List<TextInputFormatter>? inputFormatters;
+  final String? Function(String?)? validator;
+
+  const GlassInputField({
+    Key? key,
+    required this.controller,
+    required this.label,
+    required this.icon,
+    this.obscureText = false,
+    this.keyboardType,
+    this.inputFormatters,
+    this.validator,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return GlassCard(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: TextFormField(
+          controller: controller,
+          obscureText: obscureText,
+          keyboardType: keyboardType,
+          inputFormatters: inputFormatters,
+          style: TextStyle(color: Colors.white),
+          decoration: InputDecoration(
+            labelText: label,
+            labelStyle: TextStyle(color: Colors.white.withOpacity(0.7)),
+            border: InputBorder.none,
+            icon: Icon(icon, color: Colors.white.withOpacity(0.7)),
+          ),
+          validator: validator,
+        ),
+      ),
+    );
+  }
 }

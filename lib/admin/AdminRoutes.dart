@@ -2,6 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:newapp/admin/AddStudent.dart';
+import 'package:newapp/admin/FineManagementScreen.dart';
 import 'package:newapp/admin/alumni_profile_view.dart';
 import 'package:newapp/admin/FineList.dart';
 import 'package:newapp/admin/AttendanceDashboard.dart';
@@ -16,6 +17,7 @@ import 'package:newapp/admin/subjects.dart';
 import 'package:newapp/admin/DownloadReportsScreen.dart';
 import 'package:newapp/admin/AcademicCalendar.dart';
 
+import 'HolographicCalendarScreen.dart';
 import 'PlannerListScreen.dart';
 
 class AdminRoutes {
@@ -33,10 +35,10 @@ class AdminRoutes {
         return MaterialPageRoute(
           builder: (_) => SharedList(type: 'teachers', campusID: campusID),
         );
-      case '/alumniList':
+      /*case '/alumniList':
         return MaterialPageRoute(
           builder: (_) => SharedList(type: 'alumni', campusID: campusID),
-        );
+        );*/
       case '/subjects':
         return MaterialPageRoute(
           builder: (_) => SubjectDashboard(campusId: campusID),
@@ -50,6 +52,7 @@ class AdminRoutes {
           builder: (_) => DownloadReportsScreen(
             campusID: campusID,
             campusName: campusName,
+            initialTab: args!['initialTab'] ?? 0,
           ),
         );
       case '/attendance':
@@ -70,9 +73,14 @@ class AdminRoutes {
           ),
         );
       case '/fees':
-        return MaterialPageRoute(builder: (_) => FeeDashboard());
-      case '/calendar':
-        return MaterialPageRoute(builder: (_) => AcademicCalendarScreen());
+        return MaterialPageRoute(builder: (_) => FineManagementScreen());
+      /*case '/calendar':
+        return MaterialPageRoute(builder: (_) => AcademicCalendarScreen());*/
+      case '/calendar':  // Add this case for the calendar route
+        return MaterialPageRoute(
+          builder: (_) => HolographicCalendarScreen(),
+          settings: settings,
+        );
       default:
         return MaterialPageRoute(
           builder: (_) => Scaffold(
