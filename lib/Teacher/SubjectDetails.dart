@@ -219,7 +219,7 @@ class _SubjectDashboardScreenState extends State<SubjectDashboardScreen> {
             onViewAll: () => Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => SubjectAnnouncementsScreen(subject: widget.subject),
+                builder: (context) => SubjectAnnouncementScreen(subject: widget.subject),
               ),
             ),
             child: _buildAnnouncementsPreview(),
