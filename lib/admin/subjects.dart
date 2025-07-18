@@ -4,11 +4,18 @@ import 'dart:convert';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import 'AddSubject.dart';
 import 'SubjectDetails.dart';
+
 class SubjectDashboard extends StatefulWidget {
   final int campusId;
-  final String campusName="Campus";
+  final String campusName;
+  final int subjectGroupId; // Added to receive subject group ID
 
-  const SubjectDashboard({Key? key, required this.campusId}) : super(key: key);
+  const SubjectDashboard({
+    Key? key,
+    required this.campusId,
+    required this.subjectGroupId,
+    this.campusName = "Campus",
+  }) : super(key: key);
 
   @override
   _SubjectDashboardState createState() => _SubjectDashboardState();
@@ -18,16 +25,34 @@ class _SubjectDashboardState extends State<SubjectDashboard> {
   List<SubjectItem> _subjectItems = [];
   bool _isLoading = true;
   final _searchController = TextEditingController();
+  String _subjectGroupName = "";
 
   @override
   void initState() {
     super.initState();
+    _fetchSubjectGroupName();
     _fetchSubjects();
+  }
+
+  Future<void> _fetchSubjectGroupName() async {
+    try {
+      final response = await http.get(Uri.parse(
+          'http://193.203.162.232:5050/subject/api/subject_groups/${widget.subjectGroupId}'));
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        setState(() {
+          _subjectGroupName = data['subject_group_name'] ?? "Subjects";
+        });
+      }
+    } catch (e) {
+      print('Error fetching subject group name: $e');
+    }
   }
 
   Future<void> _fetchSubjects() async {
     setState(() => _isLoading = true);
-    final url = Uri.parse('http://193.203.162.232:5050/subject/get_subjects_dashboard?campus_id=${widget.campusId}');
+    final url = Uri.parse(
+        'http://193.203.162.232:5050/subject/api/subjects/group_subjects?campus_id=${widget.campusId}&subject_group_id=${widget.subjectGroupId}');
 
     try {
       final response = await http.get(url);
@@ -37,33 +62,43 @@ class _SubjectDashboardState extends State<SubjectDashboard> {
           final subjects = data['subjects'] as List;
           final List<SubjectItem> subjectItems = [];
 
-          // Add Pre Medical header and subjects
-          subjectItems.add(SubjectItem(type: SubjectItemType.header, title: 'Pre Medical'));
-          subjectItems.addAll(subjects
-              .where((s) => _isPreMedicalSubject(s['subject_name']))
-              .map((s) => SubjectItem(
-            type: SubjectItemType.subject,
-            subject: Subject(
-              name: s['subject_name'],
-              teacher: s['teacher_name'],
-              studentCount: s['student_count'],
-            ),
-          ))
-              .toList());
+          // Group subjects by year
+          final firstYearSubjects = subjects.where((s) => s['year'] == 1).toList();
+          final secondYearSubjects = subjects.where((s) => s['year'] == 2).toList();
 
-          // Add Computer header and subjects
-          subjectItems.add(SubjectItem(type: SubjectItemType.header, title: 'Computer'));
-          subjectItems.addAll(subjects
-              .where((s) => _isComputerSubject(s['subject_name']))
-              .map((s) => SubjectItem(
-            type: SubjectItemType.subject,
-            subject: Subject(
-              name: s['subject_name'],
-              teacher: s['teacher_name'],
-              studentCount: s['student_count'],
-            ),
-          ))
-              .toList());
+          // Add First Year header if there are first year subjects
+          if (firstYearSubjects.isNotEmpty) {
+            subjectItems.add(SubjectItem(type: SubjectItemType.header, title: 'First Year'));
+            subjectItems.addAll(firstYearSubjects.map((s) => SubjectItem(
+              type: SubjectItemType.subject,
+              subject: Subject(
+                id: s['subject_id'],
+                name: s['subject_name'],
+                teacher: s['teacher_name'] ?? 'Not assigned',
+                studentCount: s['student_count'] ?? 0,
+                year: s['year'],
+                day: s['day'],
+                time: s['time'],
+              ),
+            )).toList());
+          }
+
+          // Add Second Year header if there are second year subjects
+          if (secondYearSubjects.isNotEmpty) {
+            subjectItems.add(SubjectItem(type: SubjectItemType.header, title: 'Second Year'));
+            subjectItems.addAll(secondYearSubjects.map((s) => SubjectItem(
+              type: SubjectItemType.subject,
+              subject: Subject(
+                id: s['subject_id'],
+                name: s['subject_name'],
+                teacher: s['teacher_name'] ?? 'Not assigned',
+                studentCount: s['student_count'] ?? 0,
+                year: s['year'],
+                day: s['day'],
+                time: s['time'],
+              ),
+            )).toList());
+          }
 
           setState(() {
             _subjectItems = subjectItems;
@@ -94,33 +129,19 @@ class _SubjectDashboardState extends State<SubjectDashboard> {
     );
   }
 
-  bool _isPreMedicalSubject(String subjectName) {
-    final name = subjectName.toLowerCase();
-    return name.contains('biology') || name.contains('chemistry');
-  }
-
-  bool _isComputerSubject(String subjectName) {
-    final name = subjectName.toLowerCase();
-    return name.contains('math') ||
-        name.contains('ict') ||
-        name.contains('computer') ||
-        name.contains('programming');
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
       body: CustomScrollView(
         slivers: [
-          // Futuristic App Bar
           SliverAppBar(
             expandedHeight: 180,
             floating: false,
             pinned: true,
             flexibleSpace: FlexibleSpaceBar(
               title: Text(
-                'SUBJECT PORTAL',
+                _subjectGroupName.toUpperCase(),
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 18,
@@ -166,7 +187,6 @@ class _SubjectDashboardState extends State<SubjectDashboard> {
             ),
           ),
 
-          // Search Bar
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.all(16.0),
@@ -200,7 +220,6 @@ class _SubjectDashboardState extends State<SubjectDashboard> {
             ),
           ),
 
-          // Content
           _isLoading
               ? SliverFillRemaining(
             child: Center(
@@ -223,7 +242,7 @@ class _SubjectDashboardState extends State<SubjectDashboard> {
                   ),
                   SizedBox(height: 16),
                   Text(
-                    'No subjects found',
+                    'No subjects found for this group',
                     style: TextStyle(
                       color: Colors.grey[400],
                       fontSize: 18,
@@ -233,7 +252,7 @@ class _SubjectDashboardState extends State<SubjectDashboard> {
                   ElevatedButton(
                     onPressed: _fetchSubjects,
                     style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.transparent,
+                      backgroundColor: Colors.transparent,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(20),
                         side: BorderSide(color: Colors.blueAccent),
@@ -281,6 +300,7 @@ class _SubjectDashboardState extends State<SubjectDashboard> {
               pageBuilder: (_, __, ___) => AddSubjectScreen(
                 campusId: widget.campusId,
                 campusName: widget.campusName,
+
               ),
               transitionsBuilder: (_, animation, __, child) =>
                   FadeTransition(opacity: animation, child: child),
@@ -359,8 +379,8 @@ class _SubjectDashboardState extends State<SubjectDashboard> {
                 context,
                 MaterialPageRoute(
                   builder: (context) => SubjectDetailsPage(
-                    subjectId: 1, // Replace with actual subject ID from your data
-                    year: '2023-24', // Get from your data
+                    subjectId: subject.id,
+                    year: subject.year.toString(),
                     subjectName: subject.name,
                     campusId: widget.campusId,
                   ),
@@ -415,6 +435,20 @@ class _SubjectDashboardState extends State<SubjectDashboard> {
                     ],
                   ),
                   SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Icon(Icons.schedule, size: 16, color: Colors.grey),
+                      SizedBox(width: 8),
+                      Text(
+                        '${subject.day} ${subject.time != null ? 'at ${subject.time}' : ''}',
+                        style: TextStyle(
+                          color: Colors.grey[400],
+                          fontSize: 14,
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 8),
                   LinearProgressIndicator(
                     value: subject.studentCount / 100, // Adjust based on your data
                     backgroundColor: Colors.grey[800],
@@ -445,13 +479,21 @@ class SubjectItem {
 }
 
 class Subject {
+  final int id;
   final String name;
   final String teacher;
   final int studentCount;
+  final int year;
+  final String? day;
+  final String? time;
 
   Subject({
+    required this.id,
     required this.name,
     required this.teacher,
     required this.studentCount,
+    required this.year,
+    this.day,
+    this.time,
   });
 }

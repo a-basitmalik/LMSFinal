@@ -119,7 +119,7 @@ class _SharedListState extends State<SharedList> {
       Navigator.push(
         context,
         PageRouteBuilder(
-          pageBuilder: (_, __, ___) => TeacherProfileScreen(),
+          pageBuilder: (_, __, ___) => TeacherProfileScreen(teacherId: id,),
           transitionsBuilder: (_, a, __, c) =>
               FadeTransition(opacity: a, child: c),
         ),

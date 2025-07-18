@@ -51,7 +51,7 @@ class _AddTeacherScreenState extends State<AddTeacherScreen> {
         }),
       );
 
-      if (response.statusCode == 200) {
+      if (response.statusCode == 201) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Teacher registered successfully!'),

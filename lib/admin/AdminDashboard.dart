@@ -1,6 +1,10 @@
+import 'dart:convert';
 import 'dart:math';
+import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'AdminRoutes.dart';
+import 'AddPlannerScreen.dart'; // Make sure to import your AddPlannerScreen
 
 class AdminDashboard extends StatefulWidget {
   final int campusID;
@@ -61,6 +65,32 @@ class _AdminDashboardContent extends StatelessWidget {
     required this.animation,
     Key? key,
   }) : super(key: key);
+
+  void _showAddPlannerModal(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      barrierColor: Colors.black.withOpacity(0.7),
+      builder: (context) {
+        return BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+          child: Container(
+            height: MediaQuery.of(context).size.height * 0.9,
+            decoration: BoxDecoration(
+              color: Color(0xFF0A0A1A).withOpacity(0.95),
+              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+              border: Border.all(
+                color: Colors.cyanAccent.withOpacity(0.3),
+                width: 1,
+              ),
+            ),
+            child: AddPlannerScreen(campusID: campusID),
+          ),
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -290,92 +320,83 @@ class _AdminDashboardContent extends StatelessWidget {
                     const SizedBox(height: 32),
                     // New Planner Section
                     _buildSectionHeader(
-                      icon: Icons.event_note_rounded,
-                      title: 'LESSON PLANNER',
-                      iconColor: Colors.orangeAccent,
-                      onTap: () {
-                        Navigator.pushNamed(
-                          context,
-                          '/planner',
-                          arguments: {
-                            'campusID': campusID,
-                            'campusName': campusName,
-                          },
-                        );
-                      },
-                    ),
-                    const SizedBox(height: 16),
-                    GlassCard(
-                      borderRadius: 20,
-                      borderColor: Colors.orangeAccent.withOpacity(0.3),
-                      child: Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Column(
-                          children: [
-                            _buildAnimatedButton(
-                              icon: Icons.add_rounded,
-                              label: 'CREATE NEW PLAN',
-                              color: Colors.orangeAccent,
-                              onTap: () {
-                                Navigator.pushNamed(
-                                  context,
-                                  '/planner',
-                                  arguments: {
-                                    'campusID': campusID,
-                                    'campusName': campusName,
-                                  },
-                                );
-                              },
-                            ),
-                            const SizedBox(height: 12),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: _buildPlannerOption(
-                                    icon: Icons.today_rounded,
-                                    label: 'Today\'s',
-                                    subLabel: 'Plans',
-                                    color: Colors.orangeAccent,
-                                    onTap: () {
-                                      Navigator.pushNamed(
-                                        context,
-                                        '/planner',
-                                        arguments: {
-                                          'campusID': campusID,
-                                          'campusName': campusName,
-                                        },
-                                      );
-                                    },
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: _buildPlannerOption(
-                                    icon: Icons.calendar_month_rounded,
-                                    label: 'View',
-                                    subLabel: 'Calendar',
-                                    color: Colors.orangeAccent,
-                                    onTap: () {
-                                      Navigator.pushNamed(
-                                        context,
-                                        '/calendar',
-                                        arguments: {
-                                          'campusID': campusID,
-                                          'campusName': campusName,
-                                        },
-                                      );
-                                    },
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 12),
-                            _buildPlannerStatsRow(),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 32),
+                    icon: Icons.event_note_rounded,
+                    title: 'LESSON PLANNER',
+    iconColor: Colors.orangeAccent,
+    onTap: () {
+    Navigator.pushNamed(
+    context,
+    '/planner',
+    arguments: {
+    'campusID': campusID,
+    'campusName': campusName,
+    },
+    );
+    },
+    ),
+    const SizedBox(height: 16),
+    GlassCard(
+    borderRadius: 20,
+    borderColor: Colors.orangeAccent.withOpacity(0.3),
+    child: Padding(
+    padding: const EdgeInsets.all(16.0),
+    child: Column(
+    children: [
+    _buildAnimatedButton(
+    icon: Icons.add_rounded,
+    label: 'CREATE NEW PLAN',
+    color: Colors.orangeAccent,
+    onTap: () => _showAddPlannerModal(context),
+    ),
+    const SizedBox(height: 12),
+    Row(
+    children: [
+    Expanded(
+    child: _buildPlannerOption(
+    icon: Icons.today_rounded,
+    label: 'Today\'s',
+    subLabel: 'Plans',
+    color: Colors.orangeAccent,
+    onTap: () {
+    Navigator.pushNamed(
+    context,
+    '/planner',
+    arguments: {
+    'campusID': campusID,
+    'campusName': campusName,
+    },
+    );
+    },
+    ),
+    ),
+    const SizedBox(width: 12),
+    Expanded(
+    child: _buildPlannerOption(
+    icon: Icons.calendar_month_rounded,
+    label: 'View',
+    subLabel: 'Calendar',
+    color: Colors.orangeAccent,
+    onTap: () {
+    Navigator.pushNamed(
+    context,
+    '/calendar',
+    arguments: {
+    'campusID': campusID,
+    'campusName': campusName,
+    },
+    );
+    },
+    ),
+    ),
+    ],
+    ),
+    const SizedBox(height: 12),
+    _buildPlannerStatsRow(),
+    ],
+    ),
+    ),
+    ),
+
                     _buildSectionHeader(
                       icon: Icons.analytics_rounded,
                       title: 'REPORT DOWNLOAD',
@@ -444,46 +465,70 @@ class _AdminDashboardContent extends StatelessWidget {
   }
 
   Widget _buildPlannerStatsRow() {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        gradient: LinearGradient(
-          colors: [
-            Colors.orangeAccent.withOpacity(0.1),
-            Colors.orangeAccent.withOpacity(0.05),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        border: Border.all(
-          color: Colors.orangeAccent.withOpacity(0.3),
-          width: 1,
-        ),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          _buildPlannerStatItem(
-            icon: Icons.event_available,
-            value: '24',
-            label: 'Completed',
-          ),
-          _buildPlannerStatItem(
-            icon: Icons.event_busy,
-            value: '5',
-            label: 'Pending',
-          ),
-          _buildPlannerStatItem(
-            icon: Icons.event,
-            value: '12',
-            label: 'Upcoming',
-          ),
-        ],
-      ),
+    // Fetch stats from API
+    Future<Map<String, int>> fetchStats() async {
+      final response = await http.get( Uri.parse('http://193.203.162.232:5050/Planner/planner_stats?campus_id=$campusID'),);
+
+      if (response.statusCode == 200) {
+        return {
+          'completed': jsonDecode(response.body)['completed'] ?? 0,
+          'pending': jsonDecode(response.body)['pending'] ?? 0,
+          'upcoming': jsonDecode(response.body)['upcoming'] ?? 0,
+        };
+      } else {
+        throw Exception('Failed to load stats');
+      }
+    }
+
+    return FutureBuilder<Map<String, int>>(
+      future: fetchStats(),
+      builder: (context, snapshot) {
+        if (snapshot.hasData) {
+          return Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              gradient: LinearGradient(
+                colors: [
+                  Colors.orangeAccent.withOpacity(0.1),
+                  Colors.orangeAccent.withOpacity(0.05),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              border: Border.all(
+                color: Colors.orangeAccent.withOpacity(0.3),
+                width: 1,
+              ),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _buildPlannerStatItem(
+                  icon: Icons.event_available,
+                  value: snapshot.data!['completed'].toString(),
+                  label: 'Completed',
+                ),
+                _buildPlannerStatItem(
+                  icon: Icons.event_busy,
+                  value: snapshot.data!['pending'].toString(),
+                  label: 'Pending',
+                ),
+                _buildPlannerStatItem(
+                  icon: Icons.event,
+                  value: snapshot.data!['upcoming'].toString(),
+                  label: 'Upcoming',
+                ),
+              ],
+            ),
+          );
+        } else if (snapshot.hasError) {
+          return Text('Error: ${snapshot.error}');
+        }
+        return CircularProgressIndicator();
+      },
     );
   }
-
   Widget _buildPlannerStatItem({
     required IconData icon,
     required String value,
@@ -889,13 +934,41 @@ class _AdminDashboardContent extends StatelessWidget {
   }
 
   void _navigateToCurriculum(BuildContext context, String section) {
+    int groupId = 8; // Default to Pre-Medical
+    switch(section) {
+      case 'Pre-Medical':
+        groupId = 8;
+        break;
+      case 'Pre-Engineering':
+        groupId = 9;
+        break;
+      case 'ICS (Physics)':
+        groupId = 10;
+        break;
+      case 'ICS (Stats)':
+        groupId = 11;
+        break;
+      case 'General Science':
+        groupId = 12;
+        break;
+      case 'I.COM (Part-I)':
+        groupId = 13;
+        break;
+      case 'I.COM (Part-II)':
+        groupId = 14;
+        break;
+      case 'Humanities (F.A.)':
+        groupId = 15;
+        break;
+    }
+
     Navigator.pushNamed(
       context,
       '/subjects',
       arguments: {
         'campusID': campusID,
         'campusName': campusName,
-        'initialSection': section,
+        'subjectGroupId': groupId,
       },
     );
   }

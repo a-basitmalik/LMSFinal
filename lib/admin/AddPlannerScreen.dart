@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/rendering.dart';
 
 class AddPlannerScreen extends StatefulWidget {
   final int campusID;
@@ -180,9 +181,6 @@ class _AddPlannerScreenState extends State<AddPlannerScreen> {
                   ),
                 ),
                 style: TextStyle(color: Colors.white),
-                onChanged: (value) {
-                  // Implement search functionality if needed
-                },
               ),
               SizedBox(height: 16),
               Expanded(
@@ -260,7 +258,6 @@ class _AddPlannerScreenState extends State<AddPlannerScreen> {
     setState(() => _isSubmitting = true);
 
     try {
-      // Prepare the planned date time
       final plannedDateTime = DateTime(
         _selectedDate.year,
         _selectedDate.month,
@@ -269,7 +266,6 @@ class _AddPlannerScreenState extends State<AddPlannerScreen> {
         _selectedTime.minute,
       );
 
-      // Step 1: Create the planner first
       final plannerResponse = await http.post(
         Uri.parse('http://193.203.162.232:5050/Planner/planners'),
         headers: {'Content-Type': 'application/json'},
@@ -290,59 +286,17 @@ class _AddPlannerScreenState extends State<AddPlannerScreen> {
       final plannerData = json.decode(plannerResponse.body);
       final plannerId = plannerData['planner_id'];
 
-      // Step 2: Upload attachments only if planner was created successfully
       if (_attachments.isNotEmpty) {
-        bool allUploadsSuccessful = true;
-        List<String> uploadErrors = [];
-
-        // Process each attachment sequentially
-        for (final file in _attachments) {
-          try {
-            var request = http.MultipartRequest(
-              'POST',
-              Uri.parse('http://193.203.162.232:5050/Planner/attachments'),
-            );
-
-            request.fields['planner_id'] = plannerId.toString();
-            request.files.add(
-              await http.MultipartFile.fromPath(
-                'file',
-                file.path,
-                filename: file.path.split('/').last,
-              ),
-            );
-
-            var response = await request.send();
-            if (response.statusCode != 201) {
-              allUploadsSuccessful = false;
-              uploadErrors.add('Failed to upload ${file.path.split('/').last}');
-            }
-          } catch (e) {
-            allUploadsSuccessful = false;
-            uploadErrors.add('Error uploading ${file.path.split('/').last}: ${e.toString()}');
-          }
-        }
-
-        if (!allUploadsSuccessful) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Some attachments failed to upload: ${uploadErrors.join(", ")}'),
-              backgroundColor: Colors.orange,
-              duration: Duration(seconds: 5),
-            ),
-          );
-        }
+        await _uploadAttachments(plannerId);
       }
 
-      // Show success message and return
+      Navigator.pop(context, true);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Planner created successfully'),
           backgroundColor: Colors.green,
         ),
       );
-      Navigator.pop(context, true);
-
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -351,9 +305,12 @@ class _AddPlannerScreenState extends State<AddPlannerScreen> {
         ),
       );
     } finally {
-      setState(() => _isSubmitting = false);
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+      }
     }
   }
+
   Future<void> _uploadAttachments(int plannerId) async {
     try {
       for (final file in _attachments) {
@@ -383,7 +340,6 @@ class _AddPlannerScreenState extends State<AddPlannerScreen> {
           backgroundColor: Colors.orange,
         ),
       );
-      // We don't rethrow here because the planner was created successfully
     }
   }
 
@@ -487,12 +443,40 @@ class _AddPlannerScreenState extends State<AddPlannerScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFF0A0A1A),
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
         title: Text('CREATE LESSON PLAN'),
         backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
+        leading: IconButton(
+          icon: Icon(Icons.close),
+          onPressed: () => Navigator.pop(context),
+        ),
+        actions: [
+          if (!_isSubmitting)
+            TextButton(
+              onPressed: _submitPlanner,
+              child: Text(
+                'SAVE',
+                style: TextStyle(color: Colors.cyanAccent),
+              ),
+            ),
+          if (_isSubmitting)
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16),
+              child: Center(
+                child: SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.cyanAccent,
+                  ),
+                ),
+              ),
+            ),
+        ],
       ),
       body: _isLoadingSubjects
           ? Center(child: CircularProgressIndicator(color: Colors.cyanAccent))
@@ -612,29 +596,33 @@ class _AddPlannerScreenState extends State<AddPlannerScreen> {
               _buildAddAttachmentButton(),
               _buildAttachmentPreview(),
               SizedBox(height: 32),
-              Center(
-                child: _isSubmitting
-                    ? CircularProgressIndicator(color: Colors.cyanAccent)
-                    : ElevatedButton(
-                  onPressed: _submitPlanner,
-                  style: ElevatedButton.styleFrom(
-                    foregroundColor: Colors.black,
-                    backgroundColor: Colors.cyanAccent,
-                    padding: EdgeInsets.symmetric(
-                        horizontal: 40, vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+              if (!_isSubmitting)
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: _submitPlanner,
+                    style: ElevatedButton.styleFrom(
+                      foregroundColor: Colors.black,
+                      backgroundColor: Colors.cyanAccent,
+                      padding: EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
-                  ),
-                  child: Text(
-                    'SAVE PLAN',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
+                    child: Text(
+                      'SAVE PLAN',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
                     ),
                   ),
                 ),
-              ),
+              if (_isSubmitting)
+                Center(
+                  child: CircularProgressIndicator(color: Colors.cyanAccent),
+                ),
+              SizedBox(height: MediaQuery.of(context).viewInsets.bottom),
             ],
           ),
         ),

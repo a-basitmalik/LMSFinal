@@ -1,352 +1,368 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'dart:math';
 
-void main() {
-  runApp(MyApp());
-}
+class TeacherProfileScreen extends StatefulWidget {
+  final int teacherId;
 
-class MyApp extends StatelessWidget {
+  const TeacherProfileScreen({Key? key, required this.teacherId}) : super(key: key);
+
   @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Teacher Profile',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-        visualDensity: VisualDensity.adaptivePlatformDensity,
-      ),
-      home: TeacherProfileScreen(),
-    );
-  }
+  _TeacherProfileScreenState createState() => _TeacherProfileScreenState();
 }
 
-class TeacherProfileScreen extends StatelessWidget {
-  final List<String> subjects = [
-    'Mathematics - Grade 10',
-    'Physics - Grade 11',
-    'Advanced Calculus - Grade 12'
-  ];
+class _TeacherProfileScreenState extends State<TeacherProfileScreen> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _animation;
+  Map<String, dynamic>? teacherData;
+  List<dynamic> subjects = [];
+  bool isLoading = true;
 
-  final List<Map<String, dynamic>> feedbacks = [
-    {
-      'student': 'Alex Johnson',
-      'comment': 'Excellent teaching methodology, really helped me understand complex concepts.',
-      'rating': 5,
-      'date': '15 Mar 2023'
-    },
-    {
-      'student': 'Sarah Williams',
-      'comment': 'Very patient and explains things clearly. Highly recommended!',
-      'rating': 4,
-      'date': '28 Feb 2023'
-    },
-    {
-      'student': 'Michael Brown',
-      'comment': 'Makes learning fun and engaging. Always available for extra help.',
-      'rating': 5,
-      'date': '10 Feb 2023'
-    },
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 10),
+    )..repeat();
+    _animation = Tween<double>(begin: 0, end: 1).animate(_controller);
+    _fetchTeacherData();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  Future<void> _fetchTeacherData() async {
+    try {
+      // Fetch teacher details
+      final teacherResponse = await http.get(
+        Uri.parse('http://193.203.162.232:5050/teacher/api/teachers/${widget.teacherId}'),
+      );
+
+      if (teacherResponse.statusCode == 200) {
+        setState(() {
+          teacherData = json.decode(teacherResponse.body);
+        });
+      }
+
+      // Fetch subjects taught by this teacher
+      final subjectsResponse = await http.get(
+        Uri.parse('http://193.203.162.232:5050/teacher/api/subjects?teacherid=${widget.teacherId}'),
+      );
+
+      if (subjectsResponse.statusCode == 200) {
+        setState(() {
+          subjects = json.decode(subjectsResponse.body);
+        });
+      }
+    } catch (e) {
+      print('Error fetching data: $e');
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFF0A0E21),
-      body: CustomScrollView(
-        slivers: [
-          SliverAppBar(
-            expandedHeight: 280.0,
-            floating: false,
-            pinned: true,
-            flexibleSpace: FlexibleSpaceBar(
-              title: Text('PROFILE',
-                  style: GoogleFonts.orbitron(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 1.5,
-                  )),
-              background: Stack(
-                fit: StackFit.expand,
-                children: [
-                  Image.network(
-                    'https://images.unsplash.com/photo-1579547945413-497e1b99dac0?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80',
-                    fit: BoxFit.cover,
-                  ),
-                  Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.bottomCenter,
-                        end: Alignment.topCenter,
-                        colors: [
-                          Colors.black.withOpacity(0.7),
-                          Colors.transparent,
-                        ],
-                      ),
-                    ),
-                  ),
-                  Align(
-                    alignment: Alignment.center,
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        SizedBox(height: 50),
-                        Container(
-                          width: 120,
-                          height: 120,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            image: DecorationImage(
-                              fit: BoxFit.cover,
-                              image: NetworkImage(
-                                  'https://randomuser.me/api/portraits/men/42.jpg'),
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.tealAccent.withOpacity(0.4),
-                                blurRadius: 20,
-                                spreadRadius: 2,
-                              ),
-                            ],
-                            border: Border.all(
-                              color: Colors.tealAccent,
-                              width: 2,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
+      backgroundColor: Colors.black,
+      body: Stack(
+        children: [
+          CustomPaint(
+            painter: _ParticlePainter(animation: _animation),
+            size: Size.infinite,
           ),
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  SizedBox(height: 20),
-                  Center(
-                    child: Text(
-                      'Dr. Robert Chen',
-                      style: GoogleFonts.orbitron(
-                        color: Colors.white,
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 1.2,
-                      ),
-                    ),
-                  ),
-                  SizedBox(height: 5),
-                  Center(
-                    child: Text(
-                      'Senior Mathematics Professor',
-                      style: GoogleFonts.raleway(
-                        color: Colors.tealAccent,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                  SizedBox(height: 30),
-
-                  // Contact Information Card
-                  _buildSectionCard(
-                    title: 'CONTACT INFORMATION',
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+          SafeArea(
+            child: isLoading
+                ? Center(child: CircularProgressIndicator(color: Colors.cyanAccent))
+                : CustomScrollView(
+              slivers: [
+                SliverAppBar(
+                  expandedHeight: 200.0,
+                  floating: false,
+                  pinned: true,
+                  flexibleSpace: FlexibleSpaceBar(
+                    title: Text('TEACHER PROFILE',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1.5,
+                        )),
+                    background: Stack(
+                      fit: StackFit.expand,
                       children: [
-                        _buildContactItem(Icons.email, 'robert.chen@university.edu'),
-                        Divider(color: Colors.white24, height: 30),
-                        _buildContactItem(Icons.phone, '+1 (555) 123-4567'),
-                        Divider(color: Colors.white24, height: 30),
-                        _buildContactItem(Icons.location_on, 'Faculty Building, Room 304'),
-                      ],
-                    ),
-                  ),
-                  SizedBox(height: 25),
-
-                  // Attendance Reports
-                  Text(
-                    'ATTENDANCE REPORTS',
-                    style: GoogleFonts.orbitron(
-                      color: Colors.tealAccent,
-                      fontSize: 16,
-                      letterSpacing: 1.2,
-                    ),
-                  ),
-                  SizedBox(height: 15),
-                  _buildSectionCard(
-                    child: Column(
-                      children: [
-                        TextField(
-                          decoration: InputDecoration(
-                            labelText: 'Select Date Range',
-                            labelStyle: TextStyle(color: Colors.white70),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderSide: BorderSide(color: Colors.tealAccent),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            suffixIcon: Icon(Icons.calendar_today, color: Colors.tealAccent),
-                          ),
-                          style: TextStyle(color: Colors.white),
-                          readOnly: true,
-                        ),
-                        SizedBox(height: 20),
-                        OutlinedButton(
-                          onPressed: () {},
-                          style: OutlinedButton.styleFrom(
-                            side: BorderSide(color: Colors.tealAccent),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(30),
-                            ),
-                            padding: EdgeInsets.symmetric(horizontal: 30, vertical: 12),
-                          ),
-                          child: Text(
-                            'EXPORT REPORT',
-                            style: GoogleFonts.orbitron(
-                              color: Colors.tealAccent,
-                              letterSpacing: 1.2,
+                        Container(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                Colors.cyanAccent.withOpacity(0.1),
+                                Colors.black,
+                              ],
                             ),
                           ),
                         ),
-                      ],
-                    ),
-                  ),
-                  SizedBox(height: 25),
-
-                  // Subjects Taught
-                  Text(
-                    'SUBJECTS TAUGHT',
-                    style: GoogleFonts.orbitron(
-                      color: Colors.tealAccent,
-                      fontSize: 16,
-                      letterSpacing: 1.2,
-                    ),
-                  ),
-                  SizedBox(height: 15),
-                  _buildSectionCard(
-                    child: Column(
-                      children: [
-                        ...subjects.map((subject) => Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 10),
-                          child: Row(
-                            children: [
-                              Icon(Icons.school, color: Colors.tealAccent, size: 20),
-                              SizedBox(width: 15),
-                              Expanded(
-                                child: Text(
-                                  subject,
-                                  style: TextStyle(color: Colors.white, fontSize: 16),
-                                ),
-                              ),
-                              Icon(Icons.arrow_forward_ios, color: Colors.white54, size: 16),
-                            ],
-                          ),
-                        )).toList(),
-                      ],
-                    ),
-                  ),
-                  SizedBox(height: 25),
-
-                  // Performance and Feedback
-                  Text(
-                    'PERFORMANCE & FEEDBACK',
-                    style: GoogleFonts.orbitron(
-                      color: Colors.tealAccent,
-                      fontSize: 16,
-                      letterSpacing: 1.2,
-                    ),
-                  ),
-                  SizedBox(height: 15),
-                  _buildSectionCard(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Center(
-                          child: Row(
+                        Align(
+                          alignment: Alignment.center,
+                          child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(Icons.star, color: Colors.amber, size: 30),
-                              SizedBox(width: 10),
-                              Text(
-                                '4.8/5.0',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.bold,
+                              SizedBox(height: 50),
+                              Container(
+                                width: 100,
+                                height: 100,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  image: DecorationImage(
+                                    fit: BoxFit.cover,
+                                    image: NetworkImage(
+                                        'https://randomuser.me/api/portraits/men/${widget.teacherId}.jpg'),
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.cyanAccent.withOpacity(0.4),
+                                      blurRadius: 20,
+                                      spreadRadius: 2,
+                                    ),
+                                  ],
+                                  border: Border.all(
+                                    color: Colors.cyanAccent,
+                                    width: 2,
+                                  ),
                                 ),
                               ),
                             ],
                           ),
                         ),
-                        SizedBox(height: 20),
-                        ...feedbacks.map((feedback) => Padding(
-                          padding: const EdgeInsets.only(bottom: 20),
+                      ],
+                    ),
+                  ),
+                ),
+                SliverPadding(
+                  padding: EdgeInsets.all(16),
+                  sliver: SliverList(
+                    delegate: SliverChildListDelegate([
+                      SizedBox(height: 16),
+                      Center(
+                        child: Text(
+                          teacherData?['name'] ?? 'Unknown',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 1.2,
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: 5),
+                      Center(
+                        child: Text(
+                          'Faculty Member',
+                          style: TextStyle(
+                            color: Colors.cyanAccent,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: 32),
+
+                      // Contact Information
+                      _buildSectionHeader(
+                        icon: Icons.contact_mail_rounded,
+                        title: 'CONTACT INFORMATION',
+                      ),
+                      SizedBox(height: 16),
+                      GlassCard(
+                        borderRadius: 16,
+                        borderColor: Colors.cyanAccent.withOpacity(0.3),
+                        child: Padding(
+                          padding: EdgeInsets.all(16),
                           child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(
-                                    feedback['student'],
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  Text(
-                                    feedback['date'],
-                                    style: TextStyle(
-                                      color: Colors.white54,
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                ],
+                              _buildContactItem(
+                                Icons.email,
+                                teacherData?['email'] ?? 'Not available',
                               ),
-                              SizedBox(height: 5),
-                              Row(
-                                children: List.generate(5, (index) => Icon(
-                                  index < feedback['rating'] ? Icons.star : Icons.star_border,
-                                  color: Colors.amber,
-                                  size: 16,
-                                )),
+                              Divider(color: Colors.white24, height: 30),
+                              _buildContactItem(
+                                Icons.phone,
+                                teacherData?['phone'] ?? 'Not available',
                               ),
-                              SizedBox(height: 8),
+                              Divider(color: Colors.white24, height: 30),
+                              _buildContactItem(
+                                Icons.location_on,
+                                'Faculty Building',
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: 32),
+
+                      // Subjects Taught
+                      _buildSectionHeader(
+                        icon: Icons.menu_book_rounded,
+                        title: 'SUBJECTS TAUGHT',
+                        iconColor: Colors.blueAccent,
+                      ),
+                      SizedBox(height: 16),
+                      GlassCard(
+                        borderRadius: 16,
+                        borderColor: Colors.blueAccent.withOpacity(0.3),
+                        child: Padding(
+                          padding: EdgeInsets.all(16),
+                          child: Column(
+                            children: subjects.isEmpty
+                                ? [
                               Text(
-                                feedback['comment'],
+                                'No subjects assigned',
                                 style: TextStyle(
                                   color: Colors.white70,
                                   fontSize: 14,
                                 ),
+                              )
+                            ]
+                                : subjects.map((subject) => Padding(
+                              padding: EdgeInsets.symmetric(vertical: 8),
+                              child: Row(
+                                children: [
+                                  Icon(Icons.school,
+                                      color: Colors.blueAccent,
+                                      size: 20),
+                                  SizedBox(width: 15),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          subject['subject_name'] ?? 'Unknown',
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 16,
+                                          ),
+                                        ),
+                                        SizedBox(height: 4),
+                                        Text(
+                                          '${subject['day'] ?? ''} ${subject['time'] != null ? 'at ${subject['time']}' : ''}',
+                                          style: TextStyle(
+                                            color: Colors.white54,
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  Icon(Icons.arrow_forward_ios,
+                                      color: Colors.white54,
+                                      size: 16),
+                                ],
                               ),
-                              SizedBox(height: 10),
-                              Divider(color: Colors.white24),
+                            )).toList(),
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: 32),
+
+                      // Attendance Reports
+                      _buildSectionHeader(
+                        icon: Icons.fingerprint_outlined,
+                        title: 'ATTENDANCE REPORTS',
+                        iconColor: Colors.greenAccent,
+                      ),
+                      SizedBox(height: 16),
+                      GlassCard(
+                        borderRadius: 16,
+                        borderColor: Colors.greenAccent.withOpacity(0.3),
+                        child: Padding(
+                          padding: EdgeInsets.all(16),
+                          child: Column(
+                            children: [
+                              TextField(
+                                decoration: InputDecoration(
+                                  labelText: 'Select Date Range',
+                                  labelStyle: TextStyle(color: Colors.white70),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderSide: BorderSide(color: Colors.greenAccent),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  suffixIcon: Icon(Icons.calendar_today,
+                                      color: Colors.greenAccent),
+                                ),
+                                style: TextStyle(color: Colors.white),
+                                readOnly: true,
+                              ),
+                              SizedBox(height: 20),
+                              _buildAnimatedButton(
+                                icon: Icons.download,
+                                label: 'EXPORT REPORT',
+                                color: Colors.greenAccent,
+                                onTap: () {},
+                              ),
                             ],
                           ),
-                        )).toList(),
-                      ],
-                    ),
+                        ),
+                      ),
+                      SizedBox(height: 40),
+                    ]),
                   ),
-                  SizedBox(height: 40),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {},
-        backgroundColor: Colors.tealAccent,
-        child: Icon(Icons.edit, color: Colors.black),
-        elevation: 8,
+    );
+  }
+
+  Widget _buildSectionHeader({
+    required IconData icon,
+    required String title,
+    Color iconColor = Colors.cyanAccent,
+    VoidCallback? onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              children: [
+                Icon(icon, color: iconColor, size: 20),
+                SizedBox(width: 8),
+                Text(
+                  title,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+              ],
+            ),
+            if (onTap != null)
+              Icon(
+                Icons.arrow_forward_ios_rounded,
+                color: iconColor.withOpacity(0.7),
+                size: 16,
+              ),
+          ],
+        ),
       ),
     );
   }
@@ -354,7 +370,7 @@ class TeacherProfileScreen extends StatelessWidget {
   Widget _buildContactItem(IconData icon, String text) {
     return Row(
       children: [
-        Icon(icon, color: Colors.tealAccent, size: 24),
+        Icon(icon, color: Colors.cyanAccent, size: 24),
         SizedBox(width: 15),
         Text(
           text,
@@ -364,38 +380,138 @@ class TeacherProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildSectionCard({String? title, required Widget child}) {
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.all(20),
+  Widget _buildAnimatedButton({
+    required IconData icon,
+    required String label,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
       decoration: BoxDecoration(
-        color: Color(0xFF1D1E33),
         borderRadius: BorderRadius.circular(12),
+        gradient: LinearGradient(
+          colors: [
+            color.withOpacity(0.2),
+            color.withOpacity(0.1),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        border: Border.all(
+          color: color.withOpacity(0.5),
+          width: 1,
+        ),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.all(12.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(icon, color: color, size: 20),
+                SizedBox(width: 8),
+                Text(
+                  label,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class GlassCard extends StatelessWidget {
+  final Widget? child;
+  final Color? borderColor;
+  final double borderRadius;
+  final double? width;
+  final double? height;
+
+  const GlassCard({
+    Key? key,
+    this.child,
+    this.borderColor,
+    this.borderRadius = 16,
+    this.width,
+    this.height,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: width,
+      height: height,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(borderRadius),
+        border: Border.all(
+          color: borderColor ?? Colors.white.withOpacity(0.2),
+          width: 1.5,
+        ),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Colors.white.withOpacity(0.1),
+            Colors.white.withOpacity(0.05),
+          ],
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.3),
+            color: Colors.black.withOpacity(0.2),
             blurRadius: 10,
             spreadRadius: 2,
           ),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (title != null) ...[
-            Text(
-              title,
-              style: GoogleFonts.orbitron(
-                color: Colors.tealAccent,
-                fontSize: 16,
-                letterSpacing: 1.2,
-              ),
-            ),
-            SizedBox(height: 15),
-          ],
-          child,
-        ],
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(borderRadius),
+        child: child,
       ),
     );
   }
+}
+
+class _ParticlePainter extends CustomPainter {
+  final Animation<double> animation;
+  final Random random = Random(42);
+
+  _ParticlePainter({required this.animation});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..style = PaintingStyle.fill;
+
+    const particleCount = 50;
+
+    for (int i = 0; i < particleCount; i++) {
+      final x = random.nextDouble() * size.width;
+      final y = random.nextDouble() * size.height;
+      final radius = 1 + random.nextDouble() * 3;
+      final hue = 180 + random.nextDouble() * 60; // Cyan to blue range
+      final opacity = 0.1 + random.nextDouble() * 0.2;
+
+      canvas.drawCircle(
+        Offset(x, y),
+        radius * (0.8 + 0.4 * animation.value),
+        paint..color = HSVColor.fromAHSV(opacity * animation.value, hue, 0.8, 1).toColor(),
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }

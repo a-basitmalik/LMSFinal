@@ -2,8 +2,14 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:table_calendar/table_calendar.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class HolographicCalendarScreen extends StatefulWidget {
+  final int campusID;
+
+  const HolographicCalendarScreen({required this.campusID, Key? key}) : super(key: key);
+
   @override
   _HolographicCalendarScreenState createState() => _HolographicCalendarScreenState();
 }
@@ -17,9 +23,8 @@ class _HolographicCalendarScreenState extends State<HolographicCalendarScreen>
   CalendarFormat _calendarFormat = CalendarFormat.month;
   DateTime _focusedDay = DateTime.now();
   DateTime? _selectedDay;
-  Map<DateTime, List<Event>> _events = {};
-
-  final TextEditingController _eventController = TextEditingController();
+  Map<DateTime, List<Planner>> _plannersMap = {};
+  bool _isLoading = true;
 
   @override
   void initState() {
@@ -42,17 +47,61 @@ class _HolographicCalendarScreenState extends State<HolographicCalendarScreen>
       begin: Colors.cyanAccent.withOpacity(0.7),
       end: Colors.purpleAccent.withOpacity(0.7),
     ).animate(_animationController);
+
+    _fetchPlanners();
   }
 
   @override
   void dispose() {
     _animationController.dispose();
-    _eventController.dispose();
     super.dispose();
   }
 
-  List<Event> _getEventsForDay(DateTime day) {
-    return _events[DateTime(day.year, day.month, day.day)] ?? [];
+  Future<void> _fetchPlanners() async {
+    try {
+      setState(() => _isLoading = true);
+
+      final response = await http.get(
+        Uri.parse('http://193.203.162.232:5050/Planner/planners?campus_id=${widget.campusID}'),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        final planners = List<Planner>.from(
+            data['planners'].map((planner) => Planner.fromJson(planner))
+        );
+
+        setState(() {
+          _plannersMap = {};
+          for (var planner in planners) {
+            final plannedDate = DateTime.parse(planner.plannedDate);
+            final dateKey = DateTime(plannedDate.year, plannedDate.month, plannedDate.day);
+
+            if (_plannersMap[dateKey] == null) {
+              _plannersMap[dateKey] = [planner];
+            } else {
+              _plannersMap[dateKey]!.add(planner);
+            }
+          }
+        });
+      } else {
+        throw Exception('Failed to load planners: ${response.statusCode}');
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
+
+  List<Planner> _getPlannersForDay(DateTime day) {
+    return _plannersMap[DateTime(day.year, day.month, day.day)] ?? [];
   }
 
   void _onDaySelected(DateTime selectedDay, DateTime focusedDay) {
@@ -64,91 +113,12 @@ class _HolographicCalendarScreenState extends State<HolographicCalendarScreen>
     }
   }
 
-  void _showAddEventDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AnimatedBuilder(
-        animation: _animationController,
-        builder: (context, child) {
-          return Dialog(
-            backgroundColor: Colors.transparent,
-            elevation: 0,
-            child: GlassCard(
-              borderColor: _colorAnimation.value,
-              child: Padding(
-                padding: const EdgeInsets.all(20.0),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      'Add Event',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    SizedBox(height: 20),
-                    TextField(
-                      controller: _eventController,
-                      style: TextStyle(color: Colors.white),
-                      decoration: InputDecoration(
-                        labelText: 'Event Description',
-                        labelStyle: TextStyle(color: Colors.white.withOpacity(0.7)),
-                        enabledBorder: UnderlineInputBorder(
-                          borderSide: BorderSide(color: Colors.white.withOpacity(0.5)),
-                        ),
-                        focusedBorder: UnderlineInputBorder(
-                          borderSide: BorderSide(color: Colors.cyanAccent),
-                        ),
-                      ),
-                    ),
-                    SizedBox(height: 20),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(context),
-                          child: Text('Cancel', style: TextStyle(color: Colors.white)),
-                        ),
-                        SizedBox(width: 10),
-                        ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.cyanAccent,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                          ),
-                          onPressed: () {
-                            if (_eventController.text.isNotEmpty) {
-                              setState(() {
-                                final dateKey = DateTime(
-                                  _selectedDay!.year,
-                                  _selectedDay!.month,
-                                  _selectedDay!.day,
-                                );
-                                if (_events[dateKey] == null) {
-                                  _events[dateKey] = [Event(_eventController.text)];
-                                } else {
-                                  _events[dateKey]!.add(Event(_eventController.text));
-                                }
-                                _eventController.clear();
-                                Navigator.pop(context);
-                              });
-                            }
-                          },
-                          child: Text('Save', style: TextStyle(color: Colors.black)),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          );
-        },
-      ),
-    );
+  void _onPageChanged(DateTime focusedDay) {
+    _focusedDay = focusedDay;
+  }
+
+  void _onFormatChanged(CalendarFormat format) {
+    setState(() => _calendarFormat = format);
   }
 
   @override
@@ -192,7 +162,7 @@ class _HolographicCalendarScreenState extends State<HolographicCalendarScreen>
                     animation: _animationController,
                     builder: (context, child) {
                       return Text(
-                        'CALENDAR',
+                        'PLANNER CALENDAR',
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -237,19 +207,15 @@ class _HolographicCalendarScreenState extends State<HolographicCalendarScreen>
                             child: Padding(
                               padding: const EdgeInsets.all(16.0),
                               child: TableCalendar(
-                                firstDay: DateTime.utc(2010, 10, 16),
-                                lastDay: DateTime.utc(2030, 3, 14),
+                                firstDay: DateTime.utc(2020, 1, 1),
+                                lastDay: DateTime.utc(2030, 12, 31),
                                 focusedDay: _focusedDay,
                                 calendarFormat: _calendarFormat,
                                 selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
                                 onDaySelected: _onDaySelected,
-                                onFormatChanged: (format) {
-                                  setState(() => _calendarFormat = format);
-                                },
-                                onPageChanged: (focusedDay) {
-                                  _focusedDay = focusedDay;
-                                },
-                                eventLoader: _getEventsForDay,
+                                onFormatChanged: _onFormatChanged,
+                                onPageChanged: _onPageChanged,
+                                eventLoader: _getPlannersForDay,
                                 calendarStyle: CalendarStyle(
                                   defaultTextStyle: TextStyle(color: Colors.white),
                                   weekendTextStyle: TextStyle(color: Colors.white),
@@ -308,53 +274,19 @@ class _HolographicCalendarScreenState extends State<HolographicCalendarScreen>
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(
-                                    'EVENTS ON ${DateFormat('MMMM d, y').format(_selectedDay!)}',
-                                    style: TextStyle(
-                                      color: Colors.white.withOpacity(0.8),
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                      letterSpacing: 1.2,
-                                    ),
-                                  ),
-                                  IconButton(
-                                    icon: Icon(Icons.add, color: Colors.cyanAccent),
-                                    onPressed: _showAddEventDialog,
-                                  ),
-                                ],
+                              Text(
+                                'PLANNERS ON ${DateFormat('MMMM d, y').format(_selectedDay!)}',
+                                style: TextStyle(
+                                  color: Colors.white.withOpacity(0.8),
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: 1.2,
+                                ),
                               ),
                               Divider(color: Colors.white.withOpacity(0.2)),
-                              ..._getEventsForDay(_selectedDay!).map(
-                                    (event) => Padding(
-                                  padding: const EdgeInsets.symmetric(vertical: 8.0),
-                                  child: Row(
-                                    children: [
-                                      Icon(Icons.circle, color: Colors.cyanAccent, size: 10),
-                                      SizedBox(width: 10),
-                                      Text(
-                                        event.title,
-                                        style: TextStyle(color: Colors.white),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                              if (_getEventsForDay(_selectedDay!).isEmpty)
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(vertical: 16.0),
-                                  child: Center(
-                                    child: Text(
-                                      'No events scheduled',
-                                      style: TextStyle(
-                                        color: Colors.white.withOpacity(0.6),
-                                        fontStyle: FontStyle.italic,
-                                      ),
-                                    ),
-                                  ),
-                                ),
+                              _isLoading
+                                  ? Center(child: CircularProgressIndicator(color: Colors.cyanAccent))
+                                  : _buildPlannersList(),
                             ],
                           ),
                         ),
@@ -367,19 +299,152 @@ class _HolographicCalendarScreenState extends State<HolographicCalendarScreen>
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _showAddEventDialog,
-        child: Icon(Icons.add, color: Colors.black),
-        backgroundColor: Colors.cyanAccent,
-        elevation: 8,
-      ),
+    );
+  }
+
+  Widget _buildPlannersList() {
+    final planners = _getPlannersForDay(_selectedDay!);
+
+    if (planners.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 16.0),
+        child: Center(
+          child: Text(
+            'No planners scheduled',
+            style: TextStyle(
+              color: Colors.white.withOpacity(0.6),
+              fontStyle: FontStyle.italic,
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Column(
+      children: planners.map((planner) {
+        final plannedDate = DateTime.parse(planner.plannedDate);
+
+        return Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8.0),
+          child: InkWell(
+            onTap: () {
+              // You can navigate to planner details here if needed
+            },
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 10,
+                  height: 10,
+                  margin: EdgeInsets.only(top: 4, right: 10),
+                  decoration: BoxDecoration(
+                    color: Colors.cyanAccent,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        DateFormat('h:mm a').format(plannedDate),
+                        style: TextStyle(
+                          color: Colors.cyanAccent,
+                          fontSize: 12,
+                        ),
+                      ),
+                      SizedBox(height: 2),
+                      Text(
+                        planner.title ?? 'Untitled Planner',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      if (planner.subjectName != null) ...[
+                        SizedBox(height: 2),
+                        Text(
+                          planner.subjectName!,
+                          style: TextStyle(
+                            color: Colors.white70,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                      if (planner.description != null) ...[
+                        SizedBox(height: 4),
+                        Text(
+                          planner.description!,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: Colors.white70,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      }).toList(),
     );
   }
 }
 
-class Event {
-  final String title;
-  Event(this.title);
+class Planner {
+  final int plannerId;
+  final String? title;
+  final String? description;
+  final String plannedDate;
+  final int? subjectId;
+  final String? subjectName;
+  final int? teacherId;
+  final String? teacherName;
+  final String? createdAt;
+
+  Planner({
+    required this.plannerId,
+    this.title,
+    this.description,
+    required this.plannedDate,
+    this.subjectId,
+    this.subjectName,
+    this.teacherId,
+    this.teacherName,
+    this.createdAt,
+  });
+
+  factory Planner.fromJson(Map<String, dynamic> json) {
+    String parseToIso(String? rawDate) {
+      if (rawDate == null) return DateTime.now().toIso8601String();
+      try {
+        return DateTime.parse(rawDate).toIso8601String();
+      } catch (_) {
+        try {
+          final formatter = DateFormat("EEE, dd MMM yyyy HH:mm:ss 'GMT'", 'en_US');
+          return formatter.parseUtc(rawDate).toIso8601String();
+        } catch (e) {
+          return DateTime.now().toIso8601String();
+        }
+      }
+    }
+
+    return Planner(
+      plannerId: json['planner_id'],
+      title: json['title'],
+      description: json['description'],
+      plannedDate: parseToIso(json['planned_date']),
+      subjectId: json['subject_id'],
+      subjectName: json['subject_name'],
+      teacherId: json['teacher_id'],
+      teacherName: json['teacher_name'],
+      createdAt: parseToIso(json['created_at']),
+    );
+  }
 }
 
 class GlassCard extends StatelessWidget {

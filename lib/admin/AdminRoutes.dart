@@ -16,9 +16,8 @@ import 'package:newapp/admin/results_list.dart';
 import 'package:newapp/admin/subjects.dart';
 import 'package:newapp/admin/DownloadReportsScreen.dart';
 import 'package:newapp/admin/AcademicCalendar.dart';
-
-import 'HolographicCalendarScreen.dart';
-import 'PlannerListScreen.dart';
+import 'package:newapp/admin/HolographicCalendarScreen.dart';
+import 'package:newapp/admin/PlannerListScreen.dart';
 
 class AdminRoutes {
   static Route<dynamic> generateRoute(RouteSettings settings) {
@@ -35,13 +34,13 @@ class AdminRoutes {
         return MaterialPageRoute(
           builder: (_) => SharedList(type: 'teachers', campusID: campusID),
         );
-      /*case '/alumniList':
-        return MaterialPageRoute(
-          builder: (_) => SharedList(type: 'alumni', campusID: campusID),
-        );*/
       case '/subjects':
         return MaterialPageRoute(
-          builder: (_) => SubjectDashboard(campusId: campusID),
+          builder: (_) => SubjectDashboard(
+            campusId: campusID,
+            subjectGroupId: args?['subjectGroupId'] ?? 0,
+            campusName: campusName,
+          ),
         );
       case '/result':
         return MaterialPageRoute(
@@ -62,9 +61,14 @@ class AdminRoutes {
             campusName: campusName,
           ),
         );
-      case '/announcements':
+
+      case '/announcements': // Announcement creator screen
         return MaterialPageRoute(
-          builder: (_) => AnnouncementCreator(campusID: campusID),
+          builder: (_) => AnnouncementCreator(
+            campusID: campusID,
+            campusName: campusName,
+          ),
+          fullscreenDialog: true, // Makes it slide up like a modal
         );
       case '/planner':
         return MaterialPageRoute(
@@ -74,18 +78,16 @@ class AdminRoutes {
         );
       case '/fees':
         return MaterialPageRoute(builder: (_) => FineManagementScreen());
-      /*case '/calendar':
-        return MaterialPageRoute(builder: (_) => AcademicCalendarScreen());*/
-      case '/calendar':  // Add this case for the calendar route
+      case '/calendar':
         return MaterialPageRoute(
-          builder: (_) => HolographicCalendarScreen(),
+          builder: (_) => HolographicCalendarScreen(campusID: campusID),
           settings: settings,
         );
       default:
         return MaterialPageRoute(
-          builder: (_) => Scaffold(
-            body: Center(child: Text('No route defined for ${settings.name}')),
-          ),
+            builder: (_) => Scaffold(
+          body: Center(child: Text('No route defined for ${settings.name}')),
+            )
         );
     }
   }
