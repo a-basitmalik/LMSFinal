@@ -18,6 +18,7 @@ import 'package:newapp/admin/DownloadReportsScreen.dart';
 import 'package:newapp/admin/AcademicCalendar.dart';
 import 'package:newapp/admin/HolographicCalendarScreen.dart';
 import 'package:newapp/admin/PlannerListScreen.dart';
+import 'package:newapp/admin/results_list.dart';
 
 class AdminRoutes {
   static Route<dynamic> generateRoute(RouteSettings settings) {
@@ -78,6 +79,13 @@ class AdminRoutes {
         );
       case '/fees':
         return MaterialPageRoute(builder: (_) => FineManagementScreen());
+      case '/results':
+        return MaterialPageRoute(
+          builder: (_) => ResultListScreen(
+            campusId: args!['campusID'],
+          ),
+        );
+
       case '/calendar':
         return MaterialPageRoute(
           builder: (_) => HolographicCalendarScreen(campusID: campusID),

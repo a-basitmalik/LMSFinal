@@ -149,6 +149,12 @@ class _AdminDashboardContent extends StatelessWidget {
         'route': '/fees',
         'color': Colors.redAccent,
       },
+      {
+        'title': 'Results',
+        'icon': Icons.monetization_on_outlined,
+        'route': '/results',
+        'color': Colors.orangeAccent,
+      },
     ];
 
     return Scaffold(
