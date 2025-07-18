@@ -4,7 +4,8 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'AdminRoutes.dart';
-import 'AddPlannerScreen.dart'; // Make sure to import your AddPlannerScreen
+import 'AddPlannerScreen.dart';
+import 'Announcement.dart'; // Make sure to import your AddPlannerScreen
 
 class AdminDashboard extends StatefulWidget {
   final int campusID;
@@ -65,6 +66,35 @@ class _AdminDashboardContent extends StatelessWidget {
     required this.animation,
     Key? key,
   }) : super(key: key);
+
+  void _showAddAnnouncementModal(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      barrierColor: Colors.black.withOpacity(0.7),
+      builder: (context) {
+        return BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+          child: Container(
+            height: MediaQuery.of(context).size.height * 0.9,
+            decoration: BoxDecoration(
+              color: Color(0xFF0A0A1A).withOpacity(0.95),
+              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+              border: Border.all(
+                color: Colors.cyanAccent.withOpacity(0.3),
+                width: 1,
+              ),
+            ),
+            child: AnnouncementCreator(
+              campusID: campusID,
+              campusName: campusName,
+            ),
+          ),
+        );
+      },
+    );
+  }
 
   void _showAddPlannerModal(BuildContext context) {
     showModalBottomSheet(
@@ -215,27 +245,36 @@ class _AdminDashboardContent extends StatelessWidget {
                       },
                     ),
                     const SizedBox(height: 16),
+                    // GlassCard(
+                    //   borderRadius: 20,
+                    //   borderColor: Colors.cyanAccent.withOpacity(0.3),
+                    //   child: Padding(
+                    //     padding: const EdgeInsets.all(16.0),
+                    //     child: Column(
+                    //       children: [
+                    //         _buildAnimatedButton(
+                    //           icon: Icons.add_rounded,
+                    //           label: 'POST NEW',
+                    //           color: Colors.cyanAccent,
+                    //           onTap: () => _showAddAnnouncementModal(context),
+                    //         ),
+                    //       ],
+                    //     ),
+                    //   ),
+                    // ),
+                    // const SizedBox(height: 16),
                     GlassCard(
                       borderRadius: 20,
                       borderColor: Colors.cyanAccent.withOpacity(0.3),
                       child: Padding(
                         padding: const EdgeInsets.all(16.0),
                         child: Column(
-                          children: [
+                          children: [// Replace the existing announcement button with this:
                             _buildAnimatedButton(
                               icon: Icons.add_rounded,
                               label: 'POST NEW',
                               color: Colors.cyanAccent,
-                              onTap: () {
-                                Navigator.pushNamed(
-                                  context,
-                                  '/announcements',
-                                  arguments: {
-                                    'campusID': campusID,
-                                    'campusName': campusName,
-                                  },
-                                );
-                              },
+                              onTap: () => _showAddAnnouncementModal(context),
                             ),
                           ],
                         ),
