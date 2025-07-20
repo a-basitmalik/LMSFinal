@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:newapp/admin/themes/theme_colors.dart';
+import 'package:newapp/admin/themes/theme_text_styles.dart';
 import 'dart:convert';
+import 'AcademicCalendar.dart';
 import 'singleResult.dart';
+
+
 class AssessmentTypeScreen extends StatefulWidget {
   final String studentId;
 
@@ -53,7 +58,7 @@ class _AssessmentTypeScreenState extends State<AssessmentTypeScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: Colors.redAccent,
+        backgroundColor: AdminColors.dangerAccent,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(10),
@@ -77,7 +82,7 @@ class _AssessmentTypeScreenState extends State<AssessmentTypeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: AdminColors.primaryBackground,
       body: CustomScrollView(
         slivers: [
           SliverAppBar(
@@ -85,40 +90,40 @@ class _AssessmentTypeScreenState extends State<AssessmentTypeScreen> {
             floating: false,
             pinned: true,
             flexibleSpace: FlexibleSpaceBar(
-              title: const Text(
+              title: Text(
                 'ASSESSMENT TYPES',
-                style: TextStyle(
+                style: AdminTextStyles.sectionHeader.copyWith(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
                   letterSpacing: 2,
                   shadows: [
                     Shadow(
                       blurRadius: 10,
-                      color: Colors.blueAccent,
+                      color: AdminColors.primaryAccent,
                     ),
                   ],
                 ),
               ),
               background: Container(
-                decoration: const BoxDecoration(
+                decoration: BoxDecoration(
                   gradient: LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                     colors: [
-                      Colors.blue,
-                      Colors.indigo,
-                      Colors.purple,
+                      AdminColors.secondaryAccent,
+                      AdminColors.infoAccent,
+                      AdminColors.curriculumColor,
                     ],
                   ),
                 ),
-                child: const Align(
+                child: Align(
                   alignment: Alignment.bottomRight,
                   child: Opacity(
                     opacity: 0.2,
                     child: Icon(
                       Icons.assessment,
                       size: 120,
-                      color: Colors.white,
+                      color: AdminColors.primaryText,
                     ),
                   ),
                 ),
@@ -129,7 +134,7 @@ class _AssessmentTypeScreenState extends State<AssessmentTypeScreen> {
               ? SliverFillRemaining(
             child: Center(
               child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(Colors.blueAccent),
+                valueColor: AlwaysStoppedAnimation<Color>(AdminColors.primaryAccent),
               ),
             ),
           )
@@ -139,15 +144,18 @@ class _AssessmentTypeScreenState extends State<AssessmentTypeScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(Icons.search_off, size: 60, color: Colors.grey),
+                  Icon(Icons.search_off, size: 60, color: AdminColors.disabledText),
                   const SizedBox(height: 16),
-                  const Text(
+                  Text(
                     'No assessment types found',
-                    style: TextStyle(color: Colors.grey),
+                    style: AdminTextStyles.cardSubtitle,
                   ),
                   TextButton(
                     onPressed: _fetchAssessmentTypes,
-                    child: const Text('Retry'),
+                    child: Text(
+                      'Retry',
+                      style: AdminTextStyles.accentText(AdminColors.primaryAccent),
+                    ),
                   ),
                 ],
               ),
@@ -157,33 +165,31 @@ class _AssessmentTypeScreenState extends State<AssessmentTypeScreen> {
             delegate: SliverChildBuilderDelegate(
                   (context, index) {
                 final type = _assessmentTypes[index];
-                return Card(
+                return Container(
                   margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  color: Colors.grey[900],
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(12),
-                    onTap: () => _navigateToSingleResult(type),
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.assignment, color: Colors.blueAccent),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: Text(
-                              type,
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
+                  child: GlassCard(
+                    borderRadius: 12,
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(12),
+                      onTap: () => _navigateToSingleResult(type),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Row(
+                          children: [
+                            Icon(Icons.assignment, color: AdminColors.primaryAccent),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: Text(
+                                type,
+                                style: AdminTextStyles.cardTitle.copyWith(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                             ),
-                          ),
-                          const Icon(Icons.chevron_right, color: Colors.grey),
-                        ],
+                            Icon(Icons.chevron_right, color: AdminColors.disabledText),
+                          ],
+                        ),
                       ),
                     ),
                   ),
@@ -197,4 +203,3 @@ class _AssessmentTypeScreenState extends State<AssessmentTypeScreen> {
     );
   }
 }
-

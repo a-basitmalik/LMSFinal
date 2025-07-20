@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:http/http.dart' as http;
+import 'package:newapp/admin/themes/theme_colors.dart';
+import 'package:newapp/admin/themes/theme_extensions.dart';
+import 'package:newapp/admin/themes/theme_text_styles.dart';
 import 'dart:convert';
-
 import 'AddPlannerScreen.dart';
 import 'PlannerDetailScreen.dart';
 
@@ -51,7 +52,7 @@ class _PlannerListScreenState extends State<PlannerListScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error: ${e.toString()}'),
-          backgroundColor: Colors.red,
+          backgroundColor: AdminColors.dangerAccent,
         ),
       );
     } finally {
@@ -78,12 +79,12 @@ class _PlannerListScreenState extends State<PlannerListScreen> {
         return Theme(
           data: ThemeData.dark().copyWith(
             colorScheme: ColorScheme.dark(
-              primary: Colors.cyanAccent,
-              onPrimary: Colors.black,
-              surface: Color(0xFF1A1A2E),
-              onSurface: Colors.white,
+              primary: AdminColors.primaryAccent,
+              onPrimary: AdminColors.primaryBackground,
+              surface: AdminColors.secondaryBackground,
+              onSurface: AdminColors.primaryText,
             ),
-            dialogBackgroundColor: Color(0xFF0A0A1A),
+            dialogBackgroundColor: AdminColors.primaryBackground,
           ),
           child: child!,
         );
@@ -127,28 +128,37 @@ class _PlannerListScreenState extends State<PlannerListScreen> {
     }).toList();
 
     return Scaffold(
-      backgroundColor: Color(0xFF0A0A1A),
+      backgroundColor: AdminColors.primaryBackground,
       appBar: AppBar(
-        title: Text('LESSON PLANNER'),
+        title: Text(
+          'LESSON PLANNER',
+          style: AdminTextStyles.sectionHeader.copyWith(
+            color: AdminColors.plannerColor,
+          ),
+        ),
         backgroundColor: Colors.transparent,
         elevation: 0,
         actions: [
           IconButton(
-            icon: Icon(Icons.calendar_today),
+            icon: Icon(Icons.calendar_today, color: AdminColors.primaryText),
             onPressed: () => _selectDate(context),
           ),
           IconButton(
-            icon: Icon(Icons.refresh),
+            icon: Icon(Icons.refresh, color: AdminColors.primaryText),
             onPressed: _refreshPlanners,
           ),
         ],
       ),
       body: RefreshIndicator(
         onRefresh: _refreshPlanners,
-        color: Colors.cyanAccent,
-        backgroundColor: Color(0xFF0A0A1A),
+        color: AdminColors.primaryAccent,
+        backgroundColor: AdminColors.primaryBackground,
         child: _isLoading
-            ? Center(child: CircularProgressIndicator(color: Colors.cyanAccent))
+            ? Center(
+          child: CircularProgressIndicator(
+            color: AdminColors.plannerColor,
+          ),
+        )
             : Column(
           children: [
             Padding(
@@ -158,26 +168,21 @@ class _PlannerListScreenState extends State<PlannerListScreen> {
                 children: [
                   Text(
                     DateFormat('EEEE, MMMM d').format(_selectedDate),
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: AdminTextStyles.sectionHeader,
                   ),
                   Container(
                     padding: EdgeInsets.symmetric(
                         horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
-                      color: Colors.cyanAccent.withOpacity(0.2),
+                      color: AdminColors.plannerColor.withOpacity(0.2),
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
-                          color: Colors.cyanAccent, width: 1),
+                          color: AdminColors.plannerColor, width: 1),
                     ),
                     child: Text(
                       '${filteredPlanners.length} PLANS',
-                      style: TextStyle(
-                        color: Colors.cyanAccent,
-                        fontSize: 12,
+                      style: AdminTextStyles.cardSubtitle.copyWith(
+                        color: AdminColors.plannerColor,
                       ),
                     ),
                   ),
@@ -191,11 +196,11 @@ class _PlannerListScreenState extends State<PlannerListScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Icon(Icons.event_note,
-                        size: 60, color: Colors.white54),
+                        size: 60, color: AdminColors.disabledText),
                     SizedBox(height: 16),
                     Text(
                       'NO PLANS FOR SELECTED DATE',
-                      style: TextStyle(color: Colors.white54),
+                      style: AdminTextStyles.cardSubtitle,
                     ),
                   ],
                 ),
@@ -220,22 +225,8 @@ class _PlannerListScreenState extends State<PlannerListScreen> {
         child: Container(
           width: 56,
           height: 56,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            gradient: LinearGradient(
-              colors: [Colors.cyanAccent, Colors.blueAccent],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.cyanAccent.withOpacity(0.4),
-                blurRadius: 12,
-                spreadRadius: 2,
-              ),
-            ],
-          ),
-          child: Icon(Icons.add, color: Colors.white),
+          decoration: AdminColors.plannerColor.toCircleDecoration(),
+          child: Icon(Icons.add, color: AdminColors.primaryText),
         ),
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -254,18 +245,12 @@ class PlannerCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final plannedDate = DateTime.parse(planner.plannedDate);
 
-
-    return Card(
+    return Container(
       margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      color: Color(0xFF1A1A2E),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(
-          color: Colors.cyanAccent.withOpacity(0.2),
-          width: 1,
-        ),
+      decoration: AdminColors.glassDecoration(
+        borderColor: AdminColors.plannerColor,
+        borderRadius: 12,
       ),
-      elevation: 4,
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(12),
@@ -279,26 +264,21 @@ class PlannerCard extends StatelessWidget {
                 children: [
                   Text(
                     planner.subjectName ?? 'No Subject',
-                    style: TextStyle(
-                      color: Colors.cyanAccent,
-                      fontSize: 14,
+                    style: AdminTextStyles.cardSubtitle.copyWith(
+                      color: AdminColors.plannerColor,
                     ),
                   ),
                   Text(
                     DateFormat('h:mm a').format(plannedDate),
-                    style: TextStyle(
-                      color: Colors.white70,
-                      fontSize: 12,
-                    ),
+                    style: AdminTextStyles.cardSubtitle,
                   ),
                 ],
               ),
               SizedBox(height: 8),
               Text(
                 planner.title ?? 'Untitled Plan',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
+                style: AdminTextStyles.cardTitle.copyWith(
+                  fontSize: 16,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -307,8 +287,7 @@ class PlannerCard extends StatelessWidget {
                 planner.description ?? 'No description provided',
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  color: Colors.white70,
+                style: AdminTextStyles.cardSubtitle.copyWith(
                   fontSize: 14,
                 ),
               ),
@@ -317,14 +296,11 @@ class PlannerCard extends StatelessWidget {
                 Row(
                   children: [
                     Icon(Icons.person_outline,
-                        size: 16, color: Colors.white70),
+                        size: 16, color: AdminColors.secondaryText),
                     SizedBox(width: 4),
                     Text(
                       planner.teacherName!,
-                      style: TextStyle(
-                        color: Colors.white70,
-                        fontSize: 12,
-                      ),
+                      style: AdminTextStyles.cardSubtitle,
                     ),
                   ],
                 ),

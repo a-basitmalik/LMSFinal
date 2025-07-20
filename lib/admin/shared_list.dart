@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:newapp/admin/themes/theme_colors.dart';
+import 'package:newapp/admin/themes/theme_text_styles.dart';
 import 'dart:convert';
 import 'student_view.dart';
 import 'AddStudent.dart';
@@ -95,7 +97,7 @@ class _SharedListState extends State<SharedList> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text("Error: ${e.toString()}"),
-          backgroundColor: Colors.redAccent,
+          backgroundColor: AdminColors.dangerAccent,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(10)
@@ -151,52 +153,42 @@ class _SharedListState extends State<SharedList> {
 
   @override
   Widget build(BuildContext context) {
+    final accentColor = widget.type == "students"
+        ? AdminColors.studentColor
+        : widget.type == "teachers"
+        ? AdminColors.facultyColor
+        : AdminColors.announcementColor;
+
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: AdminColors.primaryBackground,
       body: SafeArea(
         child: Column(
           children: [
-            // Header with gradient
+            // Header with glass morphism effect
             Container(
               padding: EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [Colors.blue.shade900, Colors.indigo.shade800],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.blue.withOpacity(0.3),
-                    blurRadius: 20,
-                    spreadRadius: 2,
-                  ),
-                ],
+              decoration: AdminColors.glassDecoration(
+                borderColor: accentColor,
               ),
               child: Row(
                 children: [
                   Icon(
-                      widget.type == "students"
-                          ? Icons.school_outlined
-                          : widget.type == "teachers"
-                          ? Icons.people_alt_outlined
-                          : Icons.workspaces_outlined,
-                      color: Colors.white,
-                      size: 28
+                    widget.type == "students"
+                        ? Icons.school_outlined
+                        : widget.type == "teachers"
+                        ? Icons.people_alt_outlined
+                        : Icons.workspaces_outlined,
+                    color: AdminColors.primaryText,
+                    size: 28,
                   ),
                   SizedBox(width: 15),
                   Text(
                     headerText,
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 1.2,
-                    ),
+                    style: AdminTextStyles.sectionTitle(accentColor),
                   ),
                   Spacer(),
                   IconButton(
-                    icon: Icon(Icons.refresh, color: Colors.white70),
+                    icon: Icon(Icons.refresh, color: AdminColors.secondaryText),
                     onPressed: fetchData,
                   ),
                 ],
@@ -207,25 +199,20 @@ class _SharedListState extends State<SharedList> {
             Padding(
               padding: const EdgeInsets.all(16.0),
               child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.grey[900],
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.blue.withOpacity(0.1),
-                      blurRadius: 10,
-                      spreadRadius: 2,
-                    ),
-                  ],
+                decoration: AdminColors.glassDecoration(
+                  borderRadius: 12,
                 ),
                 child: TextField(
                   controller: searchController,
-                  style: TextStyle(color: Colors.white),
+                  style: AdminTextStyles.sectionHeader.copyWith(fontSize: 14),
                   decoration: InputDecoration(
-                    prefixIcon: Icon(Icons.search, color: Colors.blueAccent),
+                    prefixIcon: Icon(
+                      Icons.search,
+                      color: AdminColors.primaryAccent,
+                    ),
                     suffixIcon: searchController.text.isNotEmpty
                         ? IconButton(
-                      icon: Icon(Icons.clear, color: Colors.grey),
+                      icon: Icon(Icons.clear, color: AdminColors.disabledText),
                       onPressed: () {
                         searchController.clear();
                         filterItems('');
@@ -233,7 +220,7 @@ class _SharedListState extends State<SharedList> {
                     )
                         : null,
                     hintText: 'Search ${widget.type}...',
-                    hintStyle: TextStyle(color: Colors.grey),
+                    hintStyle: AdminTextStyles.cardSubtitle,
                     border: InputBorder.none,
                     contentPadding: EdgeInsets.symmetric(vertical: 16),
                   ),
@@ -248,7 +235,7 @@ class _SharedListState extends State<SharedList> {
                   ? Center(
                 child: CircularProgressIndicator(
                   valueColor: AlwaysStoppedAnimation<Color>(
-                      Colors.blueAccent),
+                      AdminColors.primaryAccent),
                   strokeWidth: 3,
                 ),
               )
@@ -258,16 +245,15 @@ class _SharedListState extends State<SharedList> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Icon(
-                        Icons.search_off,
-                        size: 60,
-                        color: Colors.grey[700]
+                      Icons.search_off,
+                      size: 60,
+                      color: AdminColors.disabledText,
                     ),
                     SizedBox(height: 16),
                     Text(
                       'No ${widget.type} found',
-                      style: TextStyle(
-                        color: Colors.grey[400],
-                        fontSize: 18,
+                      style: AdminTextStyles.sectionHeader.copyWith(
+                        color: AdminColors.disabledText,
                       ),
                     ),
                     SizedBox(height: 10),
@@ -275,7 +261,8 @@ class _SharedListState extends State<SharedList> {
                       onPressed: fetchData,
                       child: Text(
                         'Refresh',
-                        style: TextStyle(color: Colors.blueAccent),
+                        style: AdminTextStyles.accentText(
+                            AdminColors.primaryAccent),
                       ),
                     ),
                   ],
@@ -289,23 +276,9 @@ class _SharedListState extends State<SharedList> {
                     duration: Duration(milliseconds: 300),
                     margin: EdgeInsets.symmetric(
                         horizontal: 16, vertical: 6),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          Colors.grey[900]!,
-                          Colors.grey[850]!,
-                        ],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      borderRadius: BorderRadius.circular(12),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.3),
-                          blurRadius: 6,
-                          offset: Offset(0, 3),
-                        ),
-                      ],
+                    decoration: AdminColors.glassDecoration(
+                      borderColor: accentColor.withOpacity(0.3),
+                      borderRadius: 12,
                     ),
                     child: ListTile(
                       contentPadding: EdgeInsets.symmetric(
@@ -317,8 +290,8 @@ class _SharedListState extends State<SharedList> {
                           shape: BoxShape.circle,
                           gradient: LinearGradient(
                             colors: [
-                              Colors.blueAccent,
-                              Colors.indigoAccent,
+                              accentColor.withOpacity(0.8),
+                              accentColor.withOpacity(0.4),
                             ],
                           ),
                         ),
@@ -327,31 +300,27 @@ class _SharedListState extends State<SharedList> {
                             namesList[index].isNotEmpty
                                 ? namesList[index][0].toUpperCase()
                                 : '?',
-                            style: TextStyle(
-                              color: Colors.white,
+                            style: AdminTextStyles.statValue.copyWith(
+                              color: AdminColors.primaryText,
                               fontSize: 20,
-                              fontWeight: FontWeight.bold,
                             ),
                           ),
                         ),
                       ),
                       title: Text(
                         namesList[index],
-                        style: TextStyle(
-                          color: Colors.white,
+                        style: AdminTextStyles.cardTitle.copyWith(
                           fontSize: 16,
-                          fontWeight: FontWeight.w500,
+                          color: AdminColors.primaryText,
                         ),
                       ),
                       subtitle: Text(
                         "ID: ${idsList[index]}",
-                        style: TextStyle(
-                          color: Colors.grey[400],
-                        ),
+                        style: AdminTextStyles.cardSubtitle,
                       ),
                       trailing: Icon(
                         Icons.arrow_forward_ios,
-                        color: Colors.blueAccent,
+                        color: accentColor,
                         size: 16,
                       ),
                       onTap: () => navigateToDetailView(
@@ -389,17 +358,24 @@ class _SharedListState extends State<SharedList> {
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             gradient: LinearGradient(
-              colors: [Colors.blueAccent, Colors.indigoAccent],
+              colors: [
+                AdminColors.primaryAccent,
+                AdminColors.secondaryAccent,
+              ],
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.blue.withOpacity(0.4),
+                color: AdminColors.primaryAccent.withOpacity(0.4),
                 blurRadius: 12,
                 spreadRadius: 2,
               ),
             ],
           ),
-          child: Icon(Icons.add, color: Colors.white, size: 28),
+          child: Icon(
+            Icons.add,
+            color: AdminColors.primaryText,
+            size: 28,
+          ),
         ),
         backgroundColor: Colors.transparent,
         elevation: 0,

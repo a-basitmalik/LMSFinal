@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:intl/intl.dart';
-
+import 'package:newapp/admin/themes/theme_colors.dart';
+import 'package:newapp/admin/themes/theme_text_styles.dart';
 class MarkAttendanceScreen extends StatefulWidget {
   final int campusId;
 
@@ -12,10 +13,7 @@ class MarkAttendanceScreen extends StatefulWidget {
   _MarkAttendanceScreenState createState() => _MarkAttendanceScreenState();
 }
 
-class _MarkAttendanceScreenState extends State<MarkAttendanceScreen> with SingleTickerProviderStateMixin {
-  late AnimationController _animationController;
-  late Animation<double> _fadeAnimation;
-
+class _MarkAttendanceScreenState extends State<MarkAttendanceScreen> {
   final String _baseUrl = "http://193.203.162.232:5050/attendance/get_unmarked_attendees";
 
   List<String> _classes = ["First Year", "Second Year"];
@@ -27,23 +25,7 @@ class _MarkAttendanceScreenState extends State<MarkAttendanceScreen> with Single
   @override
   void initState() {
     super.initState();
-    _animationController = AnimationController(
-      vsync: this,
-      duration: Duration(milliseconds: 1500),
-    )..repeat(reverse: true);
-    _fadeAnimation = Tween<double>(begin: 0.8, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _animationController,
-        curve: Curves.easeInOut,
-      ),
-    );
     _selectedDate = DateTime.now();
-  }
-
-  @override
-  void dispose() {
-    _animationController.dispose();
-    super.dispose();
   }
 
   Future<void> _loadUnmarkedStudents(int year) async {
@@ -123,14 +105,14 @@ class _MarkAttendanceScreenState extends State<MarkAttendanceScreen> with Single
       lastDate: DateTime(2100),
       builder: (context, child) {
         return Theme(
-          data: ThemeData.dark().copyWith(
+          data: Theme.of(context).copyWith(
             colorScheme: ColorScheme.dark(
-              primary: Colors.cyanAccent,
-              onPrimary: Colors.black,
-              surface: Colors.grey[900]!,
-              onSurface: Colors.white,
+              primary: AdminColors.primaryAccent,
+              onPrimary: AdminColors.primaryBackground,
+              surface: AdminColors.secondaryBackground,
+              onSurface: AdminColors.primaryText,
             ),
-            dialogBackgroundColor: Colors.grey[900],
+            dialogBackgroundColor: AdminColors.primaryBackground,
           ),
           child: child!,
         );
@@ -146,7 +128,7 @@ class _MarkAttendanceScreenState extends State<MarkAttendanceScreen> with Single
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: Colors.redAccent,
+        backgroundColor: AdminColors.dangerAccent,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(10),
@@ -159,7 +141,7 @@ class _MarkAttendanceScreenState extends State<MarkAttendanceScreen> with Single
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: Colors.greenAccent,
+        backgroundColor: AdminColors.successAccent,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(10),
@@ -170,269 +152,196 @@ class _MarkAttendanceScreenState extends State<MarkAttendanceScreen> with Single
 
   @override
   Widget build(BuildContext context) {
-    return Theme(
-      data: ThemeData.dark().copyWith(
-        colorScheme: ColorScheme.dark(
-          primary: Colors.cyanAccent,
-          secondary: Colors.purpleAccent,
-          surface: Color(0xFF1E1E2E),
-          background: Color(0xFF121212),
-        ),
-        inputDecorationTheme: InputDecorationTheme(
-          filled: true,
-          fillColor: Color(0xFF2A2A3A),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide.none,
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: Colors.cyanAccent, width: 2),
-          ),
-          labelStyle: TextStyle(color: Colors.grey[400]),
-        ),
+    return Scaffold(
+      backgroundColor: AdminColors.primaryBackground,
+      appBar: AppBar(
+        title: Text('Mark Attendance', style: AdminTextStyles.sectionHeader),
+        backgroundColor: AdminColors.secondaryBackground,
+        elevation: 0,
       ),
-      child: Scaffold(
-        backgroundColor: Colors.black,
-        body: Stack(
-          children: [
-            // Animated Background
-            AnimatedBuilder(
-              animation: _animationController,
-              builder: (context, child) {
-                return Container(
-                  decoration: BoxDecoration(
-                    gradient: RadialGradient(
-                      center: Alignment.center,
-                      radius: 1.5,
-                      colors: [
-                        Colors.blue.shade900.withOpacity(_fadeAnimation.value * 0.3),
-                        Colors.indigo.shade900.withOpacity(_fadeAnimation.value * 0.3),
-                        Colors.black,
-                      ],
-                      stops: [0.1, 0.5, 1.0],
-                    ),
-                  ),
-                );
-              },
+      body: Stack(
+        children: [
+          // Background with subtle gradient
+          Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  AdminColors.primaryBackground,
+                  AdminColors.secondaryBackground,
+                ],
+              ),
             ),
+          ),
 
-            CustomScrollView(
-              slivers: [
-                SliverAppBar(
-                  expandedHeight: 180,
-                  floating: false,
-                  pinned: true,
-                  backgroundColor: Colors.transparent,
-                  elevation: 0,
-                  flexibleSpace: FlexibleSpaceBar(
-                    title: AnimatedBuilder(
-                      animation: _animationController,
-                      builder: (context, child) {
-                        return Text(
-                          'MARK ATTENDANCE',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 2,
-                            shadows: [
-                              Shadow(
-                                blurRadius: 10 * _fadeAnimation.value,
-                                color: Colors.cyanAccent.withOpacity(_fadeAnimation.value),
-                              ),
-                            ],
-                            color: Colors.white.withOpacity(_fadeAnimation.value),
-                          ),
-                        );
-                      },
-                    ),
-                    centerTitle: true,
-                    background: Container(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            Colors.blue.shade900.withOpacity(0.7),
-                            Colors.indigo.shade800.withOpacity(0.7),
-                            Colors.purple.shade900.withOpacity(0.7),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-
-                SliverToBoxAdapter(
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Date and Class Selection Card
+                Container(
+                  decoration: AdminColors.glassDecoration(),
                   child: Padding(
                     padding: const EdgeInsets.all(16.0),
                     child: Column(
                       children: [
-                        // Date and Class Selection
-                        GlassCard(
-                          child: Padding(
-                            padding: const EdgeInsets.all(16.0),
-                            child: Column(
-                              children: [
-                                // Date Picker
-                                GestureDetector(
-                                  onTap: () => _selectDate(context),
-                                  child: AbsorbPointer(
-                                    child: TextFormField(
-                                      decoration: InputDecoration(
-                                        labelText: 'DATE',
-                                        labelStyle: TextStyle(color: Colors.grey[400]),
-                                        prefixIcon: Icon(Icons.calendar_today, color: Colors.grey[400]),
-                                        filled: true,
-                                        fillColor: Colors.transparent,
-                                        border: InputBorder.none,
-                                      ),
-                                      controller: TextEditingController(
-                                        text: _selectedDate != null
-                                            ? DateFormat('yyyy-MM-dd').format(_selectedDate!)
-                                            : 'Select Date',
-                                      ),
-                                      style: TextStyle(color: Colors.white),
-                                    ),
-                                  ),
+                        // Date Picker
+                        GestureDetector(
+                          onTap: () => _selectDate(context),
+                          child: AbsorbPointer(
+                            child: TextFormField(
+                              decoration: InputDecoration(
+                                labelText: 'DATE',
+                                labelStyle: AdminTextStyles.cardSubtitle,
+                                prefixIcon: Icon(Icons.calendar_today,
+                                    color: AdminColors.secondaryText),
+                                filled: true,
+                                fillColor: AdminColors.cardBackground,
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide.none,
                                 ),
-
-                                SizedBox(height: 16),
-
-                                // Class Dropdown
-                                DropdownButtonFormField<String>(
-                                  decoration: InputDecoration(
-                                    labelText: 'CLASS',
-                                    labelStyle: TextStyle(color: Colors.grey[400]),
-                                    prefixIcon: Icon(Icons.class_, color: Colors.grey[400]),
-                                    filled: true,
-                                    fillColor: Colors.transparent,
-                                    border: InputBorder.none,
-                                  ),
-                                  value: _selectedClass,
-                                  items: _classes.map((String value) {
-                                    return DropdownMenuItem<String>(
-                                      value: value,
-                                      child: Text(
-                                        value,
-                                        style: TextStyle(color: Colors.white),
-                                      ),
-                                    );
-                                  }).toList(),
-                                  onChanged: (value) {
-                                    setState(() => _selectedClass = value);
-                                    final year = value == "First Year" ? 1 : 2;
-                                    _loadUnmarkedStudents(year);
-                                  },
-                                  dropdownColor: Colors.grey[900],
-                                  icon: Icon(Icons.arrow_drop_down, color: Colors.white),
-                                  hint: Text(
-                                    'Select Class',
-                                    style: TextStyle(color: Colors.grey[400]),
-                                  ),
-                                ),
-                              ],
+                              ),
+                              controller: TextEditingController(
+                                text: _selectedDate != null
+                                    ? DateFormat('yyyy-MM-dd').format(_selectedDate!)
+                                    : 'Select Date',
+                              ),
+                              style: AdminTextStyles.cardTitle,
                             ),
                           ),
                         ),
 
-                        SizedBox(height: 24),
+                        const SizedBox(height: 16),
 
-                        // Students List
-                        if (_students.isNotEmpty)
-                          Text(
-                            'STUDENTS LIST',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
+                        // Class Dropdown
+                        DropdownButtonFormField<String>(
+                          decoration: InputDecoration(
+                            labelText: 'CLASS',
+                            labelStyle: AdminTextStyles.cardSubtitle,
+                            prefixIcon: Icon(Icons.class_,
+                                color: AdminColors.secondaryText),
+                            filled: true,
+                            fillColor: AdminColors.cardBackground,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide.none,
                             ),
                           ),
-
-                        SizedBox(height: 16),
+                          value: _selectedClass,
+                          items: _classes.map((String value) {
+                            return DropdownMenuItem<String>(
+                              value: value,
+                              child: Text(
+                                value,
+                                style: AdminTextStyles.cardTitle,
+                              ),
+                            );
+                          }).toList(),
+                          onChanged: (value) {
+                            setState(() => _selectedClass = value);
+                            final year = value == "First Year" ? 1 : 2;
+                            _loadUnmarkedStudents(year);
+                          },
+                          dropdownColor: AdminColors.secondaryBackground,
+                          icon: Icon(Icons.arrow_drop_down,
+                              color: AdminColors.primaryText),
+                          hint: Text(
+                            'Select Class',
+                            style: AdminTextStyles.cardSubtitle,
+                          ),
+                        ),
                       ],
                     ),
                   ),
                 ),
 
+                const SizedBox(height: 24),
+
+                // Students List Header
                 if (_students.isNotEmpty)
-                  SliverList(
-                    delegate: SliverChildBuilderDelegate(
-                          (context, index) {
+                  Text(
+                    'STUDENTS LIST',
+                    style: AdminTextStyles.sectionHeader.copyWith(
+                      color: AdminColors.attendanceColor,
+                    ),
+                  ),
+
+                const SizedBox(height: 16),
+
+                // Students List
+                if (_students.isNotEmpty)
+                  Expanded(
+                    child: ListView.builder(
+                      itemCount: _students.length,
+                      itemBuilder: (context, index) {
                         final student = _students[index];
-                        return Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                          child: GlassCard(
-                            child: ListTile(
-                              title: Text(
-                                student.name,
-                                style: TextStyle(color: Colors.white),
-                              ),
-                              subtitle: Text(
-                                'RFID: ${student.rfid}',
-                                style: TextStyle(color: Colors.grey[400]),
-                              ),
-                              trailing: Transform.scale(
-                                scale: 1.3,
-                                child: Switch(
-                                  value: student.isPresent,
-                                  activeColor: Colors.cyanAccent,
-                                  inactiveThumbColor: Colors.grey[600],
-                                  inactiveTrackColor: Colors.grey[800],
-                                  onChanged: (value) {
-                                    setState(() {
-                                      _students[index] = student.copyWith(isPresent: value);
-                                    });
-                                  },
-                                ),
-                              ),
+                        return Container(
+                          margin: const EdgeInsets.only(bottom: 12),
+                          decoration: AdminColors.glassDecoration(),
+                          child: ListTile(
+                            title: Text(
+                              student.name,
+                              style: AdminTextStyles.cardTitle,
+                            ),
+                            subtitle: Text(
+                              'RFID: ${student.rfid}',
+                              style: AdminTextStyles.cardSubtitle,
+                            ),
+                            trailing: Switch(
+                              value: student.isPresent,
+                              activeColor: AdminColors.attendanceColor,
+                              inactiveThumbColor: AdminColors.disabledText,
+                              inactiveTrackColor: AdminColors.cardBackground,
+                              onChanged: (value) {
+                                setState(() {
+                                  _students[index] = student.copyWith(isPresent: value);
+                                });
+                              },
                             ),
                           ),
                         );
                       },
-                      childCount: _students.length,
                     ),
                   ),
-
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: ElevatedButton(
-                      onPressed: _markPresent,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.cyanAccent,
-                        foregroundColor: Colors.black,
-                        minimumSize: Size(double.infinity, 56),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        elevation: 8,
-                      ),
-                      child: Text(
-                        'SAVE ATTENDANCE',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-
-                SliverToBoxAdapter(
-                  child: SizedBox(height: 32),
-                ),
               ],
             ),
+          ),
 
-            if (_isLoading)
-              Center(
-                child: CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(Colors.cyanAccent),
+          // Save Button (positioned at bottom)
+          if (_students.isNotEmpty)
+            Positioned(
+              bottom: 24,
+              left: 16,
+              right: 16,
+              child: ElevatedButton(
+                onPressed: _markPresent,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AdminColors.attendanceColor,
+                  foregroundColor: AdminColors.primaryText,
+                  minimumSize: const Size(double.infinity, 56),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  elevation: 4,
+                ),
+                child: Text(
+                  'SAVE ATTENDANCE',
+                  style: AdminTextStyles.primaryButton,
                 ),
               ),
-          ],
-        ),
+            ),
+
+          if (_isLoading)
+            Center(
+              child: CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(
+                    AdminColors.primaryAccent),
+              ),
+            ),
+        ],
       ),
     );
   }
@@ -458,57 +367,6 @@ class StudentAttendance {
       rfid: rfid ?? this.rfid,
       name: name ?? this.name,
       isPresent: isPresent ?? this.isPresent,
-    );
-  }
-}
-
-class GlassCard extends StatelessWidget {
-  final Widget child;
-  final double? width;
-  final double? height;
-  final double borderRadius;
-  final Color? borderColor;
-
-  const GlassCard({
-    Key? key,
-    required this.child,
-    this.width,
-    this.height,
-    this.borderRadius = 16,
-    this.borderColor,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: width,
-      height: height,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(borderRadius),
-        border: Border.all(
-          color: borderColor ?? Colors.white.withOpacity(0.2),
-          width: 1,
-        ),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Colors.white.withOpacity(0.1),
-            Colors.white.withOpacity(0.05),
-          ],
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.2),
-            blurRadius: 10,
-            spreadRadius: 2,
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(borderRadius),
-        child: child,
-      ),
     );
   }
 }

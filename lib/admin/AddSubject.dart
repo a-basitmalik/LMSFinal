@@ -3,6 +3,9 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:intl/intl.dart';
 import 'package:flutter/services.dart';
+import 'package:newapp/admin/themes/theme_colors.dart';
+import 'package:newapp/admin/themes/theme_extensions.dart';
+import 'package:newapp/admin/themes/theme_text_styles.dart';
 
 class AddSubjectScreen extends StatefulWidget {
   final int campusId;
@@ -18,10 +21,7 @@ class AddSubjectScreen extends StatefulWidget {
   _AddSubjectScreenState createState() => _AddSubjectScreenState();
 }
 
-class _AddSubjectScreenState extends State<AddSubjectScreen> with SingleTickerProviderStateMixin {
-  late AnimationController _animationController;
-  late Animation<double> _fadeAnimation;
-
+class _AddSubjectScreenState extends State<AddSubjectScreen> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _subjectNameController = TextEditingController();
   final TextEditingController _yearController = TextEditingController();
@@ -34,22 +34,11 @@ class _AddSubjectScreenState extends State<AddSubjectScreen> with SingleTickerPr
   @override
   void initState() {
     super.initState();
-    _animationController = AnimationController(
-      vsync: this,
-      duration: Duration(milliseconds: 1500),
-    )..repeat(reverse: true);
-    _fadeAnimation = Tween<double>(begin: 0.8, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _animationController,
-        curve: Curves.easeInOut,
-      ),
-    );
     _loadTeachers();
   }
 
   @override
   void dispose() {
-    _animationController.dispose();
     _subjectNameController.dispose();
     _yearController.dispose();
     super.dispose();
@@ -83,12 +72,16 @@ class _AddSubjectScreenState extends State<AddSubjectScreen> with SingleTickerPr
 
     await showDialog(
       context: context,
-      builder: (context) => HolographicDialog(
-        title: 'Add Time Slot',
+      builder: (context) => AlertDialog(
+        backgroundColor: AdminColors.primaryBackground,
+        title: Text(
+          'Add Time Slot',
+          style: AdminTextStyles.sectionHeader,
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text('Select Days:', style: TextStyle(color: Colors.white)),
+            Text('Select Days:', style: AdminTextStyles.cardSubtitle),
             SizedBox(height: 8),
             Wrap(
               spacing: 8,
@@ -98,22 +91,26 @@ class _AddSubjectScreenState extends State<AddSubjectScreen> with SingleTickerPr
                   label: Text(day),
                   selected: selectedDays.contains(day),
                   onSelected: (selected) {
-                    if (selected) {
-                      selectedDays.add(day);
-                    } else {
-                      selectedDays.remove(day);
-                    }
+                    setState(() {
+                      if (selected) {
+                        selectedDays.add(day);
+                      } else {
+                        selectedDays.remove(day);
+                      }
+                    });
                   },
-                  selectedColor: Colors.cyanAccent,
-                  checkmarkColor: Colors.black,
-                  labelStyle: TextStyle(
-                    color: selectedDays.contains(day) ? Colors.black : Colors.white,
+                  selectedColor: AdminColors.primaryAccent,
+                  checkmarkColor: AdminColors.primaryBackground,
+                  labelStyle: AdminTextStyles.cardSubtitle.copyWith(
+                    color: selectedDays.contains(day)
+                        ? AdminColors.primaryBackground
+                        : AdminColors.primaryText,
                   ),
                 );
               }).toList(),
             ),
             SizedBox(height: 16),
-            Text('Select Time:', style: TextStyle(color: Colors.white)),
+            Text('Select Time:', style: AdminTextStyles.cardSubtitle),
             SizedBox(height: 8),
             ElevatedButton(
               onPressed: () async {
@@ -122,38 +119,53 @@ class _AddSubjectScreenState extends State<AddSubjectScreen> with SingleTickerPr
                   initialTime: TimeOfDay.now(),
                 );
                 if (time != null) {
-                  selectedTime = time;
+                  setState(() {
+                    selectedTime = time;
+                  });
                 }
               },
               child: Text(
                 selectedTime != null
                     ? '${selectedTime!.hour}:${selectedTime!.minute.toString().padLeft(2, '0')}'
                     : 'Select Time',
+                style: AdminTextStyles.primaryButton,
               ),
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.cyanAccent,
-                foregroundColor: Colors.black,
+                backgroundColor: AdminColors.primaryAccent,
+                foregroundColor: AdminColors.primaryBackground,
               ),
             ),
           ],
         ),
-        buttonText: 'Add',
-        onPressed: () {
-          if (selectedDays.isEmpty) {
-            _showErrorDialog('Please select at least one day');
-            return;
-          }
-          if (selectedTime == null) {
-            _showErrorDialog('Please select a time');
-            return;
-          }
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Cancel', style: AdminTextStyles.secondaryButton),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              if (selectedDays.isEmpty) {
+                _showErrorDialog('Please select at least one day');
+                return;
+              }
+              if (selectedTime == null) {
+                _showErrorDialog('Please select a time');
+                return;
+              }
 
-          final timeStr = '${selectedTime!.hour}:${selectedTime!.minute.toString().padLeft(2, '0')}';
-          for (final day in selectedDays) {
-            _addTimeSlot(day, timeStr);
-          }
-          Navigator.pop(context);
-        },
+              final timeStr = '${selectedTime!.hour}:${selectedTime!.minute.toString().padLeft(2, '0')}';
+              for (final day in selectedDays) {
+                _addTimeSlot(day, timeStr);
+              }
+              Navigator.pop(context);
+            },
+            child: Text('Add', style: AdminTextStyles.primaryButton),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AdminColors.primaryAccent,
+              foregroundColor: AdminColors.primaryBackground,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -209,7 +221,12 @@ class _AddSubjectScreenState extends State<AddSubjectScreen> with SingleTickerPr
 
       if (response.statusCode == 200) {
         _showSuccessDialog('Subject added successfully!');
-        Navigator.pop(context);
+        _subjectNameController.clear();
+        _yearController.clear();
+        setState(() {
+          _selectedTeacher = null;
+          _timeSlots.clear();
+        });
       } else {
         throw Exception('Failed to add subject');
       }
@@ -222,10 +239,20 @@ class _AddSubjectScreenState extends State<AddSubjectScreen> with SingleTickerPr
   void _showErrorDialog(String message) {
     showDialog(
       context: context,
-      builder: (context) => HolographicDialog(
-        title: 'Error',
-        content: message,
-        buttonText: 'OK',
+      builder: (context) => AlertDialog(
+        backgroundColor: AdminColors.primaryBackground,
+        title: Text('Error', style: AdminTextStyles.sectionHeader),
+        content: Text(message, style: AdminTextStyles.cardSubtitle),
+        actions: [
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('OK', style:AdminTextStyles.primaryButton),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AdminColors.dangerAccent,
+              foregroundColor: AdminColors.primaryBackground,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -233,276 +260,256 @@ class _AddSubjectScreenState extends State<AddSubjectScreen> with SingleTickerPr
   void _showSuccessDialog(String message) {
     showDialog(
       context: context,
-      builder: (context) => HolographicDialog(
-        title: 'Success',
-        content: message,
-        buttonText: 'OK',
+      builder: (context) => AlertDialog(
+        backgroundColor: AdminColors.primaryBackground,
+        title: Text('Success', style: AdminTextStyles.sectionHeader),
+        content: Text(message, style: AdminTextStyles.cardSubtitle),
+        actions: [
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('OK', style: AdminTextStyles.primaryButton),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AdminColors.successAccent,
+              foregroundColor: AdminColors.primaryBackground,
+            ),
+          ),
+        ],
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.adminColors;
+    final textStyles = context.adminTextStyles;
+
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: AdminColors.primaryBackground,
+      appBar: AppBar(
+        title: Text(
+          'Add New Subject',
+          style: AdminTextStyles.sectionHeader.copyWith(color: AdminColors.primaryText),
+        ),
+        centerTitle: true,
+        elevation: 0,
+        backgroundColor: Colors.transparent,
+        flexibleSpace: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                AdminColors.curriculumColor.withOpacity(0.2),
+                AdminColors.primaryAccent.withOpacity(0.2),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+        ),
+      ),
       body: Stack(
         children: [
-          // Animated Background
-          AnimatedBuilder(
-            animation: _animationController,
-            builder: (context, child) {
-              return Container(
-                decoration: BoxDecoration(
-                  gradient: RadialGradient(
-                    center: Alignment.center,
-                    radius: 1.5,
-                    colors: [
-                      Colors.blue.shade900.withOpacity(_fadeAnimation.value * 0.3),
-                      Colors.indigo.shade900.withOpacity(_fadeAnimation.value * 0.3),
-                      Colors.black,
-                    ],
-                    stops: [0.1, 0.5, 1.0],
+          SingleChildScrollView(
+            padding: EdgeInsets.all(20),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Subject Name
+                  Container(
+                    decoration: AdminColors.glassDecoration(),
+                    child: TextFormField(
+                      controller: _subjectNameController,
+                      style: AdminTextStyles.primaryButton.copyWith(color: AdminColors.primaryText),
+                      decoration: InputDecoration(
+                        labelText: 'Subject Name',
+                        labelStyle: AdminTextStyles.cardSubtitle,
+                        prefixIcon: Icon(Icons.book, color: AdminColors.secondaryText),
+                        border: InputBorder.none,
+                        contentPadding: EdgeInsets.symmetric(horizontal: 16),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter subject name';
+                        }
+                        return null;
+                      },
+                    ),
                   ),
-                ),
-              );
-            },
-          ),
 
-          CustomScrollView(
-            slivers: [
-              SliverAppBar(
-                expandedHeight: 120,
-                floating: false,
-                pinned: true,
-                backgroundColor: Colors.transparent,
-                elevation: 0,
-                flexibleSpace: FlexibleSpaceBar(
-                  title: AnimatedBuilder(
-                    animation: _animationController,
-                    builder: (context, child) {
-                      return Text(
-                        'ADD NEW SUBJECT',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 2,
-                          shadows: [
-                            Shadow(
-                              blurRadius: 10 * _fadeAnimation.value,
-                              color: Colors.cyanAccent.withOpacity(_fadeAnimation.value),
+                  SizedBox(height: 16),
+
+                  // Teacher Dropdown
+                  Container(
+                    decoration: AdminColors.glassDecoration(),
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'TEACHER',
+                            style: AdminTextStyles.cardSubtitle,
+                          ),
+                          DropdownButtonFormField<Teacher>(
+                            decoration: InputDecoration(
+                              border: InputBorder.none,
+                              isDense: true,
                             ),
-                          ],
-                          color: Colors.white.withOpacity(_fadeAnimation.value),
-                        ),
-                      );
-                    },
-                  ),
-                  centerTitle: true,
-                  background: Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [
-                          Colors.blue.shade900.withOpacity(0.7),
-                          Colors.indigo.shade800.withOpacity(0.7),
-                          Colors.purple.shade900.withOpacity(0.7),
+                            items: _teachers.map((teacher) {
+                              return DropdownMenuItem<Teacher>(
+                                value: teacher,
+                                child: Text(
+                                  teacher.name,
+                                  style: AdminTextStyles.primaryButton.copyWith(color: AdminColors.primaryText),
+                                ),
+                              );
+                            }).toList(),
+                            onChanged: (teacher) {
+                              setState(() {
+                                _selectedTeacher = teacher;
+                              });
+                            },
+                            validator: (value) {
+                              if (value == null) {
+                                return 'Please select a teacher';
+                              }
+                              return null;
+                            },
+                            hint: Text(
+                              'Select teacher',
+                              style: AdminTextStyles.cardSubtitle,
+                            ),
+                            dropdownColor: AdminColors.secondaryBackground,
+                            icon: Icon(Icons.arrow_drop_down, color: AdminColors.primaryText),
+                            value: _selectedTeacher,
+                          ),
                         ],
                       ),
                     ),
                   ),
-                ),
-              ),
 
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Form(
-                    key: _formKey,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Subject Name
-                        GlassInputField(
-                          controller: _subjectNameController,
-                          label: 'Subject Name',
-                          icon: Icons.book,
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Please enter subject name';
-                            }
-                            return null;
-                          },
-                        ),
+                  SizedBox(height: 16),
 
-                        SizedBox(height: 16),
-
-                        // Teacher Dropdown
-                        GlassCard(
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'TEACHER',
-                                  style: TextStyle(
-                                    color: Colors.white.withOpacity(0.7),
-                                    fontSize: 12,
-                                  ),
-                                ),
-                                DropdownButtonFormField<Teacher>(
-                                  decoration: InputDecoration(
-                                    border: InputBorder.none,
-                                    isDense: true,
-                                  ),
-                                  items: _teachers.map((teacher) {
-                                    return DropdownMenuItem<Teacher>(
-                                      value: teacher,
-                                      child: Text(
-                                        teacher.name,
-                                        style: TextStyle(color: Colors.white),
-                                      ),
-                                    );
-                                  }).toList(),
-                                  onChanged: (teacher) {
-                                    setState(() {
-                                      _selectedTeacher = teacher;
-                                    });
-                                  },
-                                  validator: (value) {
-                                    if (value == null) {
-                                      return 'Please select a teacher';
-                                    }
-                                    return null;
-                                  },
-                                  hint: Text(
-                                    'Select teacher',
-                                    style: TextStyle(
-                                      color: Colors.white.withOpacity(0.8),
-                                    ),
-                                  ),
-                                  dropdownColor: Colors.grey[900],
-                                  icon: Icon(Icons.arrow_drop_down, color: Colors.white),
-                                  value: _selectedTeacher,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-
-                        SizedBox(height: 16),
-
-                        // Year
-                        GlassInputField(
-                          controller: _yearController,
-                          label: 'Year',
-                          icon: Icons.calendar_today,
-                          keyboardType: TextInputType.number,
-                          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Please enter year';
-                            }
-                            final year = int.tryParse(value);
-                            if (year == null || year < 1 || year > 4) {
-                              return 'Year must be between 1 and 4';
-                            }
-                            return null;
-                          },
-                        ),
-
-                        SizedBox(height: 24),
-
-                        // Time Slots Section
-                        Text(
-                          'TIME SLOTS',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        SizedBox(height: 8),
-
-                        if (_timeSlots.isEmpty)
-                          Text(
-                            'No time slots added yet',
-                            style: TextStyle(
-                              color: Colors.white.withOpacity(0.6),
-                            ),
-                          ),
-
-                        Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
-                          children: List.generate(_timeSlots.length, (index) {
-                            final slot = _timeSlots[index];
-                            return Chip(
-                              label: Text('${slot.day} at ${slot.time}'),
-                              backgroundColor: Colors.cyanAccent.withOpacity(0.2),
-                              deleteIcon: Icon(Icons.close, size: 18),
-                              onDeleted: () => _removeTimeSlot(index),
-                              labelStyle: TextStyle(color: Colors.white),
-                            );
-                          }),
-                        ),
-
-                        SizedBox(height: 16),
-
-                        ElevatedButton(
-                          onPressed: _showAddTimeSlotDialog,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.transparent,
-                            foregroundColor: Colors.cyanAccent,
-                            minimumSize: Size(double.infinity, 56),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            side: BorderSide(color: Colors.cyanAccent, width: 1),
-                          ),
-                          child: Text(
-                            'ADD DAY AND TIME',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-
-                        SizedBox(height: 32),
-
-                        // Submit Button
-                        ElevatedButton(
-                          onPressed: _submitForm,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.cyanAccent,
-                            foregroundColor: Colors.black,
-                            minimumSize: Size(double.infinity, 56),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            elevation: 8,
-                          ),
-                          child: Text(
-                            'ADD SUBJECT',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                            ),
-                          ),
-                        ),
-                      ],
+                  // Year
+                  Container(
+                    decoration: AdminColors.glassDecoration(),
+                    child: TextFormField(
+                      controller: _yearController,
+                      style: AdminTextStyles.primaryButton.copyWith(color: AdminColors.primaryText),
+                      decoration: InputDecoration(
+                        labelText: 'Year',
+                        labelStyle: AdminTextStyles.cardSubtitle,
+                        prefixIcon: Icon(Icons.calendar_today, color: AdminColors.secondaryText),
+                        border: InputBorder.none,
+                        contentPadding: EdgeInsets.symmetric(horizontal: 16),
+                      ),
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter year';
+                        }
+                        final year = int.tryParse(value);
+                        if (year == null || year < 1 || year > 4) {
+                          return 'Year must be between 1 and 4';
+                        }
+                        return null;
+                      },
                     ),
                   ),
-                ),
+
+                  SizedBox(height: 24),
+
+                  // Time Slots Section
+                  Text(
+                    'TIME SLOTS',
+                    style: AdminTextStyles.sectionHeader,
+                  ),
+                  SizedBox(height: 8),
+
+                  if (_timeSlots.isEmpty)
+                    Text(
+                      'No time slots added yet',
+                      style: AdminTextStyles.cardSubtitle,
+                    ),
+
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: List.generate(_timeSlots.length, (index) {
+                      final slot = _timeSlots[index];
+                      return Chip(
+                        label: Text('${slot.day} at ${slot.time}'),
+                        backgroundColor: AdminColors.primaryAccent.withOpacity(0.2),
+                        deleteIcon: Icon(Icons.close, size: 18, color: AdminColors.primaryText),
+                        onDeleted: () => _removeTimeSlot(index),
+                        labelStyle: AdminTextStyles.cardSubtitle,
+                      );
+                    }),
+                  ),
+
+                  SizedBox(height: 16),
+
+                  ElevatedButton(
+                    onPressed: _showAddTimeSlotDialog,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.transparent,
+                      foregroundColor: AdminColors.primaryAccent,
+                      minimumSize: Size(double.infinity, 56),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      side: BorderSide(color: AdminColors.primaryAccent, width: 1),
+                    ),
+                    child: Text(
+                      'ADD DAY AND TIME',
+                      style: AdminTextStyles.primaryButton.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+
+                  SizedBox(height: 32),
+
+                  // Submit Button
+                  ElevatedButton(
+                    onPressed: _submitForm,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AdminColors.primaryAccent,
+                      foregroundColor: AdminColors.primaryBackground,
+                      minimumSize: Size(double.infinity, 56),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      elevation: 8,
+                    ),
+                    child: _isLoading
+                        ? SizedBox(
+                      height: 24,
+                      width: 24,
+                      child: CircularProgressIndicator(
+                        valueColor: AlwaysStoppedAnimation(AdminColors.primaryBackground),
+                        strokeWidth: 3,
+                      ),
+                    )
+                        : Text(
+                      'ADD SUBJECT',
+                      style: AdminTextStyles.primaryButton.copyWith(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
 
           if (_isLoading)
             Center(
               child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(Colors.cyanAccent),
+                valueColor: AlwaysStoppedAnimation<Color>(AdminColors.primaryAccent),
               ),
             ),
         ],
@@ -531,171 +538,4 @@ class TimeSlot {
   final String time;
 
   TimeSlot({required this.day, required this.time});
-}
-
-// Custom Widgets
-class GlassCard extends StatelessWidget {
-  final Widget child;
-  final double? width;
-  final double? height;
-  final double borderRadius;
-  final Color? borderColor;
-
-  const GlassCard({
-    Key? key,
-    required this.child,
-    this.width,
-    this.height,
-    this.borderRadius = 16,
-    this.borderColor,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: width,
-      height: height,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(borderRadius),
-        border: Border.all(
-          color: borderColor ?? Colors.white.withOpacity(0.2),
-          width: 1,
-        ),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Colors.white.withOpacity(0.1),
-            Colors.white.withOpacity(0.05),
-          ],
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.2),
-            blurRadius: 10,
-            spreadRadius: 2,
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(borderRadius),
-        child: child,
-      ),
-    );
-  }
-}
-
-class GlassInputField extends StatelessWidget {
-  final TextEditingController controller;
-  final String label;
-  final IconData icon;
-  final bool obscureText;
-  final TextInputType? keyboardType;
-  final List<TextInputFormatter>? inputFormatters;
-  final String? Function(String?)? validator;
-
-  const GlassInputField({
-    Key? key,
-    required this.controller,
-    required this.label,
-    required this.icon,
-    this.obscureText = false,
-    this.keyboardType,
-    this.inputFormatters,
-    this.validator,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return GlassCard(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        child: TextFormField(
-          controller: controller,
-          obscureText: obscureText,
-          keyboardType: keyboardType,
-          inputFormatters: inputFormatters,
-          style: TextStyle(color: Colors.white),
-          decoration: InputDecoration(
-            labelText: label,
-            labelStyle: TextStyle(color: Colors.white.withOpacity(0.7)),
-            border: InputBorder.none,
-            icon: Icon(icon, color: Colors.white.withOpacity(0.7)),
-          ),
-          validator: validator,
-        ),
-      ),
-    );
-  }
-}
-
-class HolographicDialog extends StatelessWidget {
-  final String title;
-  final dynamic content;
-  final String buttonText;
-  final VoidCallback? onPressed;
-
-  const HolographicDialog({
-    Key? key,
-    required this.title,
-    required this.content,
-    required this.buttonText,
-    this.onPressed,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Dialog(
-      backgroundColor: Colors.transparent,
-      elevation: 0,
-      child: GlassCard(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                title,
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              SizedBox(height: 16),
-              if (content is String)
-                Text(
-                  content,
-                  style: TextStyle(
-                    color: Colors.white.withOpacity(0.8),
-                    fontSize: 16,
-                  ),
-                  textAlign: TextAlign.center,
-                )
-              else if (content is Widget)
-                content,
-              SizedBox(height: 24),
-              ElevatedButton(
-                onPressed: onPressed ?? () => Navigator.pop(context),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.cyanAccent,
-                  foregroundColor: Colors.black,
-                  minimumSize: Size(120, 48),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: Text(
-                  buttonText,
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
 }

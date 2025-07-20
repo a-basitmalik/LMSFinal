@@ -1,27 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:newapp/admin/themes/theme_colors.dart';
+import 'package:newapp/admin/themes/theme_text_styles.dart';
 import 'dart:convert';
+
+
 import 'assessment_types.dart';
-
-void main() {
-  runApp(const MyApp());
-}
-
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Student Results',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-        scaffoldBackgroundColor: Colors.black,
-      ),
-      home: const ResultListScreen(campusId: 1),
-    );
-  }
-}
 
 class ResultListScreen extends StatefulWidget {
   final int campusId;
@@ -54,7 +38,6 @@ class _ResultListScreenState extends State<ResultListScreen> {
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
 
-        // Validate response structure
         if (data['students'] == null) {
           throw Exception('Invalid response: missing students array');
         }
@@ -78,7 +61,7 @@ class _ResultListScreenState extends State<ResultListScreen> {
             );
           }
         })
-            .where((student) => student.id != 'Error') // Filter out invalid entries
+            .where((student) => student.id != 'Error')
             .toList();
 
         setState(() {
@@ -133,10 +116,16 @@ class _ResultListScreenState extends State<ResultListScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: Colors.grey[900],
-        title: const Text('Student Result Summary', style: TextStyle(color: Colors.white)),
+        backgroundColor: AdminColors.secondaryBackground,
+        title: Text(
+          'Student Result Summary',
+          style: AdminTextStyles.sectionHeader,
+        ),
         content: SingleChildScrollView(
-          child: Text(summary.toString(), style: const TextStyle(color: Colors.white70)),
+          child: Text(
+            summary.toString(),
+            style: AdminTextStyles.cardSubtitle.copyWith(fontSize: 14),
+          ),
         ),
         actions: [
           TextButton(
@@ -144,11 +133,19 @@ class _ResultListScreenState extends State<ResultListScreen> {
               Navigator.pop(context);
               _printSummary(summary.toString());
             },
-            child: const Text('Print', style: TextStyle(color: Colors.blueAccent)),
+            child: Text(
+              'Print',
+              style: AdminTextStyles.secondaryButton.copyWith(
+                color: AdminColors.primaryAccent,
+              ),
+            ),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Close', style: TextStyle(color: Colors.white70)),
+            child: Text(
+              'Close',
+              style: AdminTextStyles.secondaryButton,
+            ),
           ),
         ],
       ),
@@ -156,11 +153,13 @@ class _ResultListScreenState extends State<ResultListScreen> {
   }
 
   void _printSummary(String summary) {
-    // Implement printing functionality
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: const Text('Printing summary...'),
-        backgroundColor: Colors.blueAccent,
+        content: Text(
+          'Printing summary...',
+          style: AdminTextStyles.cardSubtitle,
+        ),
+        backgroundColor: AdminColors.primaryAccent,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(10),
@@ -173,13 +172,18 @@ class _ResultListScreenState extends State<ResultListScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: Colors.grey[900],
-        title: Text(title, style: const TextStyle(color: Colors.white)),
-        content: Text(message, style: const TextStyle(color: Colors.white70)),
+        backgroundColor: AdminColors.secondaryBackground,
+        title: Text(title, style: AdminTextStyles.sectionHeader),
+        content: Text(message, style: AdminTextStyles.cardSubtitle),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('OK', style: TextStyle(color: Colors.blueAccent)),
+            child: Text(
+              'OK',
+              style: AdminTextStyles.secondaryButton.copyWith(
+                color: AdminColors.primaryAccent,
+              ),
+            ),
           ),
         ],
       ),
@@ -189,8 +193,11 @@ class _ResultListScreenState extends State<ResultListScreen> {
   void _showErrorSnackbar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.redAccent,
+        content: Text(
+          message,
+          style: AdminTextStyles.cardSubtitle,
+        ),
+        backgroundColor: AdminColors.dangerAccent,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(10),
@@ -213,6 +220,7 @@ class _ResultListScreenState extends State<ResultListScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AdminColors.primaryBackground,
       body: CustomScrollView(
         slivers: [
           SliverAppBar(
@@ -220,40 +228,39 @@ class _ResultListScreenState extends State<ResultListScreen> {
             floating: false,
             pinned: true,
             flexibleSpace: FlexibleSpaceBar(
-              title: const Text(
+              title: Text(
                 'STUDENT RESULTS',
-                style: TextStyle(
+                style: AdminTextStyles.sectionHeader.copyWith(
                   fontSize: 18,
-                  fontWeight: FontWeight.bold,
                   letterSpacing: 2,
                   shadows: [
                     Shadow(
                       blurRadius: 10,
-                      color: Colors.blueAccent,
+                      color: AdminColors.resultsColor,
                     ),
                   ],
                 ),
               ),
               background: Container(
-                decoration: const BoxDecoration(
+                decoration: BoxDecoration(
                   gradient: LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                     colors: [
-                      Colors.blue,
-                      Colors.indigo,
-                      Colors.purple,
+                      AdminColors.resultsColor.withOpacity(0.8),
+                      AdminColors.resultsColor.withOpacity(0.6),
+                      AdminColors.resultsColor.withOpacity(0.4),
                     ],
                   ),
                 ),
-                child: const Align(
+                child: Align(
                   alignment: Alignment.bottomRight,
                   child: Opacity(
                     opacity: 0.2,
                     child: Icon(
                       Icons.school,
                       size: 120,
-                      color: Colors.white,
+                      color: AdminColors.primaryText,
                     ),
                   ),
                 ),
@@ -264,26 +271,25 @@ class _ResultListScreenState extends State<ResultListScreen> {
             child: Padding(
               padding: const EdgeInsets.all(16.0),
               child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.grey[900],
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.blueAccent.withOpacity(0.2),
-                      blurRadius: 10,
-                      spreadRadius: 2,
-                    ),
-                  ],
+                decoration: AdminColors.glassDecoration(
+                  borderRadius: 12,
+                  borderColor: AdminColors.resultsColor,
                 ),
                 child: TextField(
                   controller: _searchController,
-                  style: const TextStyle(color: Colors.white),
+                  style: AdminTextStyles.cardTitle,
                   decoration: InputDecoration(
-                    prefixIcon: const Icon(Icons.search, color: Colors.blueAccent),
+                    prefixIcon: Icon(
+                      Icons.search,
+                      color: AdminColors.resultsColor,
+                    ),
                     hintText: 'Search by name or ID...',
-                    hintStyle: const TextStyle(color: Colors.grey),
+                    hintStyle: AdminTextStyles.cardSubtitle,
                     border: InputBorder.none,
-                    contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+                    contentPadding: const EdgeInsets.symmetric(
+                      vertical: 16,
+                      horizontal: 20,
+                    ),
                   ),
                 ),
               ),
@@ -293,7 +299,7 @@ class _ResultListScreenState extends State<ResultListScreen> {
               ? SliverFillRemaining(
             child: Center(
               child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(Colors.blueAccent),
+                color: AdminColors.resultsColor,
               ),
             ),
           )
@@ -303,15 +309,24 @@ class _ResultListScreenState extends State<ResultListScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(Icons.search_off, size: 60, color: Colors.grey),
+                  Icon(
+                    Icons.search_off,
+                    size: 60,
+                    color: AdminColors.disabledText,
+                  ),
                   const SizedBox(height: 16),
-                  const Text(
+                  Text(
                     'No students found',
-                    style: TextStyle(color: Colors.grey),
+                    style: AdminTextStyles.cardSubtitle,
                   ),
                   TextButton(
                     onPressed: _fetchStudents,
-                    child: const Text('Retry'),
+                    child: Text(
+                      'Retry',
+                      style: AdminTextStyles.secondaryButton.copyWith(
+                        color: AdminColors.resultsColor,
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -321,11 +336,14 @@ class _ResultListScreenState extends State<ResultListScreen> {
             delegate: SliverChildBuilderDelegate(
                   (context, index) {
                 final student = _filteredStudents[index];
-                return Card(
-                  margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  color: Colors.grey[900],
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+                return Container(
+                  margin: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
+                  decoration: AdminColors.glassDecoration(
+                    borderRadius: 12,
+                    borderColor: AdminColors.studentColor,
                   ),
                   child: InkWell(
                     borderRadius: BorderRadius.circular(12),
@@ -340,24 +358,25 @@ class _ResultListScreenState extends State<ResultListScreen> {
                               Expanded(
                                 child: Text(
                                   student.name,
-                                  style: const TextStyle(
+                                  style: AdminTextStyles.cardTitle.copyWith(
                                     fontSize: 18,
                                     fontWeight: FontWeight.bold,
-                                    color: Colors.white,
                                   ),
                                 ),
                               ),
                               Container(
                                 padding: const EdgeInsets.symmetric(
-                                    horizontal: 12, vertical: 4),
+                                  horizontal: 12,
+                                  vertical: 4,
+                                ),
                                 decoration: BoxDecoration(
-                                  color: Colors.blueAccent.withOpacity(0.2),
+                                  color: AdminColors.studentColor.withOpacity(0.2),
                                   borderRadius: BorderRadius.circular(20),
                                 ),
                                 child: Text(
                                   'Year ${student.year}',
-                                  style: const TextStyle(
-                                    color: Colors.blueAccent,
+                                  style: AdminTextStyles.cardSubtitle.copyWith(
+                                    color: AdminColors.studentColor,
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
@@ -367,16 +386,12 @@ class _ResultListScreenState extends State<ResultListScreen> {
                           const SizedBox(height: 8),
                           Text(
                             'ID: ${student.id}',
-                            style: TextStyle(
-                              color: Colors.grey[400],
-                            ),
+                            style: AdminTextStyles.cardSubtitle,
                           ),
                           const SizedBox(height: 4),
                           Text(
                             'Phone: ${student.phone}',
-                            style: TextStyle(
-                              color: Colors.grey[400],
-                            ),
+                            style: AdminTextStyles.cardSubtitle,
                           ),
                         ],
                       ),
@@ -391,9 +406,15 @@ class _ResultListScreenState extends State<ResultListScreen> {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _showResultSummary,
-        icon: const Icon(Icons.description),
-        label: const Text('Summary'),
-        backgroundColor: Colors.blue.shade800,
+        icon: Icon(
+          Icons.description,
+          color: AdminColors.primaryText,
+        ),
+        label: Text(
+          'Summary',
+          style: AdminTextStyles.primaryButton,
+        ),
+        backgroundColor: AdminColors.resultsColor,
       ),
     );
   }
@@ -418,4 +439,3 @@ class Student {
     required this.year,
   });
 }
-

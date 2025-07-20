@@ -1,12 +1,14 @@
 import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:file_picker/file_picker.dart';
+import 'package:newapp/admin/themes/theme_colors.dart';
+import 'package:newapp/admin/themes/theme_text_styles.dart';
 
 import 'PlannerListScreen.dart';
+
 
 class PlannerDetailScreen extends StatefulWidget {
   final Planner planner;
@@ -49,7 +51,7 @@ class _PlannerDetailScreenState extends State<PlannerDetailScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error loading attachments: ${e.toString()}'),
-          backgroundColor: Colors.red,
+          backgroundColor: AdminColors.dangerAccent,
         ),
       );
     } finally {
@@ -66,7 +68,7 @@ class _PlannerDetailScreenState extends State<PlannerDetailScreen> {
       );
 
       if (response.statusCode == 200) {
-        Navigator.pop(context, true); // Return success
+        Navigator.pop(context, true);
       } else {
         throw Exception('Failed to delete planner');
       }
@@ -74,7 +76,7 @@ class _PlannerDetailScreenState extends State<PlannerDetailScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error deleting planner: ${e.toString()}'),
-          backgroundColor: Colors.red,
+          backgroundColor: AdminColors.dangerAccent,
         ),
       );
     } finally {
@@ -86,19 +88,19 @@ class _PlannerDetailScreenState extends State<PlannerDetailScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: Color(0xFF1A1A2E),
+        backgroundColor: AdminColors.secondaryBackground,
         title: Text(
           'Delete Plan',
-          style: TextStyle(color: Colors.white),
+          style: AdminTextStyles.cardTitle.copyWith(color: AdminColors.primaryText),
         ),
         content: Text(
           'Are you sure you want to delete this plan?',
-          style: TextStyle(color: Colors.white70),
+          style: AdminTextStyles.cardSubtitle,
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('CANCEL', style: TextStyle(color: Colors.white70)),
+            child: Text('CANCEL', style: AdminTextStyles.secondaryButton),
           ),
           TextButton(
             onPressed: () {
@@ -107,7 +109,7 @@ class _PlannerDetailScreenState extends State<PlannerDetailScreen> {
             },
             child: Text(
               'DELETE',
-              style: TextStyle(color: Colors.red),
+              style: AdminTextStyles.secondaryButton.copyWith(color: AdminColors.dangerAccent),
             ),
           ),
         ],
@@ -131,7 +133,7 @@ class _PlannerDetailScreenState extends State<PlannerDetailScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Attachment deleted successfully'),
-            backgroundColor: Colors.green,
+            backgroundColor: AdminColors.successAccent,
           ),
         );
       } else {
@@ -141,7 +143,7 @@ class _PlannerDetailScreenState extends State<PlannerDetailScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error deleting attachment: ${e.toString()}'),
-          backgroundColor: Colors.red,
+          backgroundColor: AdminColors.dangerAccent,
         ),
       );
     } finally {
@@ -186,7 +188,7 @@ class _PlannerDetailScreenState extends State<PlannerDetailScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Attachment uploaded successfully'),
-              backgroundColor: Colors.green,
+              backgroundColor: AdminColors.successAccent,
             ),
           );
         } else {
@@ -197,7 +199,7 @@ class _PlannerDetailScreenState extends State<PlannerDetailScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error uploading attachment: ${e.toString()}'),
-          backgroundColor: Colors.red,
+          backgroundColor: AdminColors.dangerAccent,
         ),
       );
     } finally {
@@ -213,10 +215,10 @@ class _PlannerDetailScreenState extends State<PlannerDetailScreen> {
     await showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: Color(0xFF1A1A2E),
+        backgroundColor: AdminColors.secondaryBackground,
         title: Text(
           'Edit Plan',
-          style: TextStyle(color: Colors.white),
+          style: AdminTextStyles.sectionHeader,
         ),
         content: SingleChildScrollView(
           child: Column(
@@ -224,24 +226,24 @@ class _PlannerDetailScreenState extends State<PlannerDetailScreen> {
             children: [
               TextField(
                 controller: titleController,
-                style: TextStyle(color: Colors.white),
+                style: AdminTextStyles.cardTitle,
                 decoration: InputDecoration(
                   labelText: 'Title',
-                  labelStyle: TextStyle(color: Colors.white70),
+                  labelStyle: AdminTextStyles.cardSubtitle,
                   enabledBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.cyanAccent),
+                    borderSide: BorderSide(color: AdminColors.primaryAccent),
                   ),
                 ),
               ),
               SizedBox(height: 16),
               TextField(
                 controller: descriptionController,
-                style: TextStyle(color: Colors.white),
+                style: AdminTextStyles.cardTitle,
                 decoration: InputDecoration(
                   labelText: 'Description',
-                  labelStyle: TextStyle(color: Colors.white70),
+                  labelStyle: AdminTextStyles.cardSubtitle,
                   enabledBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.cyanAccent),
+                    borderSide: BorderSide(color: AdminColors.primaryAccent),
                   ),
                 ),
                 maxLines: 3,
@@ -256,14 +258,14 @@ class _PlannerDetailScreenState extends State<PlannerDetailScreen> {
                     lastDate: DateTime(2100),
                     builder: (context, child) {
                       return Theme(
-                        data: ThemeData.dark().copyWith(
+                        data: Theme.of(context).copyWith(
                           colorScheme: ColorScheme.dark(
-                            primary: Colors.cyanAccent,
-                            onPrimary: Colors.black,
-                            surface: Color(0xFF1A1A2E),
-                            onSurface: Colors.white,
+                            primary: AdminColors.primaryAccent,
+                            onPrimary: AdminColors.primaryBackground,
+                            surface: AdminColors.secondaryBackground,
+                            onSurface: AdminColors.primaryText,
                           ),
-                          dialogBackgroundColor: Color(0xFF0A0A1A),
+                          dialogBackgroundColor: AdminColors.primaryBackground,
                         ),
                         child: child!,
                       );
@@ -276,16 +278,16 @@ class _PlannerDetailScreenState extends State<PlannerDetailScreen> {
                 child: InputDecorator(
                   decoration: InputDecoration(
                     labelText: 'Date',
-                    labelStyle: TextStyle(color: Colors.white70),
+                    labelStyle: AdminTextStyles.cardSubtitle,
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
                         DateFormat('MMMM d, y').format(selectedDate!),
-                        style: TextStyle(color: Colors.white),
+                        style: AdminTextStyles.cardTitle,
                       ),
-                      Icon(Icons.calendar_today, color: Colors.cyanAccent),
+                      Icon(Icons.calendar_today, color: AdminColors.primaryAccent),
                     ],
                   ),
                 ),
@@ -296,7 +298,7 @@ class _PlannerDetailScreenState extends State<PlannerDetailScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('CANCEL', style: TextStyle(color: Colors.white70)),
+            child: Text('CANCEL', style: AdminTextStyles.secondaryButton),
           ),
           TextButton(
             onPressed: () async {
@@ -309,7 +311,7 @@ class _PlannerDetailScreenState extends State<PlannerDetailScreen> {
             },
             child: Text(
               'SAVE',
-              style: TextStyle(color: Colors.cyanAccent),
+              style: AdminTextStyles.secondaryButton.copyWith(color: AdminColors.primaryAccent),
             ),
           ),
         ],
@@ -337,14 +339,12 @@ class _PlannerDetailScreenState extends State<PlannerDetailScreen> {
       );
 
       if (response.statusCode == 200) {
-        // You might want to refresh the planner data here
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Plan updated successfully'),
-            backgroundColor: Colors.green,
+            backgroundColor: AdminColors.successAccent,
           ),
         );
-        // Optionally refresh the data
         _fetchAttachments();
       } else {
         throw Exception('Failed to update planner');
@@ -353,7 +353,7 @@ class _PlannerDetailScreenState extends State<PlannerDetailScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error updating planner: ${e.toString()}'),
-          backgroundColor: Colors.red,
+          backgroundColor: AdminColors.dangerAccent,
         ),
       );
     } finally {
@@ -369,42 +369,36 @@ class _PlannerDetailScreenState extends State<PlannerDetailScreen> {
         : plannedDate;
 
     return Scaffold(
-      backgroundColor: const Color(0xFF0A0A1A),
+      backgroundColor: AdminColors.primaryBackground,
       appBar: AppBar(
-        title: const Text('PLAN DETAILS'),
-        backgroundColor: Colors.transparent,
+        title: Text('PLAN DETAILS', style: AdminTextStyles.sectionHeader),
+        backgroundColor: AdminColors.secondaryBackground,
         elevation: 0,
         actions: [
           IconButton(
-            icon: const Icon(Icons.edit, color: Colors.cyanAccent),
+            icon: Icon(Icons.edit, color: AdminColors.primaryAccent),
             onPressed: _showEditDialog,
           ),
           IconButton(
-            icon: const Icon(Icons.delete, color: Colors.red),
+            icon: Icon(Icons.delete, color: AdminColors.dangerAccent),
             onPressed: _confirmDelete,
           ),
         ],
       ),
       body: _isLoading
-          ? const Center(
-        child: CircularProgressIndicator(color: Colors.cyanAccent),
+          ? Center(
+        child: CircularProgressIndicator(color: AdminColors.primaryAccent),
       )
           : SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Card(
-              color: const Color(0xFF1A1A2E),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-                side: BorderSide(
-                  color: Colors.cyanAccent.withOpacity(0.2),
-                  width: 1,
-                ),
-              ),
+            // Planner Details Card
+            Container(
+              decoration: AdminColors.glassDecoration(),
               child: Padding(
-                padding: const EdgeInsets.all(16.0),
+                padding: EdgeInsets.all(16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -413,68 +407,64 @@ class _PlannerDetailScreenState extends State<PlannerDetailScreen> {
                       children: [
                         Text(
                           widget.planner.subjectName ?? 'No Subject',
-                          style: const TextStyle(
-                            color: Colors.cyanAccent,
-                            fontSize: 16,
+                          style: AdminTextStyles.cardTitle.copyWith(
+                            color: AdminColors.plannerColor,
                           ),
                         ),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                           decoration: BoxDecoration(
-                            color: Colors.cyanAccent.withOpacity(0.1),
+                            color: AdminColors.plannerColor.withOpacity(0.1),
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: Colors.cyanAccent, width: 1),
+                            border: Border.all(
+                              color: AdminColors.plannerColor,
+                              width: 1,
+                            ),
                           ),
                           child: Text(
                             DateFormat('h:mm a').format(plannedDate),
-                            style: const TextStyle(
-                              color: Colors.cyanAccent,
-                              fontSize: 12,
+                            style: AdminTextStyles.cardSubtitle.copyWith(
+                              color: AdminColors.plannerColor,
                             ),
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 16),
+                    SizedBox(height: 16),
                     Text(
                       widget.planner.title ?? 'Untitled Plan',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                      ),
+                      style: AdminTextStyles.sectionHeader,
                     ),
-                    const SizedBox(height: 16),
+                    SizedBox(height: 16),
                     Text(
                       widget.planner.description ?? 'No description provided',
-                      style: const TextStyle(
-                        color: Colors.white70,
-                        fontSize: 16,
+                      style: AdminTextStyles.cardSubtitle.copyWith(
+                        fontSize: 14,
                       ),
                     ),
-                    const SizedBox(height: 24),
-                    const Divider(color: Colors.white24),
-                    const SizedBox(height: 16),
+                    SizedBox(height: 24),
+                    Divider(color: AdminColors.cardBorder),
+                    SizedBox(height: 16),
                     if (widget.planner.teacherName != null) ...[
                       _buildDetailRow(
                         icon: Icons.person_outline,
                         label: 'Teacher',
                         value: widget.planner.teacherName!,
                       ),
-                      const SizedBox(height: 8),
+                      SizedBox(height: 8),
                     ],
                     _buildDetailRow(
                       icon: Icons.calendar_today,
                       label: 'Date',
                       value: DateFormat('MMMM d, y').format(plannedDate),
                     ),
-                    const SizedBox(height: 8),
+                    SizedBox(height: 8),
                     _buildDetailRow(
                       icon: Icons.access_time,
                       label: 'Time',
                       value: DateFormat('h:mm a').format(plannedDate),
                     ),
-                    const SizedBox(height: 8),
+                    SizedBox(height: 8),
                     _buildDetailRow(
                       icon: Icons.schedule,
                       label: 'Created',
@@ -484,52 +474,52 @@ class _PlannerDetailScreenState extends State<PlannerDetailScreen> {
                 ),
               ),
             ),
-            const SizedBox(height: 24),
-            const Text(
+            SizedBox(height: 24),
+            Text(
               'ATTACHMENTS',
-              style: TextStyle(
-                color: Colors.white70,
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
+              style: AdminTextStyles.cardTitle.copyWith(
+                color: AdminColors.secondaryText,
               ),
             ),
-            const SizedBox(height: 8),
+            SizedBox(height: 8),
             if (_hasAttachments)
               Column(
                 children: [
                   ListView.builder(
                     shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
+                    physics: NeverScrollableScrollPhysics(),
                     itemCount: _attachments.length,
                     itemBuilder: (context, index) {
                       final attachment = _attachments[index];
-                      return Card(
-                        color: const Color(0xFF1A1A2E),
-                        margin: const EdgeInsets.only(bottom: 8),
+                      return Container(
+                        margin: EdgeInsets.only(bottom: 8),
+                        decoration: AdminColors.glassDecoration(),
                         child: ListTile(
                           leading: Icon(
                             _getAttachmentIcon(attachment['type']),
-                            color: Colors.cyanAccent,
+                            color: AdminColors.primaryAccent,
                           ),
                           title: Text(
                             attachment['name'] ?? 'Unnamed file',
-                            style: const TextStyle(color: Colors.white),
+                            style: AdminTextStyles.cardTitle,
                           ),
                           subtitle: Text(
                             attachment['size']?.toString() ?? '',
-                            style: const TextStyle(color: Colors.white70),
+                            style: AdminTextStyles.cardSubtitle,
                           ),
                           trailing: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               IconButton(
-                                icon: const Icon(Icons.download, color: Colors.cyanAccent),
+                                icon: Icon(Icons.download,
+                                    color: AdminColors.primaryAccent),
                                 onPressed: () {
                                   // Handle download
                                 },
                               ),
                               IconButton(
-                                icon: const Icon(Icons.delete, color: Colors.red),
+                                icon: Icon(Icons.delete,
+                                    color: AdminColors.dangerAccent),
                                 onPressed: () {
                                   if (attachment['attachment_id'] != null) {
                                     _deleteAttachment(attachment['attachment_id']);
@@ -542,7 +532,7 @@ class _PlannerDetailScreenState extends State<PlannerDetailScreen> {
                       );
                     },
                   ),
-                  const SizedBox(height: 8),
+                  SizedBox(height: 8),
                   _buildAddAttachmentButton(),
                 ],
               )
@@ -550,7 +540,7 @@ class _PlannerDetailScreenState extends State<PlannerDetailScreen> {
               Column(
                 children: [
                   _buildAddAttachmentButton(),
-                  const SizedBox(height: 16),
+                  SizedBox(height: 16),
                 ],
               ),
           ],
@@ -559,7 +549,6 @@ class _PlannerDetailScreenState extends State<PlannerDetailScreen> {
     );
   }
 
-
   Widget _buildDetailRow({
     required IconData icon,
     required String label,
@@ -567,14 +556,11 @@ class _PlannerDetailScreenState extends State<PlannerDetailScreen> {
   }) {
     return Row(
       children: [
-        Icon(icon, size: 20, color: Colors.white70),
+        Icon(icon, size: 20, color: AdminColors.secondaryText),
         SizedBox(width: 8),
         Text(
           '$label: $value',
-          style: TextStyle(
-            color: Colors.white70,
-            fontSize: 14,
-          ),
+          style: AdminTextStyles.cardSubtitle,
         ),
       ],
     );
@@ -585,23 +571,16 @@ class _PlannerDetailScreenState extends State<PlannerDetailScreen> {
       onTap: _uploadAttachment,
       child: Container(
         height: 100,
-        decoration: BoxDecoration(
-          color: Color(0xFF1A1A2E),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: Colors.white24,
-            width: 1,
-          ),
-        ),
+        decoration: AdminColors.glassDecoration(),
         child: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.add, color: Colors.white54),
+              Icon(Icons.add, color: AdminColors.secondaryText),
               SizedBox(height: 8),
               Text(
                 'Add files or links',
-                style: TextStyle(color: Colors.white54),
+                style: AdminTextStyles.cardSubtitle,
               ),
             ],
           ),

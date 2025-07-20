@@ -1,9 +1,13 @@
+// download_reports_screen.dart
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:http/http.dart' as http;
+import 'package:newapp/admin/themes/theme_colors.dart';
+import 'package:newapp/admin/themes/theme_extensions.dart';
+import 'package:newapp/admin/themes/theme_text_styles.dart';
 import 'package:open_file/open_file.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
@@ -100,7 +104,7 @@ class _DownloadReportsScreenState extends State<DownloadReportsScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: AdminColors.primaryBackground,
       body: Stack(
         children: [
           // Animated Background
@@ -113,9 +117,9 @@ class _DownloadReportsScreenState extends State<DownloadReportsScreen>
                     center: Alignment.center,
                     radius: 1.5,
                     colors: [
-                      Colors.blue.shade900.withOpacity(_fadeAnimation.value * 0.3),
-                      Colors.indigo.shade900.withOpacity(_fadeAnimation.value * 0.3),
-                      Colors.black,
+                      AdminColors.reportsColor.withOpacity(_fadeAnimation.value * 0.3),
+                      AdminColors.secondaryBackground.withOpacity(_fadeAnimation.value * 0.3),
+                      AdminColors.primaryBackground,
                     ],
                     stops: [0.1, 0.5, 1.0],
                   ),
@@ -127,7 +131,7 @@ class _DownloadReportsScreenState extends State<DownloadReportsScreen>
           CustomScrollView(
             slivers: [
               SliverAppBar(
-                expandedHeight: 100, // Reduced height
+                expandedHeight: 100,
                 floating: false,
                 pinned: true,
                 backgroundColor: Colors.transparent,
@@ -137,18 +141,15 @@ class _DownloadReportsScreenState extends State<DownloadReportsScreen>
                     animation: _animationController,
                     builder: (context, child) {
                       return Text(
-                        'GENERATE REPORTS', // Changed to just "GENERATE REPORTS"
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 2,
+                        'GENERATE REPORTS',
+                        style: AdminTextStyles.sectionTitle(AdminColors.primaryAccent).copyWith(
                           shadows: [
                             Shadow(
                               blurRadius: 10 * _fadeAnimation.value,
-                              color: Colors.cyanAccent.withOpacity(_fadeAnimation.value),
+                              color: AdminColors.primaryAccent.withOpacity(_fadeAnimation.value),
                             ),
                           ],
-                          color: Colors.white.withOpacity(_fadeAnimation.value),
+                          color: AdminColors.primaryText.withOpacity(_fadeAnimation.value),
                         ),
                       );
                     },
@@ -160,9 +161,9 @@ class _DownloadReportsScreenState extends State<DownloadReportsScreen>
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                         colors: [
-                          Colors.blue.shade900.withOpacity(0.7),
-                          Colors.indigo.shade800.withOpacity(0.7),
-                          Colors.purple.shade900.withOpacity(0.7),
+                          AdminColors.reportsColor.withOpacity(0.7),
+                          AdminColors.secondaryBackground.withOpacity(0.7),
+                          AdminColors.primaryBackground.withOpacity(0.7),
                         ],
                       ),
                     ),
@@ -172,7 +173,7 @@ class _DownloadReportsScreenState extends State<DownloadReportsScreen>
 
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.only(top: 16.0), // Added top padding
+                  padding: const EdgeInsets.only(top: 16.0),
                   child: GlassCard(
                     margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     child: TabBar(
@@ -181,13 +182,13 @@ class _DownloadReportsScreenState extends State<DownloadReportsScreen>
                         borderRadius: BorderRadius.circular(12),
                         gradient: LinearGradient(
                           colors: [
-                            Colors.cyanAccent.withOpacity(0.8),
-                            Colors.blueAccent.withOpacity(0.8),
+                            AdminColors.primaryAccent.withOpacity(0.8),
+                            AdminColors.secondaryAccent.withOpacity(0.8),
                           ],
                         ),
                       ),
-                      labelColor: Colors.black,
-                      unselectedLabelColor: Colors.white70,
+                      labelColor: AdminColors.primaryBackground,
+                      unselectedLabelColor: AdminColors.primaryText.withOpacity(0.7),
                       tabs: const [
                         Tab(text: 'SUBJECT'),
                         Tab(text: 'ASSESSMENT'),
@@ -214,7 +215,7 @@ class _DownloadReportsScreenState extends State<DownloadReportsScreen>
           if (_isLoading)
             Center(
               child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(Colors.cyanAccent),
+                valueColor: AlwaysStoppedAnimation<Color>(AdminColors.primaryAccent),
               ),
             ),
         ],
@@ -246,7 +247,7 @@ class _DownloadReportsScreenState extends State<DownloadReportsScreen>
             padding: const EdgeInsets.all(16.0),
             child: Row(
               children: [
-                Icon(Icons.assignment, color: Colors.cyanAccent, size: 28),
+                Icon(Icons.assignment, color: AdminColors.primaryAccent, size: 28),
                 SizedBox(width: 12),
                 Expanded(
                   child: Column(
@@ -254,19 +255,16 @@ class _DownloadReportsScreenState extends State<DownloadReportsScreen>
                     children: [
                       Text(
                         'SUBJECT REPORT',
-                        style: TextStyle(
-                          color: Colors.cyanAccent,
+                        style: AdminTextStyles.sectionHeader.copyWith(
+                          color: AdminColors.primaryAccent,
                           fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 1.2,
                         ),
                       ),
                       SizedBox(height: 4),
                       Text(
                         'All assessment types with quiz data',
-                        style: TextStyle(
-                          color: Colors.white.withOpacity(0.7),
-                          fontSize: 12,
+                        style: AdminTextStyles.cardSubtitle.copyWith(
+                          color: AdminColors.primaryText.withOpacity(0.7),
                         ),
                       ),
                     ],
@@ -298,7 +296,7 @@ class _DownloadReportsScreenState extends State<DownloadReportsScreen>
             padding: const EdgeInsets.all(16.0),
             child: Row(
               children: [
-                Icon(Icons.assessment, color: Colors.cyanAccent, size: 28),
+                Icon(Icons.assessment, color: AdminColors.primaryAccent, size: 28),
                 SizedBox(width: 12),
                 Expanded(
                   child: Column(
@@ -306,19 +304,16 @@ class _DownloadReportsScreenState extends State<DownloadReportsScreen>
                     children: [
                       Text(
                         'ASSESSMENT REPORT',
-                        style: TextStyle(
-                          color: Colors.cyanAccent,
+                        style: AdminTextStyles.sectionHeader.copyWith(
+                          color: AdminColors.primaryAccent,
                           fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 1.2,
                         ),
                       ),
                       SizedBox(height: 4),
                       Text(
                         'Selected assessment type for subject',
-                        style: TextStyle(
-                          color: Colors.white.withOpacity(0.7),
-                          fontSize: 12,
+                        style: AdminTextStyles.cardSubtitle.copyWith(
+                          color: AdminColors.primaryText.withOpacity(0.7),
                         ),
                       ),
                     ],
@@ -352,7 +347,7 @@ class _DownloadReportsScreenState extends State<DownloadReportsScreen>
             padding: const EdgeInsets.all(16.0),
             child: Row(
               children: [
-                Icon(Icons.quiz, color: Colors.cyanAccent, size: 28),
+                Icon(Icons.quiz, color: AdminColors.primaryAccent, size: 28),
                 SizedBox(width: 12),
                 Expanded(
                   child: Column(
@@ -360,19 +355,16 @@ class _DownloadReportsScreenState extends State<DownloadReportsScreen>
                     children: [
                       Text(
                         'MONTHLY QUIZZES',
-                        style: TextStyle(
-                          color: Colors.cyanAccent,
+                        style: AdminTextStyles.sectionHeader.copyWith(
+                          color: AdminColors.primaryAccent,
                           fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 1.2,
                         ),
                       ),
                       SizedBox(height: 4),
                       Text(
                         'Monthly assessments with quiz data',
-                        style: TextStyle(
-                          color: Colors.white.withOpacity(0.7),
-                          fontSize: 12,
+                        style: AdminTextStyles.cardSubtitle.copyWith(
+                          color: AdminColors.primaryText.withOpacity(0.7),
                         ),
                       ),
                     ],
@@ -402,7 +394,7 @@ class _DownloadReportsScreenState extends State<DownloadReportsScreen>
             padding: const EdgeInsets.all(16.0),
             child: Row(
               children: [
-                Icon(Icons.library_books, color: Colors.cyanAccent, size: 28),
+                Icon(Icons.library_books, color: AdminColors.primaryAccent, size: 28),
                 SizedBox(width: 12),
                 Expanded(
                   child: Column(
@@ -410,19 +402,16 @@ class _DownloadReportsScreenState extends State<DownloadReportsScreen>
                     children: [
                       Text(
                         'ALL SUBJECTS',
-                        style: TextStyle(
-                          color: Colors.cyanAccent,
+                        style: AdminTextStyles.sectionHeader.copyWith(
+                          color: AdminColors.primaryAccent,
                           fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 1.2,
                         ),
                       ),
                       SizedBox(height: 4),
                       Text(
                         'Selected assessment type for all subjects',
-                        style: TextStyle(
-                          color: Colors.white.withOpacity(0.7),
-                          fontSize: 12,
+                        style: AdminTextStyles.cardSubtitle.copyWith(
+                          color: AdminColors.primaryText.withOpacity(0.7),
                         ),
                       ),
                     ],
@@ -454,9 +443,8 @@ class _DownloadReportsScreenState extends State<DownloadReportsScreen>
           children: [
             Text(
               'SUBJECT',
-              style: TextStyle(
-                color: Colors.white.withOpacity(0.7),
-                fontSize: 12,
+              style: AdminTextStyles.cardSubtitle.copyWith(
+                color: AdminColors.primaryText.withOpacity(0.7),
               ),
             ),
             DropdownButtonFormField<Subject>(
@@ -469,7 +457,7 @@ class _DownloadReportsScreenState extends State<DownloadReportsScreen>
                   value: subject,
                   child: Text(
                     '${subject.name} (ID: ${subject.id})',
-                    style: TextStyle(color: Colors.white),
+                    style: AdminTextStyles.cardTitle.copyWith(color: AdminColors.primaryText),
                   ),
                 );
               }).toList(),
@@ -485,10 +473,10 @@ class _DownloadReportsScreenState extends State<DownloadReportsScreen>
                 return null;
               },
               hint: _isLoadingSubjects
-                  ? Text('Loading subjects...', style: TextStyle(color: Colors.white70))
-                  : Text('Select subject', style: TextStyle(color: Colors.white70)),
-              dropdownColor: Colors.grey[900],
-              icon: Icon(Icons.arrow_drop_down, color: Colors.white),
+                  ? Text('Loading subjects...', style: AdminTextStyles.cardSubtitle)
+                  : Text('Select subject', style: AdminTextStyles.cardSubtitle),
+              dropdownColor: AdminColors.secondaryBackground,
+              icon: Icon(Icons.arrow_drop_down, color: AdminColors.primaryText),
               value: _selectedSubject,
             ),
           ],
@@ -522,9 +510,8 @@ class _DownloadReportsScreenState extends State<DownloadReportsScreen>
           children: [
             Text(
               'ASSESSMENT TYPE',
-              style: TextStyle(
-                color: Colors.white.withOpacity(0.7),
-                fontSize: 12,
+              style: AdminTextStyles.cardSubtitle.copyWith(
+                color: AdminColors.primaryText.withOpacity(0.7),
               ),
             ),
             DropdownButtonFormField<String>(
@@ -537,7 +524,7 @@ class _DownloadReportsScreenState extends State<DownloadReportsScreen>
                   value: type,
                   child: Text(
                     type,
-                    style: TextStyle(color: Colors.white),
+                    style: AdminTextStyles.cardTitle.copyWith(color: AdminColors.primaryText),
                   ),
                 );
               }).toList(),
@@ -548,10 +535,10 @@ class _DownloadReportsScreenState extends State<DownloadReportsScreen>
               },
               hint: Text(
                 'Select assessment type',
-                style: TextStyle(color: Colors.white70),
+                style: AdminTextStyles.cardSubtitle,
               ),
-              dropdownColor: Colors.grey[900],
-              icon: Icon(Icons.arrow_drop_down, color: Colors.white),
+              dropdownColor: AdminColors.secondaryBackground,
+              icon: Icon(Icons.arrow_drop_down, color: AdminColors.primaryText),
               value: _selectedAssessmentType,
             ),
           ],
@@ -565,12 +552,12 @@ class _DownloadReportsScreenState extends State<DownloadReportsScreen>
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: Colors.white.withOpacity(0.5),
+          color: AdminColors.primaryText.withOpacity(0.5),
           width: 1.5,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.cyanAccent.withOpacity(0.2),
+            color: AdminColors.primaryAccent.withOpacity(0.2),
             blurRadius: 10,
             spreadRadius: 2,
           ),
@@ -579,8 +566,8 @@ class _DownloadReportsScreenState extends State<DownloadReportsScreen>
       child: ElevatedButton(
         onPressed: _isLoading ? null : onPressed,
         style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.transparent,
-          foregroundColor: Colors.white,
+          backgroundColor: AdminColors.cardBackground,
+          foregroundColor: AdminColors.primaryText,
           shadowColor: Colors.transparent,
           padding: const EdgeInsets.symmetric(vertical: 16),
           shape: RoundedRectangleBorder(
@@ -588,12 +575,11 @@ class _DownloadReportsScreenState extends State<DownloadReportsScreen>
           ),
         ),
         child: _isLoading
-            ? const CircularProgressIndicator(color: Colors.white)
+            ? CircularProgressIndicator(color: AdminColors.primaryText)
             : Text(
           text,
-          style: TextStyle(
+          style: AdminTextStyles.primaryButton.copyWith(
             fontSize: 16,
-            fontWeight: FontWeight.bold,
             letterSpacing: 1.1,
           ),
         ),
@@ -601,7 +587,6 @@ class _DownloadReportsScreenState extends State<DownloadReportsScreen>
     );
   }
 
-  // Keep all your existing report generation methods (_generateSubjectReport, etc.)
   Future<void> _generateSubjectReport() async {
     if (_selectedSubject == null || _yearController.text.isEmpty) {
       _showToast('Please select a subject and year');
@@ -626,7 +611,7 @@ class _DownloadReportsScreenState extends State<DownloadReportsScreen>
 
         if (kIsWeb) {
           final blob = html.Blob([resp.bodyBytes]);
-          final url  = html.Url.createObjectUrlFromBlob(blob);
+          final url = html.Url.createObjectUrlFromBlob(blob);
           html.AnchorElement(href: url)
             ..setAttribute('download', fileName)
             ..click();
@@ -810,8 +795,8 @@ class _DownloadReportsScreenState extends State<DownloadReportsScreen>
       msg: message,
       toastLength: Toast.LENGTH_LONG,
       gravity: ToastGravity.BOTTOM,
-      backgroundColor: Colors.grey[800],
-      textColor: Colors.white,
+      backgroundColor: AdminColors.secondaryBackground,
+      textColor: AdminColors.primaryText,
     );
   }
 }
@@ -873,20 +858,20 @@ class GlassCard extends StatelessWidget {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(borderRadius),
         border: Border.all(
-          color: borderColor ?? Colors.white.withOpacity(0.2),
+          color: borderColor ?? AdminColors.cardBorder,
           width: 1,
         ),
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            Colors.white.withOpacity(0.1),
-            Colors.white.withOpacity(0.05),
+            AdminColors.glassEffectLight,
+            AdminColors.glassEffectDark,
           ],
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.2),
+            color: AdminColors.primaryBackground.withOpacity(0.2),
             blurRadius: 10,
             spreadRadius: 2,
           ),
@@ -930,12 +915,14 @@ class GlassInputField extends StatelessWidget {
           obscureText: obscureText,
           keyboardType: keyboardType,
           inputFormatters: inputFormatters,
-          style: TextStyle(color: Colors.white),
+          style: AdminTextStyles.cardTitle.copyWith(color: AdminColors.primaryText),
           decoration: InputDecoration(
             labelText: label,
-            labelStyle: TextStyle(color: Colors.white.withOpacity(0.7)),
+            labelStyle: AdminTextStyles.cardSubtitle.copyWith(
+              color: AdminColors.primaryText.withOpacity(0.7),
+            ),
             border: InputBorder.none,
-            icon: Icon(icon, color: Colors.white.withOpacity(0.7)),
+            icon: Icon(icon, color: AdminColors.primaryText.withOpacity(0.7)),
           ),
           validator: validator,
         ),

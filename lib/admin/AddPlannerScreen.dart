@@ -4,7 +4,9 @@ import 'package:intl/intl.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:file_picker/file_picker.dart';
-import 'package:flutter/rendering.dart';
+import 'package:newapp/admin/themes/theme_colors.dart';
+import 'package:newapp/admin/themes/theme_text_styles.dart';
+
 
 class AddPlannerScreen extends StatefulWidget {
   final int campusID;
@@ -81,7 +83,7 @@ class _AddPlannerScreenState extends State<AddPlannerScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error loading subjects: ${e.toString()}'),
-          backgroundColor: Colors.red,
+          backgroundColor: AdminColors.dangerAccent,
         ),
       );
     }
@@ -97,12 +99,12 @@ class _AddPlannerScreenState extends State<AddPlannerScreen> {
         return Theme(
           data: ThemeData.dark().copyWith(
             colorScheme: ColorScheme.dark(
-              primary: Colors.cyanAccent,
-              onPrimary: Colors.black,
-              surface: Color(0xFF1A1A2E),
-              onSurface: Colors.white,
+              primary: AdminColors.primaryAccent,
+              onPrimary: AdminColors.primaryBackground,
+              surface: AdminColors.secondaryBackground,
+              onSurface: AdminColors.primaryText,
             ),
-            dialogBackgroundColor: Color(0xFF0A0A1A),
+            dialogBackgroundColor: AdminColors.primaryBackground,
           ),
           child: child!,
         );
@@ -124,12 +126,12 @@ class _AddPlannerScreenState extends State<AddPlannerScreen> {
         return Theme(
           data: ThemeData.dark().copyWith(
             colorScheme: ColorScheme.dark(
-              primary: Colors.cyanAccent,
-              onPrimary: Colors.black,
-              surface: Color(0xFF1A1A2E),
-              onSurface: Colors.white,
+              primary: AdminColors.primaryAccent,
+              onPrimary: AdminColors.primaryBackground,
+              surface: AdminColors.secondaryBackground,
+              onSurface: AdminColors.primaryText,
             ),
-            dialogBackgroundColor: Color(0xFF0A0A1A),
+            dialogBackgroundColor: AdminColors.primaryBackground,
           ),
           child: child!,
         );
@@ -152,7 +154,7 @@ class _AddPlannerScreenState extends State<AddPlannerScreen> {
         return Container(
           height: MediaQuery.of(context).size.height * 0.7,
           decoration: BoxDecoration(
-            color: Color(0xFF1A1A2E),
+            color: AdminColors.secondaryBackground,
             borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
           ),
           padding: EdgeInsets.all(16),
@@ -161,26 +163,24 @@ class _AddPlannerScreenState extends State<AddPlannerScreen> {
             children: [
               Text(
                 'SELECT SUBJECT',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
+                style: AdminTextStyles.sectionHeader.copyWith(
+                  color: AdminColors.primaryAccent,
                 ),
               ),
               SizedBox(height: 16),
               TextField(
                 decoration: InputDecoration(
                   hintText: 'Search subjects...',
-                  hintStyle: TextStyle(color: Colors.white54),
-                  prefixIcon: Icon(Icons.search, color: Colors.white70),
+                  hintStyle: AdminTextStyles.cardSubtitle,
+                  prefixIcon: Icon(Icons.search, color: AdminColors.secondaryText),
                   filled: true,
-                  fillColor: Color(0xFF0A0A1A),
+                  fillColor: AdminColors.primaryBackground,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: BorderSide.none,
                   ),
                 ),
-                style: TextStyle(color: Colors.white),
+                style: AdminTextStyles.primaryButton,
               ),
               SizedBox(height: 16),
               Expanded(
@@ -191,7 +191,7 @@ class _AddPlannerScreenState extends State<AddPlannerScreen> {
                     return ListTile(
                       title: Text(
                         subject['name'],
-                        style: TextStyle(color: Colors.white),
+                        style: AdminTextStyles.primaryButton,
                       ),
                       onTap: () {
                         setState(() {
@@ -228,7 +228,7 @@ class _AddPlannerScreenState extends State<AddPlannerScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error picking files: ${e.toString()}'),
-          backgroundColor: Colors.red,
+          backgroundColor: AdminColors.dangerAccent,
         ),
       );
     }
@@ -249,7 +249,7 @@ class _AddPlannerScreenState extends State<AddPlannerScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Please select a subject'),
-          backgroundColor: Colors.red,
+          backgroundColor: AdminColors.dangerAccent,
         ),
       );
       return;
@@ -294,14 +294,14 @@ class _AddPlannerScreenState extends State<AddPlannerScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Planner created successfully'),
-          backgroundColor: Colors.green,
+          backgroundColor: AdminColors.successAccent,
         ),
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error: ${e.toString()}'),
-          backgroundColor: Colors.red,
+          backgroundColor: AdminColors.dangerAccent,
         ),
       );
     } finally {
@@ -337,7 +337,7 @@ class _AddPlannerScreenState extends State<AddPlannerScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error uploading attachments: ${e.toString()}'),
-          backgroundColor: Colors.orange,
+          backgroundColor: AdminColors.warningAccent,
         ),
       );
     }
@@ -352,9 +352,8 @@ class _AddPlannerScreenState extends State<AddPlannerScreen> {
         SizedBox(height: 16),
         Text(
           'ATTACHMENTS',
-          style: TextStyle(
-            color: Colors.white70,
-            fontSize: 14,
+          style: AdminTextStyles.cardSubtitle.copyWith(
+            color: AdminColors.secondaryText,
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -366,23 +365,30 @@ class _AddPlannerScreenState extends State<AddPlannerScreen> {
           itemBuilder: (context, index) {
             final file = _attachments[index];
             return Card(
-              color: Color(0xFF1A1A2E),
+              color: AdminColors.cardBackground,
               margin: EdgeInsets.only(bottom: 8),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+                side: BorderSide(
+                  color: AdminColors.cardBorder,
+                  width: 1,
+                ),
+              ),
               child: ListTile(
                 leading: Icon(
                   _getAttachmentIcon(file.path.split('.').last),
-                  color: Colors.cyanAccent,
+                  color: AdminColors.primaryAccent,
                 ),
                 title: Text(
                   file.path.split('/').last,
-                  style: TextStyle(color: Colors.white),
+                  style: AdminTextStyles.cardTitle,
                 ),
                 subtitle: Text(
                   '${(file.lengthSync() / 1024).toStringAsFixed(2)} KB',
-                  style: TextStyle(color: Colors.white70),
+                  style: AdminTextStyles.cardSubtitle,
                 ),
                 trailing: IconButton(
-                  icon: Icon(Icons.delete, color: Colors.red),
+                  icon: Icon(Icons.delete, color: AdminColors.dangerAccent),
                   onPressed: () => _removeAttachment(index),
                 ),
               ),
@@ -398,23 +404,19 @@ class _AddPlannerScreenState extends State<AddPlannerScreen> {
       onTap: _pickFiles,
       child: Container(
         height: 100,
-        decoration: BoxDecoration(
-          color: Color(0xFF1A1A2E),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: Colors.white24,
-            width: 1,
-          ),
+        decoration: AdminColors.glassDecoration(
+          borderRadius: 12,
+          borderColor: AdminColors.cardBorder,
         ),
         child: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.add, color: Colors.white54),
+              Icon(Icons.add, color: AdminColors.secondaryText),
               SizedBox(height: 8),
               Text(
                 'Add files or links',
-                style: TextStyle(color: Colors.white54),
+                style: AdminTextStyles.cardSubtitle,
               ),
             ],
           ),
@@ -445,12 +447,15 @@ class _AddPlannerScreenState extends State<AddPlannerScreen> {
     return Scaffold(
       backgroundColor: Colors.transparent,
       appBar: AppBar(
-        title: Text('CREATE LESSON PLAN'),
+        title: Text(
+          'CREATE LESSON PLAN',
+          style: AdminTextStyles.sectionHeader,
+        ),
         backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
         leading: IconButton(
-          icon: Icon(Icons.close),
+          icon: Icon(Icons.close, color: AdminColors.primaryText),
           onPressed: () => Navigator.pop(context),
         ),
         actions: [
@@ -459,7 +464,9 @@ class _AddPlannerScreenState extends State<AddPlannerScreen> {
               onPressed: _submitPlanner,
               child: Text(
                 'SAVE',
-                style: TextStyle(color: Colors.cyanAccent),
+                style: AdminTextStyles.primaryButton.copyWith(
+                  color: AdminColors.primaryAccent,
+                ),
               ),
             ),
           if (_isSubmitting)
@@ -471,7 +478,7 @@ class _AddPlannerScreenState extends State<AddPlannerScreen> {
                   height: 20,
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
-                    color: Colors.cyanAccent,
+                    color: AdminColors.primaryAccent,
                   ),
                 ),
               ),
@@ -479,7 +486,9 @@ class _AddPlannerScreenState extends State<AddPlannerScreen> {
         ],
       ),
       body: _isLoadingSubjects
-          ? Center(child: CircularProgressIndicator(color: Colors.cyanAccent))
+          ? Center(
+        child: CircularProgressIndicator(color: AdminColors.primaryAccent),
+      )
           : SingleChildScrollView(
         padding: EdgeInsets.all(16),
         child: Form(
@@ -491,14 +500,32 @@ class _AddPlannerScreenState extends State<AddPlannerScreen> {
                 controller: _subjectController,
                 decoration: InputDecoration(
                   labelText: 'Subject',
-                  labelStyle: TextStyle(color: Colors.white70),
-                  border: OutlineInputBorder(),
+                  labelStyle: AdminTextStyles.cardSubtitle,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                      color: AdminColors.cardBorder,
+                    ),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                      color: AdminColors.cardBorder,
+                    ),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                      color: AdminColors.primaryAccent,
+                    ),
+                  ),
                   suffixIcon: IconButton(
-                    icon: Icon(Icons.arrow_drop_down),
+                    icon: Icon(Icons.arrow_drop_down,
+                        color: AdminColors.secondaryText),
                     onPressed: () => _selectSubject(context),
                   ),
                 ),
-                style: TextStyle(color: Colors.white),
+                style: AdminTextStyles.primaryButton,
                 readOnly: true,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
@@ -512,10 +539,27 @@ class _AddPlannerScreenState extends State<AddPlannerScreen> {
                 controller: _titleController,
                 decoration: InputDecoration(
                   labelText: 'Title',
-                  labelStyle: TextStyle(color: Colors.white70),
-                  border: OutlineInputBorder(),
+                  labelStyle: AdminTextStyles.cardSubtitle,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                      color: AdminColors.cardBorder,
+                    ),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                      color: AdminColors.cardBorder,
+                    ),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                      color: AdminColors.primaryAccent,
+                    ),
+                  ),
                 ),
-                style: TextStyle(color: Colors.white),
+                style: AdminTextStyles.primaryButton,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Please enter a title';
@@ -528,10 +572,27 @@ class _AddPlannerScreenState extends State<AddPlannerScreen> {
                 controller: _descriptionController,
                 decoration: InputDecoration(
                   labelText: 'Description',
-                  labelStyle: TextStyle(color: Colors.white70),
-                  border: OutlineInputBorder(),
+                  labelStyle: AdminTextStyles.cardSubtitle,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                      color: AdminColors.cardBorder,
+                    ),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                      color: AdminColors.cardBorder,
+                    ),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                      color: AdminColors.primaryAccent,
+                    ),
+                  ),
                 ),
-                style: TextStyle(color: Colors.white),
+                style: AdminTextStyles.primaryButton,
                 maxLines: 5,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
@@ -548,14 +609,32 @@ class _AddPlannerScreenState extends State<AddPlannerScreen> {
                       controller: _dateController,
                       decoration: InputDecoration(
                         labelText: 'Date',
-                        labelStyle: TextStyle(color: Colors.white70),
-                        border: OutlineInputBorder(),
+                        labelStyle: AdminTextStyles.cardSubtitle,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(
+                            color: AdminColors.cardBorder,
+                          ),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(
+                            color: AdminColors.cardBorder,
+                          ),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(
+                            color: AdminColors.primaryAccent,
+                          ),
+                        ),
                         suffixIcon: IconButton(
-                          icon: Icon(Icons.calendar_today),
+                          icon: Icon(Icons.calendar_today,
+                              color: AdminColors.secondaryText),
                           onPressed: () => _selectDate(context),
                         ),
                       ),
-                      style: TextStyle(color: Colors.white),
+                      style: AdminTextStyles.primaryButton,
                       readOnly: true,
                       onTap: () => _selectDate(context),
                       validator: (value) {
@@ -572,14 +651,32 @@ class _AddPlannerScreenState extends State<AddPlannerScreen> {
                       controller: _timeController,
                       decoration: InputDecoration(
                         labelText: 'Time',
-                        labelStyle: TextStyle(color: Colors.white70),
-                        border: OutlineInputBorder(),
+                        labelStyle: AdminTextStyles.cardSubtitle,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(
+                            color: AdminColors.cardBorder,
+                          ),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(
+                            color: AdminColors.cardBorder,
+                          ),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(
+                            color: AdminColors.primaryAccent,
+                          ),
+                        ),
                         suffixIcon: IconButton(
-                          icon: Icon(Icons.access_time),
+                          icon: Icon(Icons.access_time,
+                              color: AdminColors.secondaryText),
                           onPressed: () => _selectTime(context),
                         ),
                       ),
-                      style: TextStyle(color: Colors.white),
+                      style: AdminTextStyles.primaryButton,
                       readOnly: true,
                       onTap: () => _selectTime(context),
                       validator: (value) {
@@ -602,8 +699,8 @@ class _AddPlannerScreenState extends State<AddPlannerScreen> {
                   child: ElevatedButton(
                     onPressed: _submitPlanner,
                     style: ElevatedButton.styleFrom(
-                      foregroundColor: Colors.black,
-                      backgroundColor: Colors.cyanAccent,
+                      foregroundColor: AdminColors.primaryBackground,
+                      backgroundColor: AdminColors.primaryAccent,
                       padding: EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -611,7 +708,7 @@ class _AddPlannerScreenState extends State<AddPlannerScreen> {
                     ),
                     child: Text(
                       'SAVE PLAN',
-                      style: TextStyle(
+                      style: AdminTextStyles.primaryButton.copyWith(
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
                       ),
@@ -620,7 +717,8 @@ class _AddPlannerScreenState extends State<AddPlannerScreen> {
                 ),
               if (_isSubmitting)
                 Center(
-                  child: CircularProgressIndicator(color: Colors.cyanAccent),
+                  child: CircularProgressIndicator(
+                      color: AdminColors.primaryAccent),
                 ),
               SizedBox(height: MediaQuery.of(context).viewInsets.bottom),
             ],

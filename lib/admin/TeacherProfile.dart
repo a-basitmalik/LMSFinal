@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:newapp/admin/themes/theme_colors.dart';
+import 'package:newapp/admin/themes/theme_extensions.dart';
+import 'package:newapp/admin/themes/theme_text_styles.dart';
 import 'dart:convert';
 import 'dart:math';
+
 
 class TeacherProfileScreen extends StatefulWidget {
   final int teacherId;
@@ -70,17 +74,20 @@ class _TeacherProfileScreenState extends State<TeacherProfileScreen> with Single
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.adminColors;
+    final textStyles = context.adminTextStyles;
+
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: AdminColors.primaryBackground,
       body: Stack(
         children: [
           CustomPaint(
-            painter: _ParticlePainter(animation: _animation),
+            painter: _ParticlePainter(animation: _animation, colors: colors),
             size: Size.infinite,
           ),
           SafeArea(
             child: isLoading
-                ? Center(child: CircularProgressIndicator(color: Colors.cyanAccent))
+                ? Center(child: CircularProgressIndicator(color: AdminColors.primaryAccent))
                 : CustomScrollView(
               slivers: [
                 SliverAppBar(
@@ -88,13 +95,7 @@ class _TeacherProfileScreenState extends State<TeacherProfileScreen> with Single
                   floating: false,
                   pinned: true,
                   flexibleSpace: FlexibleSpaceBar(
-                    title: Text('TEACHER PROFILE',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 1.5,
-                        )),
+                    title: Text('TEACHER PROFILE', style: AdminTextStyles.portalTitle),
                     background: Stack(
                       fit: StackFit.expand,
                       children: [
@@ -104,8 +105,8 @@ class _TeacherProfileScreenState extends State<TeacherProfileScreen> with Single
                               begin: Alignment.topCenter,
                               end: Alignment.bottomCenter,
                               colors: [
-                                Colors.cyanAccent.withOpacity(0.1),
-                                Colors.black,
+                                AdminColors.primaryAccent.withOpacity(0.1),
+                                AdminColors.primaryBackground,
                               ],
                             ),
                           ),
@@ -128,13 +129,13 @@ class _TeacherProfileScreenState extends State<TeacherProfileScreen> with Single
                                   ),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: Colors.cyanAccent.withOpacity(0.4),
+                                      color: AdminColors.primaryAccent.withOpacity(0.4),
                                       blurRadius: 20,
                                       spreadRadius: 2,
                                     ),
                                   ],
                                   border: Border.all(
-                                    color: Colors.cyanAccent,
+                                    color: AdminColors.primaryAccent,
                                     width: 2,
                                   ),
                                 ),
@@ -154,23 +155,14 @@ class _TeacherProfileScreenState extends State<TeacherProfileScreen> with Single
                       Center(
                         child: Text(
                           teacherData?['name'] ?? 'Unknown',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 1.2,
-                          ),
+                          style: AdminTextStyles.campusName,
                         ),
                       ),
                       SizedBox(height: 5),
                       Center(
                         child: Text(
                           'Faculty Member',
-                          style: TextStyle(
-                            color: Colors.cyanAccent,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                          ),
+                          style: AdminTextStyles.accentText(AdminColors.primaryAccent),
                         ),
                       ),
                       SizedBox(height: 32),
@@ -179,11 +171,12 @@ class _TeacherProfileScreenState extends State<TeacherProfileScreen> with Single
                       _buildSectionHeader(
                         icon: Icons.contact_mail_rounded,
                         title: 'CONTACT INFORMATION',
+                        colors: colors,
+                        textStyles: textStyles,
                       ),
                       SizedBox(height: 16),
-                      GlassCard(
-                        borderRadius: 16,
-                        borderColor: Colors.cyanAccent.withOpacity(0.3),
+                      Container(
+                        decoration: AdminColors.glassDecoration(),
                         child: Padding(
                           padding: EdgeInsets.all(16),
                           child: Column(
@@ -191,16 +184,19 @@ class _TeacherProfileScreenState extends State<TeacherProfileScreen> with Single
                               _buildContactItem(
                                 Icons.email,
                                 teacherData?['email'] ?? 'Not available',
+                                colors: colors,
                               ),
-                              Divider(color: Colors.white24, height: 30),
+                              Divider(color: AdminColors.cardBorder, height: 30),
                               _buildContactItem(
                                 Icons.phone,
                                 teacherData?['phone'] ?? 'Not available',
+                                colors: colors,
                               ),
-                              Divider(color: Colors.white24, height: 30),
+                              Divider(color: AdminColors.cardBorder, height: 30),
                               _buildContactItem(
                                 Icons.location_on,
                                 'Faculty Building',
+                                colors: colors,
                               ),
                             ],
                           ),
@@ -212,12 +208,15 @@ class _TeacherProfileScreenState extends State<TeacherProfileScreen> with Single
                       _buildSectionHeader(
                         icon: Icons.menu_book_rounded,
                         title: 'SUBJECTS TAUGHT',
-                        iconColor: Colors.blueAccent,
+                        iconColor: AdminColors.studentColor,
+                        colors: colors,
+                        textStyles: textStyles,
                       ),
                       SizedBox(height: 16),
-                      GlassCard(
-                        borderRadius: 16,
-                        borderColor: Colors.blueAccent.withOpacity(0.3),
+                      Container(
+                        decoration: AdminColors.glassDecoration(
+                          borderColor: AdminColors.studentColor.withOpacity(0.3),
+                        ),
                         child: Padding(
                           padding: EdgeInsets.all(16),
                           child: Column(
@@ -225,10 +224,7 @@ class _TeacherProfileScreenState extends State<TeacherProfileScreen> with Single
                                 ? [
                               Text(
                                 'No subjects assigned',
-                                style: TextStyle(
-                                  color: Colors.white70,
-                                  fontSize: 14,
-                                ),
+                                style: AdminTextStyles.cardSubtitle,
                               )
                             ]
                                 : subjects.map((subject) => Padding(
@@ -236,7 +232,7 @@ class _TeacherProfileScreenState extends State<TeacherProfileScreen> with Single
                               child: Row(
                                 children: [
                                   Icon(Icons.school,
-                                      color: Colors.blueAccent,
+                                      color: AdminColors.studentColor,
                                       size: 20),
                                   SizedBox(width: 15),
                                   Expanded(
@@ -245,24 +241,18 @@ class _TeacherProfileScreenState extends State<TeacherProfileScreen> with Single
                                       children: [
                                         Text(
                                           subject['subject_name'] ?? 'Unknown',
-                                          style: TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 16,
-                                          ),
+                                          style: AdminTextStyles.cardTitle,
                                         ),
                                         SizedBox(height: 4),
                                         Text(
                                           '${subject['day'] ?? ''} ${subject['time'] != null ? 'at ${subject['time']}' : ''}',
-                                          style: TextStyle(
-                                            color: Colors.white54,
-                                            fontSize: 12,
-                                          ),
+                                          style: AdminTextStyles.cardSubtitle,
                                         ),
                                       ],
                                     ),
                                   ),
                                   Icon(Icons.arrow_forward_ios,
-                                      color: Colors.white54,
+                                      color: AdminColors.disabledText,
                                       size: 16),
                                 ],
                               ),
@@ -276,12 +266,15 @@ class _TeacherProfileScreenState extends State<TeacherProfileScreen> with Single
                       _buildSectionHeader(
                         icon: Icons.fingerprint_outlined,
                         title: 'ATTENDANCE REPORTS',
-                        iconColor: Colors.greenAccent,
+                        iconColor: AdminColors.attendanceColor,
+                        colors: colors,
+                        textStyles: textStyles,
                       ),
                       SizedBox(height: 16),
-                      GlassCard(
-                        borderRadius: 16,
-                        borderColor: Colors.greenAccent.withOpacity(0.3),
+                      Container(
+                        decoration: AdminColors.glassDecoration(
+                          borderColor: AdminColors.attendanceColor.withOpacity(0.3),
+                        ),
                         child: Padding(
                           padding: EdgeInsets.all(16),
                           child: Column(
@@ -289,26 +282,28 @@ class _TeacherProfileScreenState extends State<TeacherProfileScreen> with Single
                               TextField(
                                 decoration: InputDecoration(
                                   labelText: 'Select Date Range',
-                                  labelStyle: TextStyle(color: Colors.white70),
+                                  labelStyle: AdminTextStyles.cardSubtitle,
                                   border: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(10),
                                   ),
                                   enabledBorder: OutlineInputBorder(
-                                    borderSide: BorderSide(color: Colors.greenAccent),
+                                    borderSide: BorderSide(color: AdminColors.attendanceColor),
                                     borderRadius: BorderRadius.circular(10),
                                   ),
                                   suffixIcon: Icon(Icons.calendar_today,
-                                      color: Colors.greenAccent),
+                                      color: AdminColors.attendanceColor),
                                 ),
-                                style: TextStyle(color: Colors.white),
+                                style: AdminTextStyles.cardTitle,
                                 readOnly: true,
                               ),
                               SizedBox(height: 20),
                               _buildAnimatedButton(
                                 icon: Icons.download,
                                 label: 'EXPORT REPORT',
-                                color: Colors.greenAccent,
+                                color: AdminColors.attendanceColor,
                                 onTap: () {},
+                                colors: colors,
+                                textStyles: textStyles,
                               ),
                             ],
                           ),
@@ -331,6 +326,8 @@ class _TeacherProfileScreenState extends State<TeacherProfileScreen> with Single
     required String title,
     Color iconColor = Colors.cyanAccent,
     VoidCallback? onTap,
+    required AdminColors colors,
+    required AdminTextStyles textStyles,
   }) {
     return InkWell(
       onTap: onTap,
@@ -346,12 +343,7 @@ class _TeacherProfileScreenState extends State<TeacherProfileScreen> with Single
                 SizedBox(width: 8),
                 Text(
                   title,
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 0.5,
-                  ),
+                  style: AdminTextStyles.sectionHeader,
                 ),
               ],
             ),
@@ -367,14 +359,14 @@ class _TeacherProfileScreenState extends State<TeacherProfileScreen> with Single
     );
   }
 
-  Widget _buildContactItem(IconData icon, String text) {
+  Widget _buildContactItem(IconData icon, String text, {required AdminColors colors}) {
     return Row(
       children: [
-        Icon(icon, color: Colors.cyanAccent, size: 24),
+        Icon(icon, color: AdminColors.primaryAccent, size: 24),
         SizedBox(width: 15),
         Text(
           text,
-          style: TextStyle(color: Colors.white, fontSize: 16),
+          style: TextStyle(color: AdminColors.primaryText, fontSize: 16),
         ),
       ],
     );
@@ -385,25 +377,13 @@ class _TeacherProfileScreenState extends State<TeacherProfileScreen> with Single
     required String label,
     required Color color,
     required VoidCallback onTap,
+    required AdminColors colors,
+    required AdminTextStyles textStyles,
   }) {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
       curve: Curves.easeInOut,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        gradient: LinearGradient(
-          colors: [
-            color.withOpacity(0.2),
-            color.withOpacity(0.1),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        border: Border.all(
-          color: color.withOpacity(0.5),
-          width: 1,
-        ),
-      ),
+      decoration: color.toGlassDecoration(borderRadius: 12),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
@@ -418,11 +398,7 @@ class _TeacherProfileScreenState extends State<TeacherProfileScreen> with Single
                 SizedBox(width: 8),
                 Text(
                   label,
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                  ),
+                  style: AdminTextStyles.primaryButton,
                 ),
               ],
             ),
@@ -433,62 +409,12 @@ class _TeacherProfileScreenState extends State<TeacherProfileScreen> with Single
   }
 }
 
-class GlassCard extends StatelessWidget {
-  final Widget? child;
-  final Color? borderColor;
-  final double borderRadius;
-  final double? width;
-  final double? height;
-
-  const GlassCard({
-    Key? key,
-    this.child,
-    this.borderColor,
-    this.borderRadius = 16,
-    this.width,
-    this.height,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: width,
-      height: height,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(borderRadius),
-        border: Border.all(
-          color: borderColor ?? Colors.white.withOpacity(0.2),
-          width: 1.5,
-        ),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Colors.white.withOpacity(0.1),
-            Colors.white.withOpacity(0.05),
-          ],
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.2),
-            blurRadius: 10,
-            spreadRadius: 2,
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(borderRadius),
-        child: child,
-      ),
-    );
-  }
-}
-
 class _ParticlePainter extends CustomPainter {
   final Animation<double> animation;
   final Random random = Random(42);
+  final AdminColors colors;
 
-  _ParticlePainter({required this.animation});
+  _ParticlePainter({required this.animation, required this.colors});
 
   @override
   void paint(Canvas canvas, Size size) {

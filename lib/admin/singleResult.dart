@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:newapp/admin/themes/theme_colors.dart';
+import 'package:newapp/admin/themes/theme_extensions.dart';
+import 'package:newapp/admin/themes/theme_text_styles.dart';
 import 'dart:convert';
 
 class SingleResultScreen extends StatefulWidget {
@@ -92,7 +95,7 @@ class _SingleResultScreenState extends State<SingleResultScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: Colors.redAccent,
+        backgroundColor: AdminColors.dangerAccent,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(10),
@@ -103,8 +106,11 @@ class _SingleResultScreenState extends State<SingleResultScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.adminColors;
+    final textStyles = context.adminTextStyles;
+
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor:AdminColors.primaryBackground,
       body: CustomScrollView(
         slivers: [
           SliverAppBar(
@@ -114,14 +120,12 @@ class _SingleResultScreenState extends State<SingleResultScreen> {
             flexibleSpace: FlexibleSpaceBar(
               title: Text(
                 widget.assessmentType.toUpperCase(),
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 2,
+                style: AdminTextStyles.sectionHeader.copyWith(
+                  color: AdminColors.primaryText,
                   shadows: [
                     Shadow(
                       blurRadius: 10,
-                      color: Colors.blueAccent,
+                      color: AdminColors.primaryAccent,
                     ),
                   ],
                 ),
@@ -132,9 +136,9 @@ class _SingleResultScreenState extends State<SingleResultScreen> {
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                     colors: [
-                      Colors.blue.shade900,
-                      Colors.indigo.shade800,
-                      Colors.purple.shade900,
+                      AdminColors.primaryAccent.withOpacity(0.7),
+                      AdminColors.secondaryAccent.withOpacity(0.7),
+                      AdminColors.infoAccent.withOpacity(0.7),
                     ],
                   ),
                 ),
@@ -145,7 +149,7 @@ class _SingleResultScreenState extends State<SingleResultScreen> {
                     child: Icon(
                       Icons.assessment,
                       size: 120,
-                      color: Colors.white,
+                      color: AdminColors.primaryText,
                     ),
                   ),
                 ),
@@ -156,7 +160,7 @@ class _SingleResultScreenState extends State<SingleResultScreen> {
               ? SliverFillRemaining(
             child: Center(
               child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(Colors.blueAccent),
+                valueColor: AlwaysStoppedAnimation<Color>(AdminColors.primaryAccent),
               ),
             ),
           )
@@ -166,15 +170,24 @@ class _SingleResultScreenState extends State<SingleResultScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.search_off, size: 60, color: Colors.grey),
+                  Icon(Icons.search_off,
+                      size: 60,
+                      color: AdminColors.disabledText),
                   SizedBox(height: 16),
                   Text(
                     'No assessment data found',
-                    style: TextStyle(color: Colors.grey),
+                    style:AdminTextStyles.cardSubtitle.copyWith(
+                      color: AdminColors.disabledText,
+                    ),
                   ),
                   TextButton(
                     onPressed: _fetchAssessmentData,
-                    child: Text('Retry'),
+                    child: Text(
+                      'Retry',
+                      style: AdminTextStyles.secondaryButton.copyWith(
+                        color: AdminColors.primaryAccent,
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -186,8 +199,8 @@ class _SingleResultScreenState extends State<SingleResultScreen> {
                 final examResult = _examResults[index];
                 return Column(
                   children: [
-                    _buildExamHeader(examResult.examName),
-                    _buildResultsTable(examResult),
+                    _buildExamHeader(examResult.examName, colors, textStyles),
+                    _buildResultsTable(examResult, colors, textStyles),
                     SizedBox(height: 16),
                   ],
                 );
@@ -200,24 +213,17 @@ class _SingleResultScreenState extends State<SingleResultScreen> {
     );
   }
 
-  Widget _buildExamHeader(String examName) {
+  Widget _buildExamHeader(String examName, AdminColors colors, AdminTextStyles textStyles) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
-      child: Card(
-        color: Colors.blue.shade800,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-        ),
+      child: Container(
+        decoration: AdminColors.resultsColor.toGlassDecoration(),
         child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Center(
             child: Text(
               examName,
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
+              style: AdminTextStyles.sectionTitle(AdminColors.primaryText),
             ),
           ),
         ),
@@ -225,33 +231,45 @@ class _SingleResultScreenState extends State<SingleResultScreen> {
     );
   }
 
-  Widget _buildResultsTable(ExamResult examResult) {
+  Widget _buildResultsTable(ExamResult examResult, AdminColors colors, AdminTextStyles textStyles) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Card(
-        color: Colors.grey[900],
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+      child: Container(
+        decoration: AdminColors.glassDecoration(),
         child: SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           child: DataTable(
+            columnSpacing: 16,
+            dataRowHeight: 48,
+            headingRowHeight: 40,
             columns: _isMonthlyAssessment
                 ? [
-              DataColumn(label: Text('Subject', style: _headerTextStyle())),
-              DataColumn(label: Text('Quiz 1', style: _headerTextStyle())),
-              DataColumn(label: Text('Quiz 2', style: _headerTextStyle())),
-              DataColumn(label: Text('Quiz 3', style: _headerTextStyle())),
-              DataColumn(label: Text('Avg Quiz', style: _headerTextStyle())),
-              DataColumn(label: Text('Total', style: _headerTextStyle())),
-              DataColumn(label: Text('Marks', style: _headerTextStyle())),
-              DataColumn(label: Text('Achieved', style: _headerTextStyle())),
+              DataColumn(
+                  label: Text('Subject', style: _headerTextStyle(textStyles, colors))),
+              DataColumn(
+                  label: Text('Quiz 1', style: _headerTextStyle(textStyles, colors))),
+              DataColumn(
+                  label: Text('Quiz 2', style: _headerTextStyle(textStyles, colors))),
+              DataColumn(
+                  label: Text('Quiz 3', style: _headerTextStyle(textStyles, colors))),
+              DataColumn(
+                  label: Text('Avg Quiz', style: _headerTextStyle(textStyles, colors))),
+              DataColumn(
+                  label: Text('Total', style: _headerTextStyle(textStyles, colors))),
+              DataColumn(
+                  label: Text('Marks', style: _headerTextStyle(textStyles, colors))),
+              DataColumn(
+                  label: Text('Achieved', style: _headerTextStyle(textStyles, colors))),
             ]
                 : [
-              DataColumn(label: Text('Subject', style: _headerTextStyle())),
-              DataColumn(label: Text('Total', style: _headerTextStyle())),
-              DataColumn(label: Text('Marks', style: _headerTextStyle())),
-              DataColumn(label: Text('Percentage', style: _headerTextStyle())),
+              DataColumn(
+                  label: Text('Subject', style: _headerTextStyle(textStyles, colors))),
+              DataColumn(
+                  label: Text('Total', style: _headerTextStyle(textStyles, colors))),
+              DataColumn(
+                  label: Text('Marks', style: _headerTextStyle(textStyles, colors))),
+              DataColumn(
+                  label: Text('Percentage', style: _headerTextStyle(textStyles, colors))),
             ],
             rows: examResult.subjects.map((subject) {
               final avgQuiz = (subject.quiz1 + subject.quiz2 + subject.quiz3) / 3;
@@ -263,35 +281,58 @@ class _SingleResultScreenState extends State<SingleResultScreen> {
               return DataRow(
                 cells: _isMonthlyAssessment
                     ? [
-                  DataCell(Text(subject.subjectName, style: _cellTextStyle())),
-                  DataCell(Text(subject.quiz1.toStringAsFixed(1), style: _cellTextStyle())),
-                  DataCell(Text(subject.quiz2.toStringAsFixed(1), style: _cellTextStyle())),
-                  DataCell(Text(subject.quiz3.toStringAsFixed(1), style: _cellTextStyle())),
-                  DataCell(Text(avgQuiz.toStringAsFixed(1), style: _cellTextStyle())),
-                  DataCell(Text(subject.assessmentTotal.toStringAsFixed(1), style: _cellTextStyle())),
-                  DataCell(Text(subject.assessmentMarks.toStringAsFixed(1), style: _cellTextStyle())),
+                  DataCell(Text(subject.subjectName,
+                      style: _cellTextStyle(textStyles, colors))),
+                  DataCell(Text(subject.quiz1.toStringAsFixed(1),
+                      style: _cellTextStyle(textStyles, colors))),
+                  DataCell(Text(subject.quiz2.toStringAsFixed(1),
+                      style: _cellTextStyle(textStyles, colors))),
+                  DataCell(Text(subject.quiz3.toStringAsFixed(1),
+                      style: _cellTextStyle(textStyles, colors))),
+                  DataCell(Text(avgQuiz.toStringAsFixed(1),
+                      style: _cellTextStyle(textStyles, colors))),
+                  DataCell(Text(subject.assessmentTotal.toStringAsFixed(1),
+                      style: _cellTextStyle(textStyles, colors))),
+                  DataCell(Text(subject.assessmentMarks.toStringAsFixed(1),
+                      style: _cellTextStyle(textStyles, colors))),
                   DataCell(
                     Container(
-                      color: _getScoreColor(totalAchieved, subject.assessmentTotal),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(8),
+                        color: _getScoreColor(totalAchieved, subject.assessmentTotal)
+                            .withOpacity(0.2),
+                      ),
                       padding: EdgeInsets.all(8),
-                      child: Text(
-                        totalAchieved.toStringAsFixed(1),
-                        style: _cellTextStyle(),
+                      child: Center(
+                        child: Text(
+                          totalAchieved.toStringAsFixed(1),
+                          style: _cellTextStyle(textStyles, colors),
+                        ),
                       ),
                     ),
                   ),
                 ]
                     : [
-                  DataCell(Text(subject.subjectName, style: _cellTextStyle())),
-                  DataCell(Text(subject.assessmentTotal.toStringAsFixed(1), style: _cellTextStyle())),
-                  DataCell(Text(subject.assessmentMarks.toStringAsFixed(1), style: _cellTextStyle())),
+                  DataCell(Text(subject.subjectName,
+                      style: _cellTextStyle(textStyles, colors))),
+                  DataCell(Text(subject.assessmentTotal.toStringAsFixed(1),
+                      style: _cellTextStyle(textStyles, colors))),
+                  DataCell(Text(subject.assessmentMarks.toStringAsFixed(1),
+                      style: _cellTextStyle(textStyles, colors))),
                   DataCell(
                     Container(
-                      color: _getScoreColor(subject.assessmentMarks, subject.assessmentTotal),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(8),
+                        color: _getScoreColor(
+                            subject.assessmentMarks, subject.assessmentTotal)
+                            .withOpacity(0.2),
+                      ),
                       padding: EdgeInsets.all(8),
-                      child: Text(
-                        '${percentage.toStringAsFixed(1)}%',
-                        style: _cellTextStyle(),
+                      child: Center(
+                        child: Text(
+                          '${percentage.toStringAsFixed(1)}%',
+                          style: _cellTextStyle(textStyles, colors),
+                        ),
                       ),
                     ),
                   ),
@@ -304,16 +345,16 @@ class _SingleResultScreenState extends State<SingleResultScreen> {
     );
   }
 
-  TextStyle _headerTextStyle() {
-    return TextStyle(
-      color: Colors.blueAccent,
+  TextStyle _headerTextStyle(AdminTextStyles textStyles, AdminColors colors) {
+    return AdminTextStyles.cardTitle.copyWith(
+      color: AdminColors.primaryAccent,
       fontWeight: FontWeight.bold,
     );
   }
 
-  TextStyle _cellTextStyle() {
-    return TextStyle(
-      color: Colors.white,
+  TextStyle _cellTextStyle(AdminTextStyles textStyles, AdminColors colors) {
+    return AdminTextStyles.cardSubtitle.copyWith(
+      color: AdminColors.primaryText,
     );
   }
 
@@ -322,13 +363,13 @@ class _SingleResultScreenState extends State<SingleResultScreen> {
 
     final percentage = (score / total) * 100;
     if (percentage >= 85) {
-      return Colors.green.shade800.withOpacity(0.3);
+      return AdminColors.successAccent;
     } else if (percentage >= 70) {
-      return Colors.lightGreen.shade800.withOpacity(0.3);
+      return AdminColors.warningAccent;
     } else if (percentage >= 50) {
-      return Colors.orange.shade800.withOpacity(0.3);
+      return AdminColors.infoAccent;
     } else {
-      return Colors.red.shade800.withOpacity(0.3);
+      return AdminColors.dangerAccent;
     }
   }
 }

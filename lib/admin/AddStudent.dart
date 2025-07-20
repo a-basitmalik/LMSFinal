@@ -4,7 +4,11 @@ import 'dart:io';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter/services.dart';
+import 'package:newapp/admin/themes/theme_colors.dart';
+import 'package:newapp/admin/themes/theme_extensions.dart';
+import 'package:newapp/admin/themes/theme_text_styles.dart';
 import 'dart:math';
+
 
 class AddStudentScreen extends StatefulWidget {
   final int campusId;
@@ -14,10 +18,8 @@ class AddStudentScreen extends StatefulWidget {
   @override
   _AddStudentScreenState createState() => _AddStudentScreenState();
 }
-class _AddStudentScreenState extends State<AddStudentScreen> with SingleTickerProviderStateMixin {
-  late AnimationController _animationController;
-  late Animation<double> _fadeAnimation;
 
+class _AddStudentScreenState extends State<AddStudentScreen> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
@@ -35,22 +37,11 @@ class _AddStudentScreenState extends State<AddStudentScreen> with SingleTickerPr
   @override
   void initState() {
     super.initState();
-    _animationController = AnimationController(
-      vsync: this,
-      duration: Duration(milliseconds: 1500),
-    )..repeat(reverse: true);
-    _fadeAnimation = Tween<double>(begin: 0.8, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _animationController,
-        curve: Curves.easeInOut,
-      ),
-    );
     _fetchSubjects();
   }
 
   @override
   void dispose() {
-    _animationController.dispose();
     _nameController.dispose();
     _phoneController.dispose();
     _rfidController.dispose();
@@ -156,10 +147,11 @@ class _AddStudentScreenState extends State<AddStudentScreen> with SingleTickerPr
   void _showErrorDialog(String message) {
     showDialog(
       context: context,
-      builder: (context) => HolographicDialog(
+      builder: (context) => AdminDialog(
         title: 'Error',
         content: message,
         buttonText: 'OK',
+        accentColor: AdminColors.dangerAccent,
       ),
     );
   }
@@ -167,138 +159,92 @@ class _AddStudentScreenState extends State<AddStudentScreen> with SingleTickerPr
   void _showSuccessDialog(String message) {
     showDialog(
       context: context,
-      builder: (context) => HolographicDialog(
+      builder: (context) => AdminDialog(
         title: 'Success',
         content: message,
         buttonText: 'OK',
+        accentColor: AdminColors.successAccent,
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.adminColors;
+    final textStyles = context.adminTextStyles;
+
     return Scaffold(
-      backgroundColor: Colors.black,
-      body: Stack(
-        children: [
-          // Animated Background
-          AnimatedBuilder(
-            animation: _animationController,
-            builder: (context, child) {
-              return Container(
+      backgroundColor: AdminColors.primaryBackground,
+      body: CustomScrollView(
+        slivers: [
+          SliverAppBar(
+            expandedHeight: 150,
+            floating: false,
+            pinned: true,
+            backgroundColor: AdminColors.secondaryBackground,
+            elevation: 4,
+            flexibleSpace: FlexibleSpaceBar(
+              title: Text(
+                'ADD NEW STUDENT',
+                style: AdminTextStyles.sectionHeader.copyWith(
+                  color: AdminColors.primaryText,
+                ),
+              ),
+              centerTitle: true,
+              background: Container(
                 decoration: BoxDecoration(
-                  gradient: RadialGradient(
-                    center: Alignment.center,
-                    radius: 1.5,
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
                     colors: [
-                      Colors.blue.shade900.withOpacity(_fadeAnimation.value * 0.3),
-                      Colors.indigo.shade900.withOpacity(_fadeAnimation.value * 0.3),
-                      Colors.black,
+                      AdminColors.secondaryBackground,
+                      AdminColors.primaryBackground,
                     ],
-                    stops: [0.1, 0.5, 1.0],
                   ),
                 ),
-              );
-            },
-          ),
-
-          CustomScrollView(
-            slivers: [
-              SliverAppBar(
-                expandedHeight: 120,
-                floating: false,
-                pinned: true,
-                backgroundColor: Colors.transparent,
-                elevation: 0,
-                flexibleSpace: FlexibleSpaceBar(
-                  title: AnimatedBuilder(
-                    animation: _animationController,
-                    builder: (context, child) {
-                      return Text(
-                        'ADD NEW STUDENT',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 2,
-                          shadows: [
-                            Shadow(
-                              blurRadius: 10 * _fadeAnimation.value,
-                              color: Colors.cyanAccent.withOpacity(_fadeAnimation.value),
-                            ),
-                          ],
-                          color: Colors.white.withOpacity(_fadeAnimation.value),
-                        ),
-                      );
-                    },
-                  ),
-                  centerTitle: true,
-                  background: Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [
-                          Colors.blue.shade900.withOpacity(0.7),
-                          Colors.indigo.shade800.withOpacity(0.7),
-                          Colors.purple.shade900.withOpacity(0.7),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Form(
-                    key: _formKey,
-                    child: Column(
-                      children: [
-                        // Toggle between bulk and single upload
-                        GlassCard(
-                          child: Padding(
-                            padding: const EdgeInsets.all(16.0),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                              children: [
-                                _buildUploadOption(
-                                  icon: Icons.person_add,
-                                  label: 'Single Entry',
-                                  selected: !_showBulkUpload,
-                                  onTap: () => setState(() => _showBulkUpload = false),
-                                ),
-                                _buildUploadOption(
-                                  icon: Icons.upload_file,
-                                  label: 'Bulk Upload',
-                                  selected: _showBulkUpload,
-                                  onTap: () => setState(() => _showBulkUpload = true),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-
-                        SizedBox(height: 24),
-
-                        if (_showBulkUpload) _buildBulkUploadSection(),
-                        if (!_showBulkUpload) _buildSingleUploadForm(),
-
-                        SizedBox(height: 32),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-
-          if (_isLoading)
-            Center(
-              child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(Colors.cyanAccent),
               ),
             ),
+          ),
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  children: [
+                    // Toggle between bulk and single upload
+                    Container(
+                      decoration: AdminColors.glassDecoration(),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            _buildUploadOption(
+                              icon: Icons.person_add,
+                              label: 'Single Entry',
+                              selected: !_showBulkUpload,
+                              onTap: () => setState(() => _showBulkUpload = false),
+                            ),
+                            _buildUploadOption(
+                              icon: Icons.upload_file,
+                              label: 'Bulk Upload',
+                              selected: _showBulkUpload,
+                              onTap: () => setState(() => _showBulkUpload = true),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 24),
+                    if (_showBulkUpload) _buildBulkUploadSection(),
+                    if (!_showBulkUpload) _buildSingleUploadForm(),
+                    SizedBox(height: 32),
+                  ],
+                ),
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -310,6 +256,9 @@ class _AddStudentScreenState extends State<AddStudentScreen> with SingleTickerPr
     required bool selected,
     required VoidCallback onTap,
   }) {
+    final colors = context.adminColors;
+    final textStyles = context.adminTextStyles;
+
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
@@ -317,31 +266,21 @@ class _AddStudentScreenState extends State<AddStudentScreen> with SingleTickerPr
         padding: EdgeInsets.all(12),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(12),
-          gradient: selected
-              ? LinearGradient(
-            colors: [
-              Colors.cyanAccent.withOpacity(0.7),
-              Colors.blueAccent.withOpacity(0.7),
-            ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          )
-              : null,
+          gradient: selected ? AdminColors.accentGradient(AdminColors.primaryAccent) : null,
           border: Border.all(
-            color: selected ? Colors.cyanAccent : Colors.white.withOpacity(0.3),
+            color: selected ? AdminColors.primaryAccent : AdminColors.cardBorder,
             width: 1,
           ),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, color: selected ? Colors.black : Colors.white.withOpacity(0.8)),
+            Icon(icon, color: selected ? AdminColors.primaryText : AdminColors.secondaryText),
             SizedBox(height: 8),
             Text(
               label,
-              style: TextStyle(
-                color: selected ? Colors.black : Colors.white.withOpacity(0.8),
-                fontWeight: FontWeight.bold,
+              style: AdminTextStyles.cardTitle.copyWith(
+                color: selected ? AdminColors.primaryText : AdminColors.secondaryText,
               ),
             ),
           ],
@@ -351,30 +290,27 @@ class _AddStudentScreenState extends State<AddStudentScreen> with SingleTickerPr
   }
 
   Widget _buildBulkUploadSection() {
+    final colors = context.adminColors;
+    final textStyles = context.adminTextStyles;
+
     return Column(
       children: [
-        GlassCard(
+        Container(
+          decoration: AdminColors.glassDecoration(),
           child: Padding(
             padding: const EdgeInsets.all(16.0),
             child: Column(
               children: [
-                Icon(Icons.upload, size: 48, color: Colors.cyanAccent),
+                Icon(Icons.upload, size: 48, color: AdminColors.primaryAccent),
                 SizedBox(height: 16),
                 Text(
                   'BULK UPLOAD STUDENTS',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: AdminTextStyles.sectionHeader,
                 ),
                 SizedBox(height: 8),
                 Text(
                   'Upload Excel or CSV file with student data',
-                  style: TextStyle(
-                    color: Colors.white.withOpacity(0.7),
-                    fontSize: 14,
-                  ),
+                  style: AdminTextStyles.cardSubtitle,
                 ),
               ],
             ),
@@ -383,12 +319,11 @@ class _AddStudentScreenState extends State<AddStudentScreen> with SingleTickerPr
         SizedBox(height: 16),
         ElevatedButton(
           onPressed: () {
-            // Implement bulk upload functionality
             _showSuccessDialog('Bulk upload feature will be implemented soon');
           },
           style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.cyanAccent,
-            foregroundColor: Colors.black,
+            backgroundColor: AdminColors.primaryAccent,
+            foregroundColor: AdminColors.primaryBackground,
             minimumSize: Size(double.infinity, 56),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
@@ -396,39 +331,35 @@ class _AddStudentScreenState extends State<AddStudentScreen> with SingleTickerPr
           ),
           child: Text(
             'UPLOAD FILE',
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 16,
-            ),
+            style: AdminTextStyles.primaryButton,
           ),
         ),
         SizedBox(height: 24),
-        Divider(color: Colors.white.withOpacity(0.3)),
+        Divider(color: AdminColors.cardBorder),
         SizedBox(height: 16),
         Text(
           'OR',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-          ),
+          style: AdminTextStyles.sectionHeader,
         ),
         SizedBox(height: 16),
-        Divider(color: Colors.white.withOpacity(0.3)),
+        Divider(color: AdminColors.cardBorder),
       ],
     );
   }
 
   Widget _buildSingleUploadForm() {
+    final colors = context.adminColors;
+    final textStyles = context.adminTextStyles;
+
     return Column(
       children: [
         // Profile Picture
         GestureDetector(
           onTap: _pickImage,
-          child: GlassCard(
+          child: Container(
             width: 120,
             height: 120,
-            borderRadius: 60,
+            decoration: AdminColors.glassDecoration(borderRadius: 60),
             child: Stack(
               alignment: Alignment.center,
               children: [
@@ -442,27 +373,21 @@ class _AddStudentScreenState extends State<AddStudentScreen> with SingleTickerPr
                     ),
                   )
                 else
-                  Icon(Icons.person, size: 48, color: Colors.white.withOpacity(0.7)),
-
+                  Icon(Icons.person, size: 48, color: AdminColors.secondaryText),
                 Positioned(
                   bottom: 8,
                   child: Text(
                     _profileImage != null ? 'CHANGE PHOTO' : 'UPLOAD PHOTO',
-                    style: TextStyle(
-                      color: Colors.white.withOpacity(0.7),
-                      fontSize: 12,
-                    ),
+                    style: AdminTextStyles.cardSubtitle,
                   ),
                 ),
               ],
             ),
           ),
         ),
-
         SizedBox(height: 24),
-
         // Student Name
-        GlassInputField(
+        _buildInputField(
           controller: _nameController,
           label: 'Student Name',
           icon: Icons.person,
@@ -479,11 +404,9 @@ class _AddStudentScreenState extends State<AddStudentScreen> with SingleTickerPr
             return null;
           },
         ),
-
         SizedBox(height: 16),
-
         // Phone Number
-        GlassInputField(
+        _buildInputField(
           controller: _phoneController,
           label: 'Phone Number',
           icon: Icons.phone,
@@ -498,11 +421,10 @@ class _AddStudentScreenState extends State<AddStudentScreen> with SingleTickerPr
             return null;
           },
         ),
-
         SizedBox(height: 16),
-
         // Subjects Dropdown
-        GlassCard(
+        Container(
+          decoration: AdminColors.glassDecoration(),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: Column(
@@ -510,10 +432,7 @@ class _AddStudentScreenState extends State<AddStudentScreen> with SingleTickerPr
               children: [
                 Text(
                   'SUBJECTS',
-                  style: TextStyle(
-                    color: Colors.white.withOpacity(0.7),
-                    fontSize: 12,
-                  ),
+                  style: AdminTextStyles.cardSubtitle,
                 ),
                 DropdownButtonFormField<String>(
                   decoration: InputDecoration(
@@ -525,7 +444,7 @@ class _AddStudentScreenState extends State<AddStudentScreen> with SingleTickerPr
                       value: subject,
                       child: Text(
                         subject,
-                        style: TextStyle(color: Colors.white),
+                        style: AdminTextStyles.cardTitle,
                       ),
                     );
                   }).toList(),
@@ -546,22 +465,18 @@ class _AddStudentScreenState extends State<AddStudentScreen> with SingleTickerPr
                     _selectedSubjects.isEmpty
                         ? 'Select subjects'
                         : _selectedSubjects.join(', '),
-                    style: TextStyle(
-                      color: Colors.white.withOpacity(0.8),
-                    ),
+                    style: AdminTextStyles.cardTitle,
                   ),
-                  dropdownColor: Colors.grey[900],
-                  icon: Icon(Icons.arrow_drop_down, color: Colors.white),
+                  dropdownColor: AdminColors.secondaryBackground,
+                  icon: Icon(Icons.arrow_drop_down, color: AdminColors.primaryText),
                 ),
               ],
             ),
           ),
         ),
-
         SizedBox(height: 16),
-
         // RFID
-        GlassInputField(
+        _buildInputField(
           controller: _rfidController,
           label: 'RFID',
           icon: Icons.credit_card,
@@ -573,11 +488,9 @@ class _AddStudentScreenState extends State<AddStudentScreen> with SingleTickerPr
             return null;
           },
         ),
-
         SizedBox(height: 16),
-
         // Password
-        GlassInputField(
+        _buildInputField(
           controller: _passwordController,
           label: 'Password',
           icon: Icons.lock,
@@ -598,11 +511,9 @@ class _AddStudentScreenState extends State<AddStudentScreen> with SingleTickerPr
             return null;
           },
         ),
-
         SizedBox(height: 16),
-
         // Year
-        GlassInputField(
+        _buildInputField(
           controller: _yearController,
           label: 'Year',
           icon: Icons.calendar_today,
@@ -618,11 +529,9 @@ class _AddStudentScreenState extends State<AddStudentScreen> with SingleTickerPr
             return null;
           },
         ),
-
         SizedBox(height: 16),
-
         // Fee Amount
-        GlassInputField(
+        _buildInputField(
           controller: _feeController,
           label: 'Fee Amount',
           icon: Icons.attach_money,
@@ -634,119 +543,53 @@ class _AddStudentScreenState extends State<AddStudentScreen> with SingleTickerPr
             return null;
           },
         ),
-
         SizedBox(height: 24),
-
         // Submit Button
         ElevatedButton(
           onPressed: _submitForm,
           style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.cyanAccent,
-            foregroundColor: Colors.black,
+            backgroundColor: AdminColors.primaryAccent,
+            foregroundColor: AdminColors.primaryBackground,
             minimumSize: Size(double.infinity, 56),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
             ),
-            elevation: 8,
+            elevation: 4,
           ),
           child: Text(
             'ADD STUDENT',
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 16,
-            ),
+            style: AdminTextStyles.primaryButton,
           ),
         ),
       ],
     );
   }
-}
 
-// Custom Widgets
-class GlassCard extends StatelessWidget {
-  final Widget child;
-  final double? width;
-  final double? height;
-  final double borderRadius;
-  final Color? borderColor;
+  Widget _buildInputField({
+    required TextEditingController controller,
+    required String label,
+    required IconData icon,
+    bool obscureText = false,
+    TextInputType? keyboardType,
+    String? Function(String?)? validator,
+  }) {
+    final colors = context.adminColors;
+    final textStyles = context.adminTextStyles;
 
-  const GlassCard({
-    Key? key,
-    required this.child,
-    this.width,
-    this.height,
-    this.borderRadius = 16,
-    this.borderColor,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
     return Container(
-      width: width,
-      height: height,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(borderRadius),
-        border: Border.all(
-          color: borderColor ?? Colors.white.withOpacity(0.2),
-          width: 1,
-        ),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Colors.white.withOpacity(0.1),
-            Colors.white.withOpacity(0.05),
-          ],
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.2),
-            blurRadius: 10,
-            spreadRadius: 2,
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(borderRadius),
-        child: child,
-      ),
-    );
-  }
-}
-
-class GlassInputField extends StatelessWidget {
-  final TextEditingController controller;
-  final String label;
-  final IconData icon;
-  final bool obscureText;
-  final TextInputType? keyboardType;
-  final String? Function(String?)? validator;
-
-  const GlassInputField({
-    Key? key,
-    required this.controller,
-    required this.label,
-    required this.icon,
-    this.obscureText = false,
-    this.keyboardType,
-    this.validator,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return GlassCard(
+      decoration: AdminColors.glassDecoration(),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16),
         child: TextFormField(
           controller: controller,
           obscureText: obscureText,
           keyboardType: keyboardType,
-          style: TextStyle(color: Colors.white),
+          style: AdminTextStyles.cardTitle,
           decoration: InputDecoration(
             labelText: label,
-            labelStyle: TextStyle(color: Colors.white.withOpacity(0.7)),
+            labelStyle: AdminTextStyles.cardSubtitle,
             border: InputBorder.none,
-            icon: Icon(icon, color: Colors.white.withOpacity(0.7)),
+            icon: Icon(icon, color: AdminColors.secondaryText),
           ),
           validator: validator,
         ),
@@ -755,24 +598,30 @@ class GlassInputField extends StatelessWidget {
   }
 }
 
-class HolographicDialog extends StatelessWidget {
+class AdminDialog extends StatelessWidget {
   final String title;
   final String content;
   final String buttonText;
+  final Color accentColor;
 
-  const HolographicDialog({
+  const AdminDialog({
     Key? key,
     required this.title,
     required this.content,
     required this.buttonText,
+    required this.accentColor,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.adminColors;
+    final textStyles = context.adminTextStyles;
+
     return Dialog(
       backgroundColor: Colors.transparent,
       elevation: 0,
-      child: GlassCard(
+      child: Container(
+        decoration: AdminColors.glassDecoration(),
         child: Padding(
           padding: const EdgeInsets.all(24.0),
           child: Column(
@@ -780,27 +629,20 @@ class HolographicDialog extends StatelessWidget {
             children: [
               Text(
                 title,
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: AdminTextStyles.sectionHeader.copyWith(color: accentColor),
               ),
               SizedBox(height: 16),
               Text(
                 content,
-                style: TextStyle(
-                  color: Colors.white.withOpacity(0.8),
-                  fontSize: 16,
-                ),
+                style: AdminTextStyles.cardTitle,
                 textAlign: TextAlign.center,
               ),
               SizedBox(height: 24),
               ElevatedButton(
                 onPressed: () => Navigator.pop(context),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.cyanAccent,
-                  foregroundColor: Colors.black,
+                  backgroundColor: accentColor,
+                  foregroundColor: AdminColors.primaryBackground,
                   minimumSize: Size(120, 48),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -808,9 +650,7 @@ class HolographicDialog extends StatelessWidget {
                 ),
                 child: Text(
                   buttonText,
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: AdminTextStyles.primaryButton,
                 ),
               ),
             ],

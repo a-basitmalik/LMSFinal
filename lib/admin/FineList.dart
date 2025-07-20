@@ -1,31 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'dart:math';
-void main() {
-  runApp(const MyApp());
-}
-
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Fee Management',
-      theme: ThemeData.dark().copyWith(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF00F0FF),
-          brightness: Brightness.dark,
-          background: const Color(0xFF0A0A1A),
-        ),
-        useMaterial3: true,
-      ),
-      home: const FineListScreen(),
-      debugShowCheckedModeBanner: false,
-    );
-  }
-}
+import 'package:newapp/admin/themes/theme_colors.dart';
+import 'package:newapp/admin/themes/theme_text_styles.dart';
 
 class FineListScreen extends StatefulWidget {
   const FineListScreen({super.key});
@@ -65,7 +42,7 @@ class _FineListScreenState extends State<FineListScreen> {
 
   Future<void> _loadFines() async {
     setState(() => _isLoading = true);
-    await Future.delayed(const Duration(seconds: 1)); // Simulate network delay
+    await Future.delayed(const Duration(seconds: 1));
     setState(() {
       _fines.addAll(_getDummyFines());
       _filteredFines = _fines;
@@ -87,7 +64,6 @@ class _FineListScreenState extends State<FineListScreen> {
 
     final List<Fine> dummyFines = [];
 
-    // Generate standard fines
     for (int i = 0; i < 20; i++) {
       final studentIndex = random.nextInt(studentNames.length);
       final fineTypeIndex = random.nextInt(_fineTypes.length - 1);
@@ -95,32 +71,27 @@ class _FineListScreenState extends State<FineListScreen> {
       final variation = (random.nextDouble() * 2 - 1) * (baseAmount * 0.1);
       final amount = (baseAmount + variation).clamp(0, double.infinity);
 
-      final fine = Fine(
+      dummyFines.add(Fine(
         studentName: studentNames[studentIndex],
         studentId: studentIds[studentIndex],
         amount: amount.toDouble(),
         type: _fineTypes[fineTypeIndex],
         isWaived: random.nextDouble() < 0.2,
-      );
-
-      dummyFines.add(fine);
+      ));
     }
 
-    // Generate custom fines
     for (int i = 0; i < 5; i++) {
       final studentIndex = random.nextInt(studentNames.length);
       final customAmount = 5 + (random.nextDouble() * 45);
       final reason = customReasons[random.nextInt(customReasons.length)];
 
-      final customFine = Fine(
+      dummyFines.add(Fine(
         studentName: studentNames[studentIndex],
         studentId: studentIds[studentIndex],
         amount: customAmount,
         type: 'Custom Fine: $reason',
         isWaived: false,
-      );
-
-      dummyFines.add(customFine);
+      ));
     }
 
     return dummyFines;
@@ -193,9 +164,8 @@ class _FineListScreenState extends State<FineListScreen> {
           builder: (context, setState) {
             return AlertDialog(
               backgroundColor: Colors.transparent,
-              insetPadding: const EdgeInsets.all(16),
-              content: GlassCard(
-                borderRadius: 20,
+              content: Container(
+                decoration: AdminColors.glassDecoration(borderRadius: 20),
                 child: Padding(
                   padding: const EdgeInsets.all(16),
                   child: Column(
@@ -203,37 +173,22 @@ class _FineListScreenState extends State<FineListScreen> {
                     children: [
                       Text(
                         'Add Fine',
-                        style: GoogleFonts.orbitron(
-                          color: Colors.cyanAccent,
+                        style: AdminTextStyles.sectionHeader.copyWith(
+                          color: AdminColors.primaryAccent,
                           fontSize: 20,
-                          fontWeight: FontWeight.bold,
                         ),
                       ),
                       const SizedBox(height: 16),
                       TextField(
                         onChanged: (value) => studentName = value,
-                        style: GoogleFonts.orbitron(color: Colors.white),
+                        style: AdminTextStyles.cardTitle,
                         decoration: InputDecoration(
                           hintText: 'Student Name',
-                          hintStyle: GoogleFonts.orbitron(
-                            color: Colors.white.withOpacity(0.5),
-                          ),
+                          hintStyle: AdminTextStyles.cardSubtitle,
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                             borderSide: BorderSide(
-                              color: Colors.cyanAccent.withOpacity(0.3),
-                            ),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(
-                              color: Colors.cyanAccent.withOpacity(0.3),
-                            ),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(
-                              color: Colors.cyanAccent,
+                              color: AdminColors.cardBorder,
                             ),
                           ),
                         ),
@@ -241,16 +196,14 @@ class _FineListScreenState extends State<FineListScreen> {
                       const SizedBox(height: 12),
                       TextField(
                         onChanged: (value) => studentId = value,
-                        style: GoogleFonts.orbitron(color: Colors.white),
+                        style: AdminTextStyles.cardTitle,
                         decoration: InputDecoration(
                           hintText: 'Student ID',
-                          hintStyle: GoogleFonts.orbitron(
-                            color: Colors.white.withOpacity(0.5),
-                          ),
+                          hintStyle: AdminTextStyles.cardSubtitle,
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                             borderSide: BorderSide(
-                              color: Colors.cyanAccent.withOpacity(0.3),
+                              color: AdminColors.cardBorder,
                             ),
                           ),
                         ),
@@ -263,9 +216,7 @@ class _FineListScreenState extends State<FineListScreen> {
                             value: type,
                             child: Text(
                               type,
-                              style: GoogleFonts.orbitron(
-                                color: Colors.white,
-                              ),
+                              style: AdminTextStyles.cardTitle,
                             ),
                           );
                         }).toList(),
@@ -274,16 +225,16 @@ class _FineListScreenState extends State<FineListScreen> {
                             selectedType = value!;
                             isCustom = value == _fineTypes.last;
                             if (!isCustom) {
-                              amount = _defaultFineAmounts[_fineTypes.indexOf(value!)];
+                              amount = _defaultFineAmounts[_fineTypes.indexOf(value)];
                             }
                           });
                         },
-                        dropdownColor: const Color(0xFF1A1A2E),
+                        dropdownColor: AdminColors.secondaryBackground,
                         decoration: InputDecoration(
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                             borderSide: BorderSide(
-                              color: Colors.cyanAccent.withOpacity(0.3),
+                              color: AdminColors.cardBorder,
                             ),
                           ),
                         ),
@@ -293,24 +244,21 @@ class _FineListScreenState extends State<FineListScreen> {
                         enabled: isCustom,
                         onChanged: (value) => amount = double.tryParse(value) ?? 0,
                         keyboardType: TextInputType.number,
-                        style: GoogleFonts.orbitron(color: Colors.white),
+                        style: AdminTextStyles.cardTitle,
                         decoration: InputDecoration(
                           hintText: 'Amount',
-                          hintStyle: GoogleFonts.orbitron(
-                            color: Colors.white.withOpacity(0.5),
-                          ),
+                          hintStyle: AdminTextStyles.cardSubtitle,
                           prefixText: isCustom ? '' : 'Default: ',
-                          prefixStyle: GoogleFonts.orbitron(
-                            color: Colors.white.withOpacity(0.7),
-                          ),
-                          suffixText: isCustom ? '' : _defaultFineAmounts[_fineTypes.indexOf(selectedType)].toStringAsFixed(2),
-                          suffixStyle: GoogleFonts.orbitron(
-                            color: Colors.white,
-                          ),
+                          prefixStyle: AdminTextStyles.cardSubtitle,
+                          suffixText: isCustom
+                              ? ''
+                              : _defaultFineAmounts[_fineTypes.indexOf(selectedType)]
+                              .toStringAsFixed(2),
+                          suffixStyle: AdminTextStyles.cardTitle,
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                             borderSide: BorderSide(
-                              color: Colors.cyanAccent.withOpacity(0.3),
+                              color: AdminColors.cardBorder,
                             ),
                           ),
                         ),
@@ -323,35 +271,34 @@ class _FineListScreenState extends State<FineListScreen> {
                             onPressed: () => Navigator.pop(context),
                             child: Text(
                               'Cancel',
-                              style: GoogleFonts.orbitron(
-                                color: Colors.cyanAccent,
+                              style: AdminTextStyles.secondaryButton.copyWith(
+                                color: AdminColors.primaryAccent,
                               ),
                             ),
                           ),
                           const SizedBox(width: 8),
                           ElevatedButton(
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.cyanAccent,
+                              backgroundColor: AdminColors.primaryAccent,
                             ),
                             onPressed: () {
-                              if (studentName.isEmpty || studentId.isEmpty) {
-                                return;
-                              }
-                              final fine = Fine(
+                              if (studentName.isEmpty || studentId.isEmpty) return;
+                              _fines.add(Fine(
                                 studentName: studentName,
                                 studentId: studentId,
-                                amount: isCustom ? amount : _defaultFineAmounts[_fineTypes.indexOf(selectedType)],
+                                amount: isCustom
+                                    ? amount
+                                    : _defaultFineAmounts[_fineTypes.indexOf(selectedType)],
                                 type: selectedType,
                                 isWaived: false,
-                              );
-                              _fines.add(fine);
+                              ));
                               _filterFines();
                               Navigator.pop(context);
                             },
                             child: Text(
                               'Add',
-                              style: GoogleFonts.orbitron(
-                                color: Colors.black,
+                              style: AdminTextStyles.primaryButton.copyWith(
+                                color: AdminColors.primaryBackground,
                               ),
                             ),
                           ),
@@ -368,6 +315,7 @@ class _FineListScreenState extends State<FineListScreen> {
     );
   }
 
+
   Future<void> _handleGenerateReport() async {
     final studentsWithFines = _getStudentsWithSelectedFines();
 
@@ -376,9 +324,9 @@ class _FineListScreenState extends State<FineListScreen> {
         SnackBar(
           content: Text(
             'Please select at least one fine',
-            style: GoogleFonts.orbitron(),
+            style: AdminTextStyles.cardSubtitle,
           ),
-          backgroundColor: Colors.redAccent,
+          backgroundColor: AdminColors.dangerAccent,
         ),
       );
       return;
@@ -402,8 +350,8 @@ class _FineListScreenState extends State<FineListScreen> {
       builder: (context) {
         return AlertDialog(
           backgroundColor: Colors.transparent,
-          content: GlassCard(
-            borderRadius: 20,
+          content: Container(
+            decoration: AdminColors.glassDecoration(borderRadius: 20),
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Column(
@@ -411,9 +359,8 @@ class _FineListScreenState extends State<FineListScreen> {
                 children: [
                   Text(
                     'Select Student for Challan',
-                    style: GoogleFonts.orbitron(
-                      color: Colors.cyanAccent,
-                      fontSize: 18,
+                    style: AdminTextStyles.sectionHeader.copyWith(
+                      color: AdminColors.primaryAccent,
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -421,9 +368,7 @@ class _FineListScreenState extends State<FineListScreen> {
                     return ListTile(
                       title: Text(
                         name,
-                        style: GoogleFonts.orbitron(
-                          color: Colors.white,
-                        ),
+                        style: AdminTextStyles.cardTitle,
                       ),
                       onTap: () {
                         final studentId = studentIds[displayNames.indexOf(name)];
@@ -438,8 +383,8 @@ class _FineListScreenState extends State<FineListScreen> {
                     onPressed: () => Navigator.pop(context),
                     child: Text(
                       'Cancel',
-                      style: GoogleFonts.orbitron(
-                        color: Colors.cyanAccent,
+                      style: AdminTextStyles.secondaryButton.copyWith(
+                        color: AdminColors.primaryAccent,
                       ),
                     ),
                   ),
@@ -453,33 +398,20 @@ class _FineListScreenState extends State<FineListScreen> {
   }
 
   Future<void> _generateChallanForStudent(String studentId, List<Fine> selectedFines) async {
-    if (selectedFines.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'No fines selected for this student',
-            style: GoogleFonts.orbitron(),
-          ),
-          backgroundColor: Colors.redAccent,
-        ),
-      );
-      return;
-    }
+    if (selectedFines.isEmpty) return;
 
     final studentName = _getStudentNames()[studentId] ?? 'Unknown';
     final totalAmount = selectedFines.fold(0.0, (sum, fine) => sum + fine.amount);
     final date = DateFormat('yyyyMMdd').format(DateTime.now());
     final challanNumber = 'FINE-$date-$studentId';
 
-    // In a real app, you would navigate to a challan screen
-    // Here we just show a dialog with the summary
     await showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
           backgroundColor: Colors.transparent,
-          content: GlassCard(
-            borderRadius: 20,
+          content: Container(
+            decoration: AdminColors.glassDecoration(borderRadius: 20),
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Column(
@@ -488,37 +420,30 @@ class _FineListScreenState extends State<FineListScreen> {
                 children: [
                   Text(
                     'Challan Generated',
-                    style: GoogleFonts.orbitron(
-                      color: Colors.cyanAccent,
+                    style: AdminTextStyles.sectionHeader.copyWith(
+                      color: AdminColors.primaryAccent,
                       fontSize: 20,
-                      fontWeight: FontWeight.bold,
                     ),
                   ),
                   const SizedBox(height: 16),
                   Text(
                     'Student: $studentName ($studentId)',
-                    style: GoogleFonts.orbitron(
-                      color: Colors.white,
-                    ),
+                    style: AdminTextStyles.cardTitle,
                   ),
                   Text(
                     'Challan #: $challanNumber',
-                    style: GoogleFonts.orbitron(
-                      color: Colors.white,
-                    ),
+                    style: AdminTextStyles.cardTitle,
                   ),
                   Text(
                     'Total Amount: Rs${totalAmount.toStringAsFixed(2)}',
-                    style: GoogleFonts.orbitron(
-                      color: Colors.cyanAccent,
-                      fontSize: 18,
+                    style: AdminTextStyles.sectionHeader.copyWith(
+                      color: AdminColors.primaryAccent,
                     ),
                   ),
                   const SizedBox(height: 16),
                   Text(
                     'Fines:',
-                    style: GoogleFonts.orbitron(
-                      color: Colors.white,
+                    style: AdminTextStyles.cardTitle.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -527,9 +452,7 @@ class _FineListScreenState extends State<FineListScreen> {
                       padding: const EdgeInsets.symmetric(vertical: 4),
                       child: Text(
                         '${fine.type}: Rs${fine.amount.toStringAsFixed(2)}',
-                        style: GoogleFonts.orbitron(
-                          color: Colors.white.withOpacity(0.8),
-                        ),
+                        style: AdminTextStyles.cardSubtitle,
                       ),
                     );
                   }).toList(),
@@ -538,7 +461,7 @@ class _FineListScreenState extends State<FineListScreen> {
                     alignment: Alignment.centerRight,
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.cyanAccent,
+                        backgroundColor: AdminColors.primaryAccent,
                       ),
                       onPressed: () {
                         _clearSelections();
@@ -546,8 +469,8 @@ class _FineListScreenState extends State<FineListScreen> {
                       },
                       child: Text(
                         'Done',
-                        style: GoogleFonts.orbitron(
-                          color: Colors.black,
+                        style: AdminTextStyles.primaryButton.copyWith(
+                          color: AdminColors.primaryBackground,
                         ),
                       ),
                     ),
@@ -561,14 +484,15 @@ class _FineListScreenState extends State<FineListScreen> {
     );
   }
 
+
   Future<void> _showWaiverConfirmation(Fine fine, int index) async {
     await showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
           backgroundColor: Colors.transparent,
-          content: GlassCard(
-            borderRadius: 20,
+          content: Container(
+            decoration: AdminColors.glassDecoration(borderRadius: 20),
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Column(
@@ -576,17 +500,14 @@ class _FineListScreenState extends State<FineListScreen> {
                 children: [
                   Text(
                     'Confirm Waiver',
-                    style: GoogleFonts.orbitron(
-                      color: Colors.cyanAccent,
-                      fontSize: 18,
+                    style: AdminTextStyles.sectionHeader.copyWith(
+                      color: AdminColors.primaryAccent,
                     ),
                   ),
                   const SizedBox(height: 16),
                   Text(
                     'Waive this fine for ${fine.studentName}?',
-                    style: GoogleFonts.orbitron(
-                      color: Colors.white,
-                    ),
+                    style: AdminTextStyles.cardTitle,
                   ),
                   const SizedBox(height: 24),
                   Row(
@@ -596,26 +517,24 @@ class _FineListScreenState extends State<FineListScreen> {
                         onPressed: () => Navigator.pop(context),
                         child: Text(
                           'Cancel',
-                          style: GoogleFonts.orbitron(
-                            color: Colors.cyanAccent,
+                          style: AdminTextStyles.secondaryButton.copyWith(
+                            color: AdminColors.primaryAccent,
                           ),
                         ),
                       ),
                       const SizedBox(width: 8),
                       ElevatedButton(
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.cyanAccent,
+                          backgroundColor: AdminColors.primaryAccent,
                         ),
                         onPressed: () {
-                          setState(() {
-                            fine.isWaived = true;
-                          });
+                          setState(() => fine.isWaived = true);
                           Navigator.pop(context);
                         },
                         child: Text(
                           'Confirm',
-                          style: GoogleFonts.orbitron(
-                            color: Colors.black,
+                          style: AdminTextStyles.primaryButton.copyWith(
+                            color: AdminColors.primaryBackground,
                           ),
                         ),
                       ),
@@ -636,8 +555,8 @@ class _FineListScreenState extends State<FineListScreen> {
       builder: (context) {
         return AlertDialog(
           backgroundColor: Colors.transparent,
-          content: GlassCard(
-            borderRadius: 20,
+          content: Container(
+            decoration: AdminColors.glassDecoration(borderRadius: 20),
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Column(
@@ -645,17 +564,14 @@ class _FineListScreenState extends State<FineListScreen> {
                 children: [
                   Text(
                     'Remove Fine',
-                    style: GoogleFonts.orbitron(
-                      color: Colors.cyanAccent,
-                      fontSize: 18,
+                    style: AdminTextStyles.sectionHeader.copyWith(
+                      color: AdminColors.dangerAccent,
                     ),
                   ),
                   const SizedBox(height: 16),
                   Text(
                     'Remove this fine for ${fine.studentName}?',
-                    style: GoogleFonts.orbitron(
-                      color: Colors.white,
-                    ),
+                    style: AdminTextStyles.cardTitle,
                   ),
                   const SizedBox(height: 24),
                   Row(
@@ -665,15 +581,15 @@ class _FineListScreenState extends State<FineListScreen> {
                         onPressed: () => Navigator.pop(context),
                         child: Text(
                           'Cancel',
-                          style: GoogleFonts.orbitron(
-                            color: Colors.cyanAccent,
+                          style: AdminTextStyles.secondaryButton.copyWith(
+                            color: AdminColors.primaryAccent,
                           ),
                         ),
                       ),
                       const SizedBox(width: 8),
                       ElevatedButton(
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.redAccent,
+                          backgroundColor: AdminColors.dangerAccent,
                         ),
                         onPressed: () {
                           setState(() {
@@ -684,8 +600,8 @@ class _FineListScreenState extends State<FineListScreen> {
                         },
                         child: Text(
                           'Remove',
-                          style: GoogleFonts.orbitron(
-                            color: Colors.white,
+                          style: AdminTextStyles.primaryButton.copyWith(
+                            color: AdminColors.primaryText,
                           ),
                         ),
                       ),
@@ -700,21 +616,21 @@ class _FineListScreenState extends State<FineListScreen> {
     );
   }
 
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: AdminColors.primaryBackground,
       body: Stack(
         children: [
-          // Cyberpunk background
           Container(
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               gradient: RadialGradient(
                 center: Alignment.center,
                 radius: 1.5,
                 colors: [
-                  Color(0xFF0A0A1A),
-                  Color(0xFF000000),
+                  AdminColors.primaryBackground,
+                  AdminColors.secondaryBackground,
                 ],
               ),
             ),
@@ -731,11 +647,9 @@ class _FineListScreenState extends State<FineListScreen> {
                 flexibleSpace: FlexibleSpaceBar(
                   title: Text(
                     'FINE MANAGEMENT',
-                    style: GoogleFonts.orbitron(
+                    style: AdminTextStyles.sectionHeader.copyWith(
                       fontSize: 18,
-                      fontWeight: FontWeight.bold,
                       letterSpacing: 3,
-                      color: Colors.cyanAccent,
                     ),
                   ),
                   centerTitle: true,
@@ -745,8 +659,8 @@ class _FineListScreenState extends State<FineListScreen> {
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
                         colors: [
-                          const Color(0xFF0066FF).withOpacity(0.7),
-                          const Color(0xFF00F0FF).withOpacity(0.5),
+                          AdminColors.secondaryAccent.withOpacity(0.7),
+                          AdminColors.primaryAccent.withOpacity(0.5),
                           Colors.transparent,
                         ],
                       ),
@@ -755,8 +669,7 @@ class _FineListScreenState extends State<FineListScreen> {
                 ),
                 actions: [
                   IconButton(
-                    icon: const Icon(Icons.print),
-                    color: Colors.cyanAccent,
+                    icon: Icon(Icons.print, color: AdminColors.primaryAccent),
                     onPressed: _handleGenerateReport,
                   ),
                 ],
@@ -765,38 +678,24 @@ class _FineListScreenState extends State<FineListScreen> {
               SliverPadding(
                 padding: const EdgeInsets.all(16),
                 sliver: SliverToBoxAdapter(
-                  child: GlassCard(
-                    borderRadius: 16,
+                  child: Container(
+                    decoration: AdminColors.glassDecoration(),
                     child: Padding(
                       padding: const EdgeInsets.all(16),
                       child: TextField(
                         controller: _searchController,
-                        style: GoogleFonts.orbitron(color: Colors.white),
+                        style: AdminTextStyles.cardTitle,
                         decoration: InputDecoration(
                           hintText: 'Search by name or ID',
-                          hintStyle: GoogleFonts.orbitron(
-                            color: Colors.white.withOpacity(0.5),
-                          ),
+                          hintStyle: AdminTextStyles.cardSubtitle,
                           prefixIcon: Icon(
                             Icons.search,
-                            color: Colors.cyanAccent,
+                            color: AdminColors.primaryAccent,
                           ),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                             borderSide: BorderSide(
-                              color: Colors.cyanAccent.withOpacity(0.3),
-                            ),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(
-                              color: Colors.cyanAccent.withOpacity(0.3),
-                            ),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(
-                              color: Colors.cyanAccent,
+                              color: AdminColors.cardBorder,
                             ),
                           ),
                         ),
@@ -810,7 +709,7 @@ class _FineListScreenState extends State<FineListScreen> {
                 const SliverFillRemaining(
                   child: Center(
                     child: CircularProgressIndicator(
-                      color: Colors.cyanAccent,
+                      color: AdminColors.primaryAccent,
                     ),
                   ),
                 )
@@ -819,9 +718,7 @@ class _FineListScreenState extends State<FineListScreen> {
                   child: Center(
                     child: Text(
                       'No fines found',
-                      style: GoogleFonts.orbitron(
-                        color: Colors.white.withOpacity(0.5),
-                      ),
+                      style: AdminTextStyles.cardSubtitle,
                     ),
                   ),
                 )
@@ -856,15 +753,14 @@ class _FineListScreenState extends State<FineListScreen> {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _showAddFineDialog,
-        icon: const Icon(Icons.add, color: Colors.black),
+        icon: Icon(Icons.add, color: AdminColors.primaryBackground),
         label: Text(
           'ADD FINE',
-          style: GoogleFonts.orbitron(
-            color: Colors.black,
-            fontWeight: FontWeight.bold,
+          style: AdminTextStyles.primaryButton.copyWith(
+            color: AdminColors.primaryBackground,
           ),
         ),
-        backgroundColor: Colors.cyanAccent,
+        backgroundColor: AdminColors.primaryAccent,
       ),
     );
   }
@@ -889,9 +785,11 @@ class _FineCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
-      child: GlassCard(
-        borderRadius: 12,
-        borderColor: isSelected ? Colors.cyanAccent : null,
+      child: Container(
+        decoration: AdminColors.glassDecoration(
+          borderRadius: 12,
+          borderColor: isSelected ? AdminColors.primaryAccent : null,
+        ),
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
@@ -902,16 +800,15 @@ class _FineCard extends StatelessWidget {
                 children: [
                   Text(
                     fine.studentName,
-                    style: GoogleFonts.orbitron(
-                      color: Colors.white,
+                    style: AdminTextStyles.cardTitle.copyWith(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                   Text(
                     'Rs${fine.amount.toStringAsFixed(2)}',
-                    style: GoogleFonts.orbitron(
-                      color: fine.isWaived ? Colors.redAccent : Colors.cyanAccent,
+                    style: AdminTextStyles.cardTitle.copyWith(
+                      color: fine.isWaived ? AdminColors.dangerAccent : AdminColors.primaryAccent,
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                     ),
@@ -924,25 +821,21 @@ class _FineCard extends StatelessWidget {
                 children: [
                   Text(
                     fine.studentId,
-                    style: GoogleFonts.orbitron(
-                      color: Colors.white.withOpacity(0.7),
-                      fontSize: 12,
-                    ),
+                    style: AdminTextStyles.cardSubtitle,
                   ),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                     decoration: BoxDecoration(
-                      color: Colors.cyanAccent.withOpacity(0.1),
+                      color: AdminColors.primaryAccent.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: Colors.cyanAccent.withOpacity(0.3),
+                        color: AdminColors.primaryAccent.withOpacity(0.3),
                       ),
                     ),
                     child: Text(
                       fine.type,
-                      style: GoogleFonts.orbitron(
-                        color: Colors.cyanAccent,
-                        fontSize: 12,
+                      style: AdminTextStyles.cardSubtitle.copyWith(
+                        color: AdminColors.primaryAccent,
                       ),
                     ),
                   ),
@@ -955,11 +848,11 @@ class _FineCard extends StatelessWidget {
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
                         backgroundColor: fine.isWaived
-                            ? Colors.grey.withOpacity(0.2)
-                            : Colors.cyanAccent.withOpacity(0.2),
+                            ? AdminColors.disabledText.withOpacity(0.2)
+                            : AdminColors.primaryAccent.withOpacity(0.2),
                         foregroundColor: fine.isWaived
-                            ? Colors.grey
-                            : Colors.cyanAccent,
+                            ? AdminColors.disabledText
+                            : AdminColors.primaryAccent,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),
@@ -967,8 +860,7 @@ class _FineCard extends StatelessWidget {
                       onPressed: fine.isWaived ? null : onWaiver,
                       child: Text(
                         fine.isWaived ? 'WAIVED' : 'WAIVER',
-                        style: GoogleFonts.orbitron(
-                          fontSize: 12,
+                        style: AdminTextStyles.secondaryButton.copyWith(
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -978,8 +870,8 @@ class _FineCard extends StatelessWidget {
                   Expanded(
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.redAccent.withOpacity(0.2),
-                        foregroundColor: Colors.redAccent,
+                        backgroundColor: AdminColors.dangerAccent.withOpacity(0.2),
+                        foregroundColor: AdminColors.dangerAccent,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),
@@ -987,8 +879,7 @@ class _FineCard extends StatelessWidget {
                       onPressed: onRemove,
                       child: Text(
                         'REMOVE',
-                        style: GoogleFonts.orbitron(
-                          fontSize: 12,
+                        style: AdminTextStyles.secondaryButton.copyWith(
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -1018,56 +909,4 @@ class Fine {
     required this.type,
     this.isWaived = false,
   });
-}
-
-class GlassCard extends StatelessWidget {
-  final Widget? child;
-  final double borderRadius;
-  final Color? borderColor;
-  final EdgeInsets? padding;
-
-  const GlassCard({
-    super.key,
-    this.child,
-    this.borderRadius = 16,
-    this.borderColor,
-    this.padding,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(borderRadius),
-        border: Border.all(
-          color: borderColor ?? Colors.white.withOpacity(0.1),
-          width: 1.5,
-        ),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Colors.white.withOpacity(0.05),
-            Colors.white.withOpacity(0.02),
-          ],
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.3),
-            blurRadius: 20,
-            spreadRadius: 5,
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(borderRadius),
-        child: padding != null
-            ? Padding(
-          padding: padding!,
-          child: child,
-        )
-            : child,
-      ),
-    );
-  }
 }

@@ -1,67 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+
+import 'package:newapp/admin/themes/theme_colors.dart';import 'package:newapp/admin/themes/theme_extensions.dart';
+import 'package:newapp/admin/themes/theme_text_styles.dart';
 import 'dart:convert';
-import 'package:flutter/scheduler.dart';
 import 'package:shimmer/shimmer.dart';
 
-
-void main() {
-  runApp(AttendanceApp());
-}
-
-class AttendanceApp extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'NeoAttendance',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData.dark().copyWith(
-        scaffoldBackgroundColor: Color(0xFF0A0E21),
-        primaryColor: Color(0xFF00D1FF),
-        colorScheme: ColorScheme.dark(
-          secondary: Color(0xFF00D1FF),
-          surface: Color(0xFF1D1E33),
-        ),
-        cardTheme: CardThemeData(
-          elevation: 8,
-          margin: EdgeInsets.symmetric(vertical: 8),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-        ),
-        textTheme: TextTheme(
-          headlineSmall: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-            letterSpacing: 1.2,
-          ),
-          bodyMedium: TextStyle(
-            fontSize: 16,
-            color: Colors.white70,
-          ),
-        ),
-      ),
-      home: AttendanceDashboard2(campusID: 1),
-    );
-  }
-}
-
-class StudentAttendance {
-  final int rfid;
-  final String name;
-  final String id;
-  final bool isPresent;
-  final String time;
-
-  StudentAttendance({
-    required this.rfid,
-    required this.name,
-    required this.id,
-    required this.isPresent,
-    required this.time,
-  });
-}
 
 class AttendanceDashboard2 extends StatefulWidget {
   final int campusID;
@@ -72,7 +16,8 @@ class AttendanceDashboard2 extends StatefulWidget {
   _AttendanceDashboardState2 createState() => _AttendanceDashboardState2();
 }
 
-class _AttendanceDashboardState2 extends State<AttendanceDashboard2> with SingleTickerProviderStateMixin {
+class _AttendanceDashboardState2 extends State<AttendanceDashboard2>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _animation;
   List<StudentAttendance> attendanceList = [];
@@ -147,7 +92,7 @@ class _AttendanceDashboardState2 extends State<AttendanceDashboard2> with Single
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Failed to fetch attendance data'),
-          backgroundColor: Colors.redAccent,
+          backgroundColor: AdminColors.dangerAccent,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(10),
@@ -159,17 +104,15 @@ class _AttendanceDashboardState2 extends State<AttendanceDashboard2> with Single
 
   Widget _buildShimmerLoading() {
     return Shimmer.fromColors(
-      baseColor: Colors.grey[800]!,
-      highlightColor: Colors.grey[700]!,
+      baseColor: AdminColors.secondaryBackground,
+      highlightColor: AdminColors.cardBackground,
       child: Column(
         children: List.generate(
           5,
-              (index) => Card(
-            child: Container(
-              height: 80,
-              width: double.infinity,
-              color: Colors.white,
-            ),
+              (index) => Container(
+            margin: EdgeInsets.symmetric(vertical: 8),
+            decoration: AdminColors.glassDecoration(),
+            height: 80,
           ),
         ),
       ),
@@ -177,6 +120,8 @@ class _AttendanceDashboardState2 extends State<AttendanceDashboard2> with Single
   }
 
   Widget _buildAttendanceCard(String title, int count, Color color) {
+    final textStyles = context.adminTextStyles;
+
     return AnimatedBuilder(
       animation: _animation,
       builder: (context, child) {
@@ -185,12 +130,8 @@ class _AttendanceDashboardState2 extends State<AttendanceDashboard2> with Single
           child: child,
         );
       },
-      child: Card(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-          side: BorderSide(color: color.withOpacity(0.3), width: 1),
-        ),
-        color: Color(0xFF1D1E33),
+      child: Container(
+        decoration: color.toGlassDecoration(),
         child: Padding(
           padding: EdgeInsets.all(16),
           child: Column(
@@ -198,20 +139,12 @@ class _AttendanceDashboardState2 extends State<AttendanceDashboard2> with Single
             children: [
               Text(
                 title,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.white70,
-                  letterSpacing: 1.1,
-                ),
+                style: AdminTextStyles.cardSubtitle,
               ),
               SizedBox(height: 8),
               Text(
                 count.toString(),
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: color,
-                ),
+                style: AdminTextStyles.statValue.copyWith(color: color),
               ),
             ],
           ),
@@ -221,77 +154,46 @@ class _AttendanceDashboardState2 extends State<AttendanceDashboard2> with Single
   }
 
   Widget _buildStudentCard(StudentAttendance student) {
-    return Card(
+    final colors = context.adminColors;
+    final textStyles = context.adminTextStyles;
+
+    final statusColor = student.isPresent ? AdminColors.successAccent : AdminColors.dangerAccent;
+
+    return Container(
       margin: EdgeInsets.symmetric(vertical: 8),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(
-          color: student.isPresent
-              ? Colors.greenAccent.withOpacity(0.2)
-              : Colors.redAccent.withOpacity(0.2),
-          width: 1,
-        ),
+      decoration: AdminColors.glassDecoration(
+        borderColor: statusColor.withOpacity(0.2),
       ),
       child: ListTile(
-        contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         leading: Container(
           width: 50,
           height: 50,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            gradient: LinearGradient(
-              colors: student.isPresent
-                  ? [Color(0xFF00D1FF), Color(0xFF00FFA3)]
-                  : [Color(0xFFFF416C), Color(0xFFFF4B2B)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-          ),
+          decoration: statusColor.toCircleDecoration(),
           child: Center(
             child: Text(
               student.name.substring(0, 1).toUpperCase(),
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+              style: AdminTextStyles.statValue,
             ),
           ),
         ),
         title: Text(
           student.name,
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w500,
-            color: Colors.white,
-          ),
+          style: AdminTextStyles.cardTitle.copyWith(fontSize: 14),
         ),
         subtitle: Text(
           'ID: ${student.rfid}',
-          style: TextStyle(
-            color: Colors.white70,
-          ),
+          style: AdminTextStyles.cardSubtitle,
         ),
         trailing: Container(
           padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
-            gradient: LinearGradient(
-              colors: student.isPresent
-                  ? [Color(0xFF00D1FF), Color(0xFF00FFA3)]
-                  : [Color(0xFFFF416C), Color(0xFFFF4B2B)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
+            gradient: AdminColors.accentGradient(statusColor),
           ),
           child: Text(
             student.isPresent ? 'PRESENT' : 'ABSENT',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 12,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 1.1,
-            ),
+            style: AdminTextStyles.primaryButton.copyWith(fontSize: 12),
           ),
         ),
       ),
@@ -300,7 +202,11 @@ class _AttendanceDashboardState2 extends State<AttendanceDashboard2> with Single
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.adminColors;
+    final textStyles = context.adminTextStyles;
+
     return Scaffold(
+      backgroundColor: AdminColors.primaryBackground,
       body: NestedScrollView(
         headerSliverBuilder: (context, innerBoxIsScrolled) {
           return [
@@ -311,11 +217,7 @@ class _AttendanceDashboardState2 extends State<AttendanceDashboard2> with Single
               flexibleSpace: FlexibleSpaceBar(
                 title: Text(
                   'ATTENDANCE DASHBOARD',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 1.5,
-                  ),
+                  style: AdminTextStyles.portalTitle.copyWith(fontSize: 16),
                 ),
                 centerTitle: true,
                 background: Container(
@@ -324,8 +226,8 @@ class _AttendanceDashboardState2 extends State<AttendanceDashboard2> with Single
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                       colors: [
-                        Color(0xFF0A0E21),
-                        Color(0xFF1A1C2E),
+                        AdminColors.primaryBackground,
+                        AdminColors.secondaryBackground,
                       ],
                     ),
                   ),
@@ -333,7 +235,7 @@ class _AttendanceDashboardState2 extends State<AttendanceDashboard2> with Single
               ),
               actions: [
                 IconButton(
-                  icon: Icon(Icons.refresh),
+                  icon: Icon(Icons.refresh, color: AdminColors.primaryAccent),
                   onPressed: fetchAttendanceData,
                 ),
               ],
@@ -349,9 +251,7 @@ class _AttendanceDashboardState2 extends State<AttendanceDashboard2> with Single
             children: [
               Text(
                 'TODAY\'S SUMMARY',
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  letterSpacing: 1.5,
-                ),
+                style: AdminTextStyles.sectionHeader,
               ),
               SizedBox(height: 16),
               Row(
@@ -360,7 +260,7 @@ class _AttendanceDashboardState2 extends State<AttendanceDashboard2> with Single
                     child: _buildAttendanceCard(
                       'PRESENT',
                       presentCount,
-                      Color(0xFF00FFA3),
+                      AdminColors.successAccent,
                     ),
                   ),
                   SizedBox(width: 16),
@@ -368,7 +268,7 @@ class _AttendanceDashboardState2 extends State<AttendanceDashboard2> with Single
                     child: _buildAttendanceCard(
                       'ABSENT',
                       absentCount,
-                      Color(0xFFFF416C),
+                      AdminColors.dangerAccent,
                     ),
                   ),
                 ],
@@ -376,9 +276,7 @@ class _AttendanceDashboardState2 extends State<AttendanceDashboard2> with Single
               SizedBox(height: 24),
               Text(
                 'STUDENT RECORDS',
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  letterSpacing: 1.5,
-                ),
+                style: AdminTextStyles.sectionHeader,
               ),
               SizedBox(height: 16),
               ...attendanceList.map((student) => _buildStudentCard(student)).toList(),
@@ -390,12 +288,28 @@ class _AttendanceDashboardState2 extends State<AttendanceDashboard2> with Single
         onPressed: fetchAttendanceData,
         child: isRefreshing
             ? CircularProgressIndicator(
-          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+          valueColor: AlwaysStoppedAnimation<Color>(AdminColors.primaryText),
         )
             : Icon(Icons.refresh, size: 28),
-        backgroundColor: Color(0xFF00D1FF),
+        backgroundColor: AdminColors.primaryAccent,
         elevation: 8,
       ),
     );
   }
+}
+
+class StudentAttendance {
+  final int rfid;
+  final String name;
+  final String id;
+  final bool isPresent;
+  final String time;
+
+  StudentAttendance({
+    required this.rfid,
+    required this.name,
+    required this.id,
+    required this.isPresent,
+    required this.time,
+  });
 }

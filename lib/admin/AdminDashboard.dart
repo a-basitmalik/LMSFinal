@@ -3,9 +3,13 @@ import 'dart:math';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:newapp/admin/themes/theme_colors.dart';
+import 'package:newapp/admin/themes/theme_extensions.dart';
+import 'package:newapp/admin/themes/theme_text_styles.dart';
 import 'AdminRoutes.dart';
 import 'AddPlannerScreen.dart';
-import 'Announcement.dart'; // Make sure to import your AddPlannerScreen
+import 'Announcement.dart';
+
 
 class AdminDashboard extends StatefulWidget {
   final int campusID;
@@ -79,10 +83,10 @@ class _AdminDashboardContent extends StatelessWidget {
           child: Container(
             height: MediaQuery.of(context).size.height * 0.9,
             decoration: BoxDecoration(
-              color: Color(0xFF0A0A1A).withOpacity(0.95),
-              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+              color: AdminColors.primaryBackground.withOpacity(0.95),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
               border: Border.all(
-                color: Colors.cyanAccent.withOpacity(0.3),
+                color: AdminColors.primaryAccent.withOpacity(0.3),
                 width: 1,
               ),
             ),
@@ -108,10 +112,10 @@ class _AdminDashboardContent extends StatelessWidget {
           child: Container(
             height: MediaQuery.of(context).size.height * 0.9,
             decoration: BoxDecoration(
-              color: Color(0xFF0A0A1A).withOpacity(0.95),
-              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+              color: AdminColors.primaryBackground.withOpacity(0.95),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
               border: Border.all(
-                color: Colors.cyanAccent.withOpacity(0.3),
+                color: AdminColors.primaryAccent.withOpacity(0.3),
                 width: 1,
               ),
             ),
@@ -129,36 +133,36 @@ class _AdminDashboardContent extends StatelessWidget {
         'title': 'Student',
         'icon': Icons.school_outlined,
         'route': '/studentList',
-        'color': Colors.blueAccent,
+        'color': AdminColors.studentColor,
       },
       {
         'title': 'Faculty',
         'icon': Icons.person_outlined,
         'route': '/teacherList',
-        'color': Colors.purpleAccent,
+        'color': AdminColors.facultyColor,
       },
       {
         'title': 'Attendance',
         'icon': Icons.fingerprint_outlined,
         'route': '/attendance',
-        'color': Colors.greenAccent,
+        'color': AdminColors.attendanceColor,
       },
       {
         'title': 'Fine',
         'icon': Icons.monetization_on_outlined,
         'route': '/fees',
-        'color': Colors.redAccent,
+        'color': AdminColors.fineColor,
       },
       {
         'title': 'Results',
         'icon': Icons.monetization_on_outlined,
         'route': '/results',
-        'color': Colors.orangeAccent,
+        'color': AdminColors.resultsColor,
       },
     ];
 
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: AdminColors.primaryBackground,
       body: Stack(
         children: [
           CustomPaint(
@@ -176,7 +180,7 @@ class _AdminDashboardContent extends StatelessWidget {
                       children: [
                         AnimatedCircularProgress(
                           value: 0.75,
-                          color: Colors.cyanAccent,
+                          color: AdminColors.primaryAccent,
                           animation: animation,
                         ),
                         const SizedBox(width: 16),
@@ -186,28 +190,19 @@ class _AdminDashboardContent extends StatelessWidget {
                             children: [
                               Row(
                                 children: [
-                                  const Icon(Icons.admin_panel_settings_outlined,
-                                      color: Colors.cyanAccent, size: 18),
+                                  Icon(Icons.admin_panel_settings_outlined,
+                                      color: AdminColors.primaryAccent, size: 18),
                                   const SizedBox(width: 8),
                                   Text(
                                     'ADMIN PORTAL',
-                                    style: TextStyle(
-                                      color: Colors.white.withOpacity(0.7),
-                                      fontSize: 14,
-                                      letterSpacing: 1.5,
-                                    ),
+                                    style: AdminTextStyles.portalTitle,
                                   ),
                                 ],
                               ),
                               const SizedBox(height: 4),
                               Text(
                                 campusName.toUpperCase(),
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 22,
-                                  fontWeight: FontWeight.bold,
-                                  letterSpacing: 1.2,
-                                ),
+                                style: AdminTextStyles.campusName,
                                 overflow: TextOverflow.ellipsis,
                                 maxLines: 1,
                               ),
@@ -251,35 +246,17 @@ class _AdminDashboardContent extends StatelessWidget {
                       },
                     ),
                     const SizedBox(height: 16),
-                    // GlassCard(
-                    //   borderRadius: 20,
-                    //   borderColor: Colors.cyanAccent.withOpacity(0.3),
-                    //   child: Padding(
-                    //     padding: const EdgeInsets.all(16.0),
-                    //     child: Column(
-                    //       children: [
-                    //         _buildAnimatedButton(
-                    //           icon: Icons.add_rounded,
-                    //           label: 'POST NEW',
-                    //           color: Colors.cyanAccent,
-                    //           onTap: () => _showAddAnnouncementModal(context),
-                    //         ),
-                    //       ],
-                    //     ),
-                    //   ),
-                    // ),
-                    // const SizedBox(height: 16),
                     GlassCard(
                       borderRadius: 20,
-                      borderColor: Colors.cyanAccent.withOpacity(0.3),
+                      borderColor: AdminColors.announcementColor.withOpacity(0.3),
                       child: Padding(
                         padding: const EdgeInsets.all(16.0),
                         child: Column(
-                          children: [// Replace the existing announcement button with this:
+                          children: [
                             _buildAnimatedButton(
                               icon: Icons.add_rounded,
                               label: 'POST NEW',
-                              color: Colors.cyanAccent,
+                              color: AdminColors.announcementColor,
                               onTap: () => _showAddAnnouncementModal(context),
                             ),
                           ],
@@ -290,7 +267,7 @@ class _AdminDashboardContent extends StatelessWidget {
                     _buildSectionHeader(
                       icon: Icons.menu_book_rounded,
                       title: 'CURRICULUM',
-                      iconColor: Colors.blueAccent,
+                      iconColor: AdminColors.curriculumColor,
                       onTap: () {
                         Navigator.pushNamed(
                           context,
@@ -303,149 +280,148 @@ class _AdminDashboardContent extends StatelessWidget {
                       },
                     ),
                     const SizedBox(height: 16),
-    SingleChildScrollView(
-    scrollDirection: Axis.horizontal,
-    padding: const EdgeInsets.only(bottom: 8),
-    child: Row(
-    children: [
-    _buildAnimatedCurriculumOption(
-    icon: Icons.medical_services,
-    label: 'Pre-Medical',
-    color: Colors.blueAccent,
-    onTap: () => _navigateToCurriculum(context, 'Pre-Medical'),
-    ),
-    _buildAnimatedCurriculumOption(
-    icon: Icons.engineering,
-    label: 'Pre-Engineering',
-    color: Colors.blueAccent,
-    onTap: () => _navigateToCurriculum(context, 'Pre-Engineering'),
-    ),
-    _buildAnimatedCurriculumOption(
-    icon: Icons.science,
-    label: 'ICS (Physics)',
-    color: Colors.blueAccent,
-    onTap: () => _navigateToCurriculum(context, 'ICS (Physics)'),
-    ),
-    _buildAnimatedCurriculumOption(
-    icon: Icons.bar_chart,
-    label: 'ICS (Stats)',
-    color: Colors.blueAccent,
-    onTap: () => _navigateToCurriculum(context, 'ICS (Stats)'),
-    ),
-    _buildAnimatedCurriculumOption(
-    icon: Icons.bubble_chart,
-    label: 'General Science',
-    color: Colors.blueAccent,
-    onTap: () => _navigateToCurriculum(context, 'General Science'),
-    ),
-    _buildAnimatedCurriculumOption(
-    icon: Icons.account_balance_wallet,
-    label: 'I.COM (Part-I)',
-    color: Colors.blueAccent,
-    onTap: () => _navigateToCurriculum(context, 'I.COM (Part-I)'),
-    ),
-    _buildAnimatedCurriculumOption(
-    icon: Icons.account_balance,
-    label: 'I.COM (Part-II)',
-    color: Colors.blueAccent,
-    onTap: () => _navigateToCurriculum(context, 'I.COM (Part-II)'),
-    ),
-    _buildAnimatedCurriculumOption(
-    icon: Icons.people,
-    label: 'Humanities (F.A.)',
-    color: Colors.blueAccent,
-    onTap: () => _navigateToCurriculum(context, 'Humanities (F.A.)'),
-    ),
-    ].map((widget) => Padding(
-    padding: const EdgeInsets.only(right: 16),
-    child: SizedBox(width: 150, child: widget),
-    )).toList(),
-    ),
-    ),
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: Row(
+                        children: [
+                          _buildAnimatedCurriculumOption(
+                            icon: Icons.medical_services,
+                            label: 'Pre-Medical',
+                            color: AdminColors.curriculumColor,
+                            onTap: () => _navigateToCurriculum(context, 'Pre-Medical'),
+                          ),
+                          _buildAnimatedCurriculumOption(
+                            icon: Icons.engineering,
+                            label: 'Pre-Engineering',
+                            color: AdminColors.curriculumColor,
+                            onTap: () => _navigateToCurriculum(context, 'Pre-Engineering'),
+                          ),
+                          _buildAnimatedCurriculumOption(
+                            icon: Icons.science,
+                            label: 'ICS (Physics)',
+                            color: AdminColors.curriculumColor,
+                            onTap: () => _navigateToCurriculum(context, 'ICS (Physics)'),
+                          ),
+                          _buildAnimatedCurriculumOption(
+                            icon: Icons.bar_chart,
+                            label: 'ICS (Stats)',
+                            color: AdminColors.curriculumColor,
+                            onTap: () => _navigateToCurriculum(context, 'ICS (Stats)'),
+                          ),
+                          _buildAnimatedCurriculumOption(
+                            icon: Icons.bubble_chart,
+                            label: 'General Science',
+                            color: AdminColors.curriculumColor,
+                            onTap: () => _navigateToCurriculum(context, 'General Science'),
+                          ),
+                          _buildAnimatedCurriculumOption(
+                            icon: Icons.account_balance_wallet,
+                            label: 'I.COM (Part-I)',
+                            color: AdminColors.curriculumColor,
+                            onTap: () => _navigateToCurriculum(context, 'I.COM (Part-I)'),
+                          ),
+                          _buildAnimatedCurriculumOption(
+                            icon: Icons.account_balance,
+                            label: 'I.COM (Part-II)',
+                            color: AdminColors.curriculumColor,
+                            onTap: () => _navigateToCurriculum(context, 'I.COM (Part-II)'),
+                          ),
+                          _buildAnimatedCurriculumOption(
+                            icon: Icons.people,
+                            label: 'Humanities (F.A.)',
+                            color: AdminColors.curriculumColor,
+                            onTap: () => _navigateToCurriculum(context, 'Humanities (F.A.)'),
+                          ),
+                        ].map((widget) => Padding(
+                          padding: const EdgeInsets.only(right: 16),
+                          child: SizedBox(width: 150, child: widget),
+                        )).toList(),
+                      ),
+                    ),
                     const SizedBox(height: 32),
-                    // New Planner Section
                     _buildSectionHeader(
-                    icon: Icons.event_note_rounded,
-                    title: 'LESSON PLANNER',
-    iconColor: Colors.orangeAccent,
-    onTap: () {
-    Navigator.pushNamed(
-    context,
-    '/planner',
-    arguments: {
-    'campusID': campusID,
-    'campusName': campusName,
-    },
-    );
-    },
-    ),
-    const SizedBox(height: 16),
-    GlassCard(
-    borderRadius: 20,
-    borderColor: Colors.orangeAccent.withOpacity(0.3),
-    child: Padding(
-    padding: const EdgeInsets.all(16.0),
-    child: Column(
-    children: [
-    _buildAnimatedButton(
-    icon: Icons.add_rounded,
-    label: 'CREATE NEW PLAN',
-    color: Colors.orangeAccent,
-    onTap: () => _showAddPlannerModal(context),
-    ),
-    const SizedBox(height: 12),
-    Row(
-    children: [
-    Expanded(
-    child: _buildPlannerOption(
-    icon: Icons.today_rounded,
-    label: 'Today\'s',
-    subLabel: 'Plans',
-    color: Colors.orangeAccent,
-    onTap: () {
-    Navigator.pushNamed(
-    context,
-    '/planner',
-    arguments: {
-    'campusID': campusID,
-    'campusName': campusName,
-    },
-    );
-    },
-    ),
-    ),
-    const SizedBox(width: 12),
-    Expanded(
-    child: _buildPlannerOption(
-    icon: Icons.calendar_month_rounded,
-    label: 'View',
-    subLabel: 'Calendar',
-    color: Colors.orangeAccent,
-    onTap: () {
-    Navigator.pushNamed(
-    context,
-    '/calendar',
-    arguments: {
-    'campusID': campusID,
-    'campusName': campusName,
-    },
-    );
-    },
-    ),
-    ),
-    ],
-    ),
-    const SizedBox(height: 12),
-    _buildPlannerStatsRow(),
-    ],
-    ),
-    ),
-    ),
-
+                      icon: Icons.event_note_rounded,
+                      title: 'LESSON PLANNER',
+                      iconColor: AdminColors.plannerColor,
+                      onTap: () {
+                        Navigator.pushNamed(
+                          context,
+                          '/planner',
+                          arguments: {
+                            'campusID': campusID,
+                            'campusName': campusName,
+                          },
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    GlassCard(
+                      borderRadius: 20,
+                      borderColor: AdminColors.plannerColor.withOpacity(0.3),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          children: [
+                            _buildAnimatedButton(
+                              icon: Icons.add_rounded,
+                              label: 'CREATE NEW PLAN',
+                              color: AdminColors.plannerColor,
+                              onTap: () => _showAddPlannerModal(context),
+                            ),
+                            const SizedBox(height: 12),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: _buildPlannerOption(
+                                    icon: Icons.today_rounded,
+                                    label: 'Today\'s',
+                                    subLabel: 'Plans',
+                                    color: AdminColors.plannerColor,
+                                    onTap: () {
+                                      Navigator.pushNamed(
+                                        context,
+                                        '/planner',
+                                        arguments: {
+                                          'campusID': campusID,
+                                          'campusName': campusName,
+                                        },
+                                      );
+                                    },
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: _buildPlannerOption(
+                                    icon: Icons.calendar_month_rounded,
+                                    label: 'View',
+                                    subLabel: 'Calendar',
+                                    color: AdminColors.plannerColor,
+                                    onTap: () {
+                                      Navigator.pushNamed(
+                                        context,
+                                        '/calendar',
+                                        arguments: {
+                                          'campusID': campusID,
+                                          'campusName': campusName,
+                                        },
+                                      );
+                                    },
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            _buildPlannerStatsRow(),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 32),
                     _buildSectionHeader(
                       icon: Icons.analytics_rounded,
                       title: 'REPORT DOWNLOAD',
-                      iconColor: Colors.redAccent,
+                      iconColor: AdminColors.reportsColor,
                       onTap: () {
                         Navigator.pushNamed(
                           context,
@@ -468,7 +444,7 @@ class _AdminDashboardContent extends StatelessWidget {
                             icon: Icons.assignment,
                             label: 'Subject',
                             subLabel: 'Report',
-                            color: Colors.redAccent,
+                            color: AdminColors.reportsColor,
                             onTap: () => _navigateToReports(context, 0),
                           ),
                           const SizedBox(width: 12),
@@ -476,7 +452,7 @@ class _AdminDashboardContent extends StatelessWidget {
                             icon: Icons.assessment,
                             label: 'Assessment',
                             subLabel: 'Report',
-                            color: Colors.redAccent,
+                            color: AdminColors.reportsColor,
                             onTap: () => _navigateToReports(context, 1),
                           ),
                           const SizedBox(width: 12),
@@ -484,7 +460,7 @@ class _AdminDashboardContent extends StatelessWidget {
                             icon: Icons.quiz,
                             label: 'Monthly',
                             subLabel: '+ Quizzes',
-                            color: Colors.redAccent,
+                            color: AdminColors.reportsColor,
                             onTap: () => _navigateToReports(context, 2),
                           ),
                           const SizedBox(width: 12),
@@ -492,7 +468,7 @@ class _AdminDashboardContent extends StatelessWidget {
                             icon: Icons.library_books,
                             label: 'All',
                             subLabel: 'Subjects',
-                            color: Colors.redAccent,
+                            color: AdminColors.reportsColor,
                             onTap: () => _navigateToReports(context, 3),
                           ),
                         ],
@@ -510,9 +486,8 @@ class _AdminDashboardContent extends StatelessWidget {
   }
 
   Widget _buildPlannerStatsRow() {
-    // Fetch stats from API
     Future<Map<String, int>> fetchStats() async {
-      final response = await http.get( Uri.parse('http://193.203.162.232:5050/Planner/planner_stats?campus_id=$campusID'),);
+      final response = await http.get(Uri.parse('http://193.203.162.232:5050/Planner/planner_stats?campus_id=$campusID'));
 
       if (response.statusCode == 200) {
         return {
@@ -533,16 +508,9 @@ class _AdminDashboardContent extends StatelessWidget {
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(12),
-              gradient: LinearGradient(
-                colors: [
-                  Colors.orangeAccent.withOpacity(0.1),
-                  Colors.orangeAccent.withOpacity(0.05),
-                ],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
+              gradient: AdminColors.accentGradient(AdminColors.plannerColor),
               border: Border.all(
-                color: Colors.orangeAccent.withOpacity(0.3),
+                color: AdminColors.plannerColor.withOpacity(0.3),
                 width: 1,
               ),
             ),
@@ -574,6 +542,7 @@ class _AdminDashboardContent extends StatelessWidget {
       },
     );
   }
+
   Widget _buildPlannerStatItem({
     required IconData icon,
     required String value,
@@ -583,14 +552,12 @@ class _AdminDashboardContent extends StatelessWidget {
       children: [
         Row(
           children: [
-            Icon(icon, size: 16, color: Colors.orangeAccent.withOpacity(0.8)),
+            Icon(icon, size: 16, color: AdminColors.plannerColor.withOpacity(0.8)),
             const SizedBox(width: 4),
             Text(
               value,
-              style: TextStyle(
-                color: Colors.orangeAccent,
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
+              style: AdminTextStyles.statValue.copyWith(
+                color: AdminColors.plannerColor,
               ),
             ),
           ],
@@ -598,10 +565,7 @@ class _AdminDashboardContent extends StatelessWidget {
         const SizedBox(height: 4),
         Text(
           label,
-          style: TextStyle(
-            color: Colors.white.withOpacity(0.7),
-            fontSize: 10,
-          ),
+          style: AdminTextStyles.statLabel,
         ),
       ],
     );
@@ -631,21 +595,7 @@ class _AdminDashboardContent extends StatelessWidget {
                 Container(
                   width: 36,
                   height: 36,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: LinearGradient(
-                      colors: [
-                        color.withOpacity(0.3),
-                        color.withOpacity(0.1),
-                      ],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    border: Border.all(
-                      color: color.withOpacity(0.5),
-                      width: 1.5,
-                    ),
-                  ),
+                  decoration: color.toCircleDecoration(size: 36),
                   child: Icon(
                     icon,
                     color: color,
@@ -655,18 +605,11 @@ class _AdminDashboardContent extends StatelessWidget {
                 const SizedBox(height: 8),
                 Text(
                   label,
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                  ),
+                  style: AdminTextStyles.cardTitle,
                 ),
                 Text(
                   subLabel,
-                  style: TextStyle(
-                    color: Colors.white.withOpacity(0.7),
-                    fontSize: 10,
-                  ),
+                  style: AdminTextStyles.cardSubtitle,
                 ),
               ],
             ),
@@ -679,7 +622,7 @@ class _AdminDashboardContent extends StatelessWidget {
   Widget _buildSectionHeader({
     required IconData icon,
     required String title,
-    Color iconColor = Colors.cyanAccent,
+    Color iconColor = AdminColors.primaryAccent,
     VoidCallback? onTap,
   }) {
     return InkWell(
@@ -696,12 +639,7 @@ class _AdminDashboardContent extends StatelessWidget {
                 const SizedBox(width: 8),
                 Text(
                   title,
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 0.5,
-                  ),
+                  style: AdminTextStyles.sectionHeader,
                 ),
               ],
             ),
@@ -746,21 +684,7 @@ class _AdminDashboardContent extends StatelessWidget {
                 Container(
                   width: 48,
                   height: 48,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: LinearGradient(
-                      colors: [
-                        option['color'].withOpacity(0.3),
-                        option['color'].withOpacity(0.1),
-                      ],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    border: Border.all(
-                      color: option['color'].withOpacity(0.5),
-                      width: 1.5,
-                    ),
-                  ),
+                  decoration: (option['color'] as Color).toCircleDecoration(size: 48),
                   child: Icon(
                     option['icon'],
                     color: option['color'],
@@ -770,11 +694,7 @@ class _AdminDashboardContent extends StatelessWidget {
                 const SizedBox(height: 12),
                 Text(
                   option['title'],
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                  ),
+                  style: AdminTextStyles.cardTitle,
                 ),
               ],
             ),
@@ -793,21 +713,7 @@ class _AdminDashboardContent extends StatelessWidget {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
       curve: Curves.easeInOut,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        gradient: LinearGradient(
-          colors: [
-            color.withOpacity(0.2),
-            color.withOpacity(0.1),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        border: Border.all(
-          color: color.withOpacity(0.5),
-          width: 1,
-        ),
-      ),
+      decoration: color.toGlassDecoration(borderRadius: 12, borderWidth: 1),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
@@ -822,11 +728,7 @@ class _AdminDashboardContent extends StatelessWidget {
                 const SizedBox(width: 8),
                 Text(
                   label,
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                  ),
+                  style: AdminTextStyles.primaryButton,
                 ),
               ],
             ),
@@ -858,21 +760,7 @@ class _AdminDashboardContent extends StatelessWidget {
                 Container(
                   width: 40,
                   height: 40,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: LinearGradient(
-                      colors: [
-                        color.withOpacity(0.3),
-                        color.withOpacity(0.1),
-                      ],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    border: Border.all(
-                      color: color.withOpacity(0.5),
-                      width: 1.5,
-                    ),
-                  ),
+                  decoration: color.toCircleDecoration(size: 40),
                   child: Icon(
                     icon,
                     color: color,
@@ -882,11 +770,7 @@ class _AdminDashboardContent extends StatelessWidget {
                 const SizedBox(height: 12),
                 Text(
                   label,
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                  ),
+                  style: AdminTextStyles.cardTitle,
                 ),
               ],
             ),
@@ -921,21 +805,7 @@ class _AdminDashboardContent extends StatelessWidget {
                 Container(
                   width: 36,
                   height: 36,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: LinearGradient(
-                      colors: [
-                        color.withOpacity(0.3),
-                        color.withOpacity(0.1),
-                      ],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    border: Border.all(
-                      color: color.withOpacity(0.5),
-                      width: 1.5,
-                    ),
-                  ),
+                  decoration: color.toCircleDecoration(size: 36),
                   child: Icon(
                     icon,
                     color: color,
@@ -945,18 +815,11 @@ class _AdminDashboardContent extends StatelessWidget {
                 const SizedBox(height: 8),
                 Text(
                   label,
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                  ),
+                  style: AdminTextStyles.cardTitle,
                 ),
                 Text(
                   subLabel,
-                  style: TextStyle(
-                    color: Colors.white.withOpacity(0.7),
-                    fontSize: 10,
-                  ),
+                  style: AdminTextStyles.cardSubtitle,
                 ),
               ],
             ),
@@ -1018,6 +881,7 @@ class _AdminDashboardContent extends StatelessWidget {
     );
   }
 }
+
 class GlassCard extends StatelessWidget {
   final Widget? child;
   final Color? borderColor;
@@ -1039,27 +903,9 @@ class GlassCard extends StatelessWidget {
     return Container(
       width: width,
       height: height,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(borderRadius),
-        border: Border.all(
-          color: borderColor ?? Colors.white.withOpacity(0.2),
-          width: 1.5,
-        ),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Colors.white.withOpacity(0.1),
-            Colors.white.withOpacity(0.05),
-          ],
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.2),
-            blurRadius: 10,
-            spreadRadius: 2,
-          ),
-        ],
+      decoration: AdminColors.glassDecoration(
+        borderColor: borderColor,
+        borderRadius: borderRadius,
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(borderRadius),

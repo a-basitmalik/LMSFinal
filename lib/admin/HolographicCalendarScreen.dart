@@ -1,25 +1,28 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:newapp/admin/themes/theme_colors.dart';
+import 'package:newapp/admin/themes/theme_extensions.dart';
+import 'package:newapp/admin/themes/theme_text_styles.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
+
 class HolographicCalendarScreen extends StatefulWidget {
   final int campusID;
 
-  const HolographicCalendarScreen({required this.campusID, Key? key}) : super(key: key);
+  const HolographicCalendarScreen({required this.campusID, Key? key})
+      : super(key: key);
 
   @override
-  _HolographicCalendarScreenState createState() => _HolographicCalendarScreenState();
+  _HolographicCalendarScreenState createState() =>
+      _HolographicCalendarScreenState();
 }
 
 class _HolographicCalendarScreenState extends State<HolographicCalendarScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
-  late Animation<double> _fadeAnimation;
-  late Animation<Color?> _colorAnimation;
-
   CalendarFormat _calendarFormat = CalendarFormat.month;
   DateTime _focusedDay = DateTime.now();
   DateTime? _selectedDay;
@@ -33,20 +36,8 @@ class _HolographicCalendarScreenState extends State<HolographicCalendarScreen>
 
     _animationController = AnimationController(
       vsync: this,
-      duration: Duration(milliseconds: 1500),
+      duration: const Duration(milliseconds: 1500),
     )..repeat(reverse: true);
-
-    _fadeAnimation = Tween<double>(begin: 0.8, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _animationController,
-        curve: Curves.easeInOut,
-      ),
-    );
-
-    _colorAnimation = ColorTween(
-      begin: Colors.cyanAccent.withOpacity(0.7),
-      end: Colors.purpleAccent.withOpacity(0.7),
-    ).animate(_animationController);
 
     _fetchPlanners();
   }
@@ -92,7 +83,7 @@ class _HolographicCalendarScreenState extends State<HolographicCalendarScreen>
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error: ${e.toString()}'),
-          backgroundColor: Colors.red,
+          backgroundColor: AdminColors.dangerAccent,
         ),
       );
     } finally {
@@ -124,178 +115,154 @@ class _HolographicCalendarScreenState extends State<HolographicCalendarScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
-      body: Stack(
-        children: [
-          AnimatedBuilder(
-            animation: _animationController,
-            builder: (context, child) {
-              return Container(
+      backgroundColor: AdminColors.primaryBackground,
+      body: CustomScrollView(
+        slivers: [
+          SliverAppBar(
+            expandedHeight: 120,
+            floating: false,
+            pinned: true,
+            backgroundColor: AdminColors.secondaryBackground,
+            elevation: 0,
+            flexibleSpace: FlexibleSpaceBar(
+              title: Text(
+                'PLANNER CALENDAR',
+                style: AdminTextStyles.portalTitle.copyWith(
+                  color: AdminColors.primaryText,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              centerTitle: true,
+              background: Container(
                 decoration: BoxDecoration(
-                  gradient: RadialGradient(
-                    center: Alignment.center,
-                    radius: 1.5,
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
                     colors: [
-                      Colors.blue.shade900.withOpacity(_fadeAnimation.value * 0.3),
-                      Colors.indigo.shade900.withOpacity(_fadeAnimation.value * 0.3),
-                      Colors.black,
+                      AdminColors.secondaryBackground,
+                      AdminColors.primaryBackground,
                     ],
-                    stops: [0.1, 0.5, 1.0],
                   ),
                 ),
-                child: CustomPaint(
-                  painter: _ParticlePainter(animation: _animationController),
-                ),
-              );
-            },
+              ),
+            ),
           ),
-          CustomScrollView(
-            slivers: [
-              SliverAppBar(
-                expandedHeight: 150,
-                floating: false,
-                pinned: true,
-                backgroundColor: Colors.transparent,
-                elevation: 0,
-                flexibleSpace: FlexibleSpaceBar(
-                  title: AnimatedBuilder(
-                    animation: _animationController,
-                    builder: (context, child) {
-                      return Text(
-                        'PLANNER CALENDAR',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 2,
-                          color: Colors.white.withOpacity(_fadeAnimation.value),
-                          shadows: [
-                            Shadow(
-                              blurRadius: 10 * _fadeAnimation.value,
-                              color: Colors.cyanAccent.withOpacity(_fadeAnimation.value),
+          SliverPadding(
+            padding: const EdgeInsets.all(16),
+            sliver: SliverToBoxAdapter(
+              child: Column(
+                children: [
+                  Container(
+                    decoration: AdminColors.glassDecoration(),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: TableCalendar(
+                        firstDay: DateTime.utc(2020, 1, 1),
+                        lastDay: DateTime.utc(2030, 12, 31),
+                        focusedDay: _focusedDay,
+                        calendarFormat: _calendarFormat,
+                        selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
+                        onDaySelected: _onDaySelected,
+                        onFormatChanged: _onFormatChanged,
+                        onPageChanged: _onPageChanged,
+                        eventLoader: _getPlannersForDay,
+                        calendarStyle: CalendarStyle(
+                          defaultTextStyle: AdminTextStyles.cardSubtitle.copyWith(
+                            color: AdminColors.primaryText,
+                          ),
+                          weekendTextStyle: AdminTextStyles.cardSubtitle.copyWith(
+                            color: AdminColors.primaryText,
+                          ),
+                          outsideTextStyle: AdminTextStyles.cardSubtitle.copyWith(
+                            color: AdminColors.disabledText,
+                          ),
+                          selectedTextStyle: AdminTextStyles.cardTitle.copyWith(
+                            color: AdminColors.primaryBackground,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          todayTextStyle: AdminTextStyles.cardTitle.copyWith(
+                            color: AdminColors.primaryAccent,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          todayDecoration: BoxDecoration(
+                            color: AdminColors.secondaryBackground,
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: AdminColors.primaryAccent,
+                              width: 1.5,
                             ),
-                          ],
+                          ),
+                          selectedDecoration: BoxDecoration(
+                            color: AdminColors.primaryAccent,
+                            shape: BoxShape.circle,
+                          ),
+                          markerDecoration: BoxDecoration(
+                            color: AdminColors.primaryAccent,
+                            shape: BoxShape.circle,
+                          ),
+                          markerSize: 6,
+                          cellPadding: const EdgeInsets.all(4),
                         ),
-                      );
-                    },
+                        headerStyle: HeaderStyle(
+                          formatButtonVisible: true,
+                          titleCentered: true,
+                          formatButtonShowsNext: false,
+                          formatButtonDecoration: BoxDecoration(
+                            border: Border.all(color: AdminColors.primaryAccent),
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          formatButtonTextStyle: AdminTextStyles.secondaryButton.copyWith(
+                            color: AdminColors.primaryText,
+                          ),
+                          leftChevronIcon: Icon(
+                            Icons.chevron_left,
+                            color: AdminColors.primaryAccent,
+                          ),
+                          rightChevronIcon: Icon(
+                            Icons.chevron_right,
+                            color: AdminColors.primaryAccent,
+                          ),
+                          titleTextStyle: AdminTextStyles.sectionHeader,
+                        ),
+                        daysOfWeekStyle: DaysOfWeekStyle(
+                          weekdayStyle: AdminTextStyles.cardSubtitle.copyWith(
+                            color: AdminColors.primaryText,
+                          ),
+                          weekendStyle: AdminTextStyles.cardSubtitle.copyWith(
+                            color: AdminColors.primaryText,
+                          ),
+                        ),
+                      ),
+                    ),
                   ),
-                  centerTitle: true,
-                  background: Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [
-                          Colors.blue.shade900.withOpacity(0.7),
-                          Colors.indigo.shade800.withOpacity(0.7),
-                          Colors.purple.shade900.withOpacity(0.7),
+                  const SizedBox(height: 16),
+                  Container(
+                    decoration: AdminColors.glassDecoration(),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'PLANNERS ON ${DateFormat('MMMM d, y').format(_selectedDay!)}',
+                            style: AdminTextStyles.sectionHeader,
+                          ),
+                          Divider(color: AdminColors.cardBorder),
+                          _isLoading
+                              ? Center(
+                            child: CircularProgressIndicator(
+                              color: AdminColors.primaryAccent,
+                            ),
+                          )
+                              : _buildPlannersList(),
                         ],
                       ),
                     ),
                   ),
-                ),
+                ],
               ),
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    children: [
-                      AnimatedBuilder(
-                        animation: _animationController,
-                        builder: (context, child) {
-                          return GlassCard(
-                            borderColor: _colorAnimation.value,
-                            child: Padding(
-                              padding: const EdgeInsets.all(16.0),
-                              child: TableCalendar(
-                                firstDay: DateTime.utc(2020, 1, 1),
-                                lastDay: DateTime.utc(2030, 12, 31),
-                                focusedDay: _focusedDay,
-                                calendarFormat: _calendarFormat,
-                                selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
-                                onDaySelected: _onDaySelected,
-                                onFormatChanged: _onFormatChanged,
-                                onPageChanged: _onPageChanged,
-                                eventLoader: _getPlannersForDay,
-                                calendarStyle: CalendarStyle(
-                                  defaultTextStyle: TextStyle(color: Colors.white),
-                                  weekendTextStyle: TextStyle(color: Colors.white),
-                                  outsideTextStyle: TextStyle(color: Colors.white.withOpacity(0.3)),
-                                  selectedTextStyle: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
-                                  todayTextStyle: TextStyle(color: Colors.cyanAccent, fontWeight: FontWeight.bold),
-                                  todayDecoration: BoxDecoration(
-                                    color: Colors.transparent,
-                                    shape: BoxShape.circle,
-                                    border: Border.all(color: Colors.cyanAccent, width: 2),
-                                  ),
-                                  selectedDecoration: BoxDecoration(
-                                    gradient: LinearGradient(
-                                      colors: [Colors.cyanAccent, Colors.purpleAccent],
-                                      begin: Alignment.topLeft,
-                                      end: Alignment.bottomRight,
-                                    ),
-                                    shape: BoxShape.circle,
-                                  ),
-                                  markerDecoration: BoxDecoration(
-                                    color: Colors.cyanAccent,
-                                    shape: BoxShape.circle,
-                                  ),
-                                  markerSize: 6,
-                                ),
-                                headerStyle: HeaderStyle(
-                                  formatButtonVisible: true,
-                                  titleCentered: true,
-                                  formatButtonShowsNext: false,
-                                  formatButtonDecoration: BoxDecoration(
-                                    border: Border.all(color: Colors.cyanAccent),
-                                    borderRadius: BorderRadius.circular(20),
-                                  ),
-                                  formatButtonTextStyle: TextStyle(color: Colors.white),
-                                  leftChevronIcon: Icon(Icons.chevron_left, color: Colors.cyanAccent),
-                                  rightChevronIcon: Icon(Icons.chevron_right, color: Colors.cyanAccent),
-                                  titleTextStyle: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                daysOfWeekStyle: DaysOfWeekStyle(
-                                  weekdayStyle: TextStyle(color: Colors.white),
-                                  weekendStyle: TextStyle(color: Colors.white),
-                                ),
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                      SizedBox(height: 20),
-                      GlassCard(
-                        child: Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'PLANNERS ON ${DateFormat('MMMM d, y').format(_selectedDay!)}',
-                                style: TextStyle(
-                                  color: Colors.white.withOpacity(0.8),
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  letterSpacing: 1.2,
-                                ),
-                              ),
-                              Divider(color: Colors.white.withOpacity(0.2)),
-                              _isLoading
-                                  ? Center(child: CircularProgressIndicator(color: Colors.cyanAccent))
-                                  : _buildPlannersList(),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
+            ),
           ),
         ],
       ),
@@ -311,8 +278,8 @@ class _HolographicCalendarScreenState extends State<HolographicCalendarScreen>
         child: Center(
           child: Text(
             'No planners scheduled',
-            style: TextStyle(
-              color: Colors.white.withOpacity(0.6),
+            style: AdminTextStyles.cardSubtitle.copyWith(
+              color: AdminColors.disabledText,
               fontStyle: FontStyle.italic,
             ),
           ),
@@ -327,66 +294,66 @@ class _HolographicCalendarScreenState extends State<HolographicCalendarScreen>
         return Padding(
           padding: const EdgeInsets.symmetric(vertical: 8.0),
           child: InkWell(
+            borderRadius: BorderRadius.circular(8),
             onTap: () {
               // You can navigate to planner details here if needed
             },
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  width: 10,
-                  height: 10,
-                  margin: EdgeInsets.only(top: 4, right: 10),
-                  decoration: BoxDecoration(
-                    color: Colors.cyanAccent,
-                    shape: BoxShape.circle,
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(8),
+                color: AdminColors.cardBackground,
+              ),
+              padding: const EdgeInsets.all(12),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: 8,
+                    height: 8,
+                    margin: const EdgeInsets.only(top: 4, right: 12),
+                    decoration: BoxDecoration(
+                      color: AdminColors.primaryAccent,
+                      shape: BoxShape.circle,
+                    ),
                   ),
-                ),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        DateFormat('h:mm a').format(plannedDate),
-                        style: TextStyle(
-                          color: Colors.cyanAccent,
-                          fontSize: 12,
-                        ),
-                      ),
-                      SizedBox(height: 2),
-                      Text(
-                        planner.title ?? 'Untitled Planner',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      if (planner.subjectName != null) ...[
-                        SizedBox(height: 2),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
                         Text(
-                          planner.subjectName!,
-                          style: TextStyle(
-                            color: Colors.white70,
-                            fontSize: 12,
+                          DateFormat('h:mm a').format(plannedDate),
+                          style: AdminTextStyles.cardSubtitle.copyWith(
+                            color: AdminColors.primaryAccent,
                           ),
                         ),
-                      ],
-                      if (planner.description != null) ...[
-                        SizedBox(height: 4),
+                        const SizedBox(height: 4),
                         Text(
-                          planner.description!,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            color: Colors.white70,
-                            fontSize: 12,
+                          planner.title ?? 'Untitled Planner',
+                          style: AdminTextStyles.cardTitle.copyWith(
+                            color: AdminColors.primaryText,
                           ),
                         ),
+                        if (planner.subjectName != null) ...[
+                          const SizedBox(height: 4),
+                          Text(
+                            planner.subjectName!,
+                            style: AdminTextStyles.cardSubtitle,
+                          ),
+                        ],
+                        if (planner.description != null) ...[
+                          const SizedBox(height: 4),
+                          Text(
+                            planner.description!,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: AdminTextStyles.cardSubtitle,
+                          ),
+                        ],
                       ],
-                    ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         );
@@ -445,81 +412,4 @@ class Planner {
       createdAt: parseToIso(json['created_at']),
     );
   }
-}
-
-class GlassCard extends StatelessWidget {
-  final Widget child;
-  final Color? borderColor;
-  final double borderRadius;
-
-  const GlassCard({
-    Key? key,
-    required this.child,
-    this.borderColor,
-    this.borderRadius = 16,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(borderRadius),
-        border: Border.all(
-          color: borderColor ?? Colors.white.withOpacity(0.2),
-          width: 1,
-        ),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Colors.white.withOpacity(0.1),
-            Colors.white.withOpacity(0.05),
-          ],
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.2),
-            blurRadius: 10,
-            spreadRadius: 2,
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(borderRadius),
-        child: child,
-      ),
-    );
-  }
-}
-
-class _ParticlePainter extends CustomPainter {
-  final Animation<double> animation;
-
-  _ParticlePainter({required this.animation});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = Colors.cyanAccent.withOpacity(0.1)
-      ..style = PaintingStyle.fill;
-
-    final random = Random(42);
-    final particleCount = 30;
-
-    for (int i = 0; i < particleCount; i++) {
-      final x = random.nextDouble() * size.width;
-      final y = random.nextDouble() * size.height;
-      final radius = 1 + random.nextDouble() * 2;
-      final opacity = 0.2 + random.nextDouble() * 0.5;
-
-      canvas.drawCircle(
-        Offset(x, y),
-        radius * (0.8 + 0.4 * animation.value),
-        paint..color = Colors.cyanAccent.withOpacity(opacity * animation.value),
-      );
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }

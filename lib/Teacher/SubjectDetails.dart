@@ -79,7 +79,7 @@ class _SubjectDashboardScreenState extends State<SubjectDashboardScreen> {
         http.get(Uri.parse('$baseUrl/subject/${widget.subject['subject_id']}/assignments')),
         http.get(Uri.parse('$baseUrl/subject/${widget.subject['subject_id']}/queries')),
         http.get(Uri.parse('$baseUrl/subject/${widget.subject['subject_id']}/attendance')),
-        http.get(Uri.parse('http://192.168.18.185:5050/SubjectPlanner/subject/${widget.subject['subject_id']}/planners')),
+        http.get(Uri.parse('$baseUrl/SubjectPlanner/subject/${widget.subject['subject_id']}/planners')),
       ], eagerError: true);
 
       // Parse responses

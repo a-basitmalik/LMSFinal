@@ -1,9 +1,11 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:newapp/admin/themes/theme_colors.dart';
+import 'package:newapp/admin/themes/theme_extensions.dart';
+import 'package:newapp/admin/themes/theme_text_styles.dart';
 import 'AdminDashboard.dart';
 import 'AdminRoutes.dart';
-
 class AdminMain extends StatelessWidget {
   final String userId;
 
@@ -17,9 +19,9 @@ class AdminMain extends StatelessWidget {
       theme: ThemeData(
         useMaterial3: true,
         colorScheme: ColorScheme.dark(
-          primary: Colors.blueAccent,
-          secondary: Colors.tealAccent,
-          surface: Color(0xFF121212),
+          primary: AdminColors.primaryAccent,
+          secondary: AdminColors.secondaryAccent,
+          surface: AdminColors.primaryBackground,
         ),
       ),
       home: SelectCampus(userId: userId),
@@ -51,7 +53,7 @@ class _SelectCampusState extends State<SelectCampus> {
   Future<void> loadCampusesFromDatabase() async {
     try {
       final response = await http.get(Uri.parse('$baseUrl/campus/get_campuses'))
-          .timeout(Duration(seconds: 10));
+          .timeout(const Duration(seconds: 10));
 
       if (response.statusCode == 200) {
         List<dynamic> data = json.decode(response.body);
@@ -71,7 +73,7 @@ class _SelectCampusState extends State<SelectCampus> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: Colors.redAccent,
+        backgroundColor: AdminColors.dangerAccent,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(10),
@@ -102,33 +104,15 @@ class _SelectCampusState extends State<SelectCampus> {
   }
 
   Widget buildCampusCard(Map<String, dynamic> campus) {
-    return Container(
-      margin: EdgeInsets.only(bottom: 16),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Colors.blueAccent.withOpacity(0.2),
-            Colors.indigoAccent.withOpacity(0.2),
-          ],
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.blueAccent.withOpacity(0.1),
-            blurRadius: 10,
-            spreadRadius: 2,
-          ),
-        ],
-      ),
+    return GlassCard(
+      borderRadius: 16,
+      borderColor: AdminColors.primaryAccent.withOpacity(0.3),
       child: Material(
         color: Colors.transparent,
         borderRadius: BorderRadius.circular(16),
         child: InkWell(
           borderRadius: BorderRadius.circular(16),
-          onTap: () =>
-              navigateToDashboard(campus['CampusID'], campus['CampusName']),
+          onTap: () => navigateToDashboard(campus['CampusID'], campus['CampusName']),
           child: Padding(
             padding: const EdgeInsets.all(16.0),
             child: Row(
@@ -136,41 +120,32 @@ class _SelectCampusState extends State<SelectCampus> {
                 Container(
                   width: 48,
                   height: 48,
-                  decoration: BoxDecoration(
-                    color: Colors.blueAccent.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
+                  decoration: AdminColors.primaryAccent.toCircleDecoration(size: 48),
                   child: Icon(
                     Icons.school_outlined,
-                    color: Colors.blueAccent,
+                    color: AdminColors.primaryAccent,
                   ),
                 ),
-                SizedBox(width: 16),
+                const SizedBox(width: 16),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         campus['CampusName'],
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
+                        style: AdminTextStyles.cardTitle.copyWith(fontSize: 18),
                       ),
-                      SizedBox(height: 4),
+                      const SizedBox(height: 4),
                       Text(
                         'ID: ${campus['CampusID']}',
-                        style: TextStyle(
-                          color: Colors.white70,
-                        ),
+                        style: AdminTextStyles.cardSubtitle,
                       ),
                     ],
                   ),
                 ),
                 Icon(
                   Icons.arrow_forward_ios,
-                  color: Colors.blueAccent,
+                  color: AdminColors.primaryAccent,
                 ),
               ],
             ),
@@ -183,32 +158,33 @@ class _SelectCampusState extends State<SelectCampus> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFF121212),
+      backgroundColor: AdminColors.primaryBackground,
       appBar: AppBar(
         title: Text(
           'Select Campus',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-          ),
+          style: AdminTextStyles.sectionHeader.copyWith(fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
         elevation: 0,
         backgroundColor: Colors.transparent,
-        foregroundColor: Colors.blueAccent,
+        foregroundColor: AdminColors.primaryAccent,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: isLoading
             ? Center(
           child: CircularProgressIndicator(
-            color: Colors.blueAccent,
+            color: AdminColors.primaryAccent,
           ),
         )
             : ListView.builder(
-          physics: BouncingScrollPhysics(),
+          physics: const BouncingScrollPhysics(),
           itemCount: campuses.length,
           itemBuilder: (context, index) {
-            return buildCampusCard(campuses[index]);
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 16.0),
+              child: buildCampusCard(campuses[index]),
+            );
           },
         ),
       ),

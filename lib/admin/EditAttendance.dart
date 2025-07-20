@@ -3,52 +3,8 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:intl/intl.dart';
 import 'package:shimmer/shimmer.dart';
-
-void main() {
-  runApp(AttendanceApp());
-}
-
-class AttendanceApp extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Attendance Editor',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData.dark().copyWith(
-        scaffoldBackgroundColor: Color(0xFF121212),
-        primaryColor: Color(0xFFBB86FC),
-        colorScheme: ColorScheme.dark(
-          secondary: Color(0xFF03DAC6),
-          surface: Color(0xFF1E1E1E),
-        ),
-        cardTheme: CardThemeData(
-          elevation: 4,
-          margin: EdgeInsets.symmetric(vertical: 8),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-        inputDecorationTheme: InputDecorationTheme(
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
-            borderSide: BorderSide(color: Colors.grey[700]!),
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
-            borderSide: BorderSide(color: Colors.grey[700]!),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
-            borderSide: BorderSide(color: Color(0xFFBB86FC)),
-          ),
-          filled: true,
-          fillColor: Color(0xFF1E1E1E),
-        ),
-      ),
-      home: EditAttendanceScreen(campusID: 1, userType: "Admin"),
-    );
-  }
-}
+import 'package:newapp/admin/themes/theme_colors.dart';
+import 'package:newapp/admin/themes/theme_text_styles.dart';
 
 class AttendanceRecord {
   final int id;
@@ -150,7 +106,7 @@ class _EditAttendanceScreenState extends State<EditAttendanceScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Failed to fetch attendance records'),
-          backgroundColor: Colors.redAccent,
+          backgroundColor: AdminColors.dangerAccent,
         ),
       );
       setState(() {
@@ -169,12 +125,12 @@ class _EditAttendanceScreenState extends State<EditAttendanceScreen> {
         return Theme(
           data: ThemeData.dark().copyWith(
             colorScheme: ColorScheme.dark(
-              primary: Color(0xFFBB86FC),
-              onPrimary: Colors.black,
-              surface: Color(0xFF1E1E1E),
-              onSurface: Colors.white,
+              primary: AdminColors.primaryAccent,
+              onPrimary: AdminColors.primaryBackground,
+              surface: AdminColors.secondaryBackground,
+              onSurface: AdminColors.primaryText,
             ),
-            dialogBackgroundColor: Color(0xFF1E1E1E),
+            dialogBackgroundColor: AdminColors.secondaryBackground,
           ),
           child: child!,
         );
@@ -194,12 +150,14 @@ class _EditAttendanceScreenState extends State<EditAttendanceScreen> {
       isSaving = true;
     });
 
-    // Filter only changed records
     final changedRecords = attendanceRecords.where((r) => r.statusChanged).toList();
 
     if (changedRecords.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('No changes to save')),
+        SnackBar(
+          content: Text('No changes to save'),
+          backgroundColor: AdminColors.infoAccent,
+        ),
       );
       setState(() {
         isSaving = false;
@@ -207,7 +165,6 @@ class _EditAttendanceScreenState extends State<EditAttendanceScreen> {
       return;
     }
 
-    // Prepare data for API
     final List<Map<String, dynamic>> updateData = changedRecords
         .map((r) => {
       'id': r.id,
@@ -216,7 +173,6 @@ class _EditAttendanceScreenState extends State<EditAttendanceScreen> {
         .toList();
 
     try {
-      // Replace with your actual API endpoint
       final url = "http://193.203.162.232:5050/attendance/update_attendance";
       final response = await http.post(
         Uri.parse(url),
@@ -237,10 +193,9 @@ class _EditAttendanceScreenState extends State<EditAttendanceScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Attendance updated successfully'),
-              backgroundColor: Colors.green,
+              backgroundColor: AdminColors.successAccent,
             ),
           );
-          // Reset changed flags
           for (var record in changedRecords) {
             record.resetStatusChanged();
           }
@@ -251,7 +206,7 @@ class _EditAttendanceScreenState extends State<EditAttendanceScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Failed to save attendance'),
-          backgroundColor: Colors.redAccent,
+          backgroundColor: AdminColors.dangerAccent,
         ),
       );
     } finally {
@@ -263,11 +218,12 @@ class _EditAttendanceScreenState extends State<EditAttendanceScreen> {
 
   Widget _buildShimmerLoading() {
     return Shimmer.fromColors(
-      baseColor: Colors.grey[800]!,
-      highlightColor: Colors.grey[700]!,
+      baseColor: AdminColors.secondaryBackground,
+      highlightColor: AdminColors.cardBackground,
       child: ListView.builder(
         itemCount: 5,
         itemBuilder: (context, index) => Card(
+          color: AdminColors.cardBackground,
           child: Container(
             height: 80,
             margin: EdgeInsets.symmetric(vertical: 8),
@@ -279,6 +235,7 @@ class _EditAttendanceScreenState extends State<EditAttendanceScreen> {
 
   Widget _buildStudentCard(AttendanceRecord record) {
     return Card(
+      color: AdminColors.cardBackground,
       margin: EdgeInsets.symmetric(vertical: 8),
       child: Padding(
         padding: EdgeInsets.all(16),
@@ -293,7 +250,7 @@ class _EditAttendanceScreenState extends State<EditAttendanceScreen> {
                   children: [
                     Text(
                       record.name,
-                      style: TextStyle(
+                      style: AdminTextStyles.cardTitle.copyWith(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
                       ),
@@ -301,9 +258,7 @@ class _EditAttendanceScreenState extends State<EditAttendanceScreen> {
                     SizedBox(height: 4),
                     Text(
                       'Roll #: ${record.rollNumber}',
-                      style: TextStyle(
-                        color: Colors.grey[400],
-                      ),
+                      style: AdminTextStyles.cardSubtitle,
                     ),
                   ],
                 ),
@@ -311,27 +266,27 @@ class _EditAttendanceScreenState extends State<EditAttendanceScreen> {
                   padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
                     color: record.status == 'Present'
-                        ? Colors.green.withOpacity(0.2)
+                        ? AdminColors.successAccent.withOpacity(0.2)
                         : record.status == 'Absent'
-                        ? Colors.red.withOpacity(0.2)
-                        : Colors.orange.withOpacity(0.2),
+                        ? AdminColors.dangerAccent.withOpacity(0.2)
+                        : AdminColors.warningAccent.withOpacity(0.2),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
                       color: record.status == 'Present'
-                          ? Colors.green
+                          ? AdminColors.successAccent
                           : record.status == 'Absent'
-                          ? Colors.red
-                          : Colors.orange,
+                          ? AdminColors.dangerAccent
+                          : AdminColors.warningAccent,
                     ),
                   ),
                   child: Text(
                     record.status,
-                    style: TextStyle(
+                    style: AdminTextStyles.cardTitle.copyWith(
                       color: record.status == 'Present'
-                          ? Colors.green
+                          ? AdminColors.successAccent
                           : record.status == 'Absent'
-                          ? Colors.red
-                          : Colors.orange,
+                          ? AdminColors.dangerAccent
+                          : AdminColors.warningAccent,
                     ),
                   ),
                 ),
@@ -340,9 +295,7 @@ class _EditAttendanceScreenState extends State<EditAttendanceScreen> {
             SizedBox(height: 12),
             Text(
               'Change Status:',
-              style: TextStyle(
-                color: Colors.grey[400],
-              ),
+              style: AdminTextStyles.cardSubtitle,
             ),
             SizedBox(height: 8),
             Row(
@@ -358,8 +311,8 @@ class _EditAttendanceScreenState extends State<EditAttendanceScreen> {
                 padding: EdgeInsets.only(top: 8),
                 child: Text(
                   'Status changed',
-                  style: TextStyle(
-                    color: Color(0xFFBB86FC),
+                  style: AdminTextStyles.cardSubtitle.copyWith(
+                    color: AdminColors.primaryAccent,
                     fontStyle: FontStyle.italic,
                   ),
                 ),
@@ -379,49 +332,50 @@ class _EditAttendanceScreenState extends State<EditAttendanceScreen> {
         });
       },
       style: OutlinedButton.styleFrom(
-        disabledBackgroundColor: isSelected ? Colors.white : null,
         backgroundColor: isSelected
             ? status == 'Present'
-            ? Colors.green.withOpacity(0.3)
+            ? AdminColors.successAccent.withOpacity(0.3)
             : status == 'Absent'
-            ? Colors.red.withOpacity(0.3)
-            : Colors.orange.withOpacity(0.3)
+            ? AdminColors.dangerAccent.withOpacity(0.3)
+            : AdminColors.warningAccent.withOpacity(0.3)
             : null,
         side: BorderSide(
           color: status == 'Present'
-              ? Colors.green
+              ? AdminColors.successAccent
               : status == 'Absent'
-              ? Colors.red
-              : Colors.orange,
+              ? AdminColors.dangerAccent
+              : AdminColors.warningAccent,
         ),
       ),
-      child: Text(status),
+      child: Text(
+        status,
+        style: AdminTextStyles.secondaryButton.copyWith(
+          color: status == 'Present'
+              ? AdminColors.successAccent
+              : status == 'Absent'
+              ? AdminColors.dangerAccent
+              : AdminColors.warningAccent,
+        ),
+      ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AdminColors.primaryBackground,
       appBar: AppBar(
         leading: IconButton(
-          icon: Icon(Icons.arrow_back),
+          icon: Icon(Icons.arrow_back, color: AdminColors.primaryText),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: Text('Edit Attendance'),
+        title: Text(
+          'Edit Attendance',
+          style: AdminTextStyles.sectionHeader.copyWith(fontSize: 18),
+        ),
         centerTitle: true,
         elevation: 0,
-        flexibleSpace: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                Color(0xFF121212),
-                Color(0xFF1E1E1E),
-              ],
-            ),
-          ),
-        ),
+        backgroundColor: AdminColors.secondaryBackground,
       ),
       body: Column(
         children: [
@@ -437,16 +391,23 @@ class _EditAttendanceScreenState extends State<EditAttendanceScreen> {
                         child: InputDecorator(
                           decoration: InputDecoration(
                             labelText: 'Date',
-                            border: OutlineInputBorder(),
+                            labelStyle: AdminTextStyles.cardSubtitle,
+                            border: OutlineInputBorder(
+                              borderSide: BorderSide(color: AdminColors.cardBorder),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderSide: BorderSide(color: AdminColors.cardBorder),
+                            ),
                           ),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Text(
                                 DateFormat('yyyy-MM-dd').format(selectedDate),
-                                style: TextStyle(fontSize: 16),
+                                style: AdminTextStyles.cardTitle,
                               ),
-                              Icon(Icons.calendar_today, size: 20),
+                              Icon(Icons.calendar_today,
+                                  size: 20, color: AdminColors.primaryText),
                             ],
                           ),
                         ),
@@ -458,14 +419,25 @@ class _EditAttendanceScreenState extends State<EditAttendanceScreen> {
                         value: selectedClass,
                         decoration: InputDecoration(
                           labelText: 'Class',
-                          border: OutlineInputBorder(),
+                          labelStyle: AdminTextStyles.cardSubtitle,
+                          border: OutlineInputBorder(
+                            borderSide: BorderSide(color: AdminColors.cardBorder),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderSide: BorderSide(color: AdminColors.cardBorder),
+                          ),
                         ),
+                        dropdownColor: AdminColors.secondaryBackground,
+                        style: AdminTextStyles.cardTitle,
                         items: classValues.asMap().entries.map((entry) {
                           final index = entry.key;
                           final value = entry.value;
                           return DropdownMenuItem<String>(
                             value: value,
-                            child: Text(classOptions[index]),
+                            child: Text(
+                              classOptions[index],
+                              style: AdminTextStyles.cardTitle,
+                            ),
                           );
                         }).toList(),
                         onChanged: (value) {
@@ -481,10 +453,7 @@ class _EditAttendanceScreenState extends State<EditAttendanceScreen> {
                 SizedBox(height: 16),
                 Text(
                   'Edit attendance records for the selected date and class.',
-                  style: TextStyle(
-                    color: Colors.grey[400],
-                    fontSize: 14,
-                  ),
+                  style: AdminTextStyles.cardSubtitle,
                 ),
               ],
             ),
@@ -496,7 +465,7 @@ class _EditAttendanceScreenState extends State<EditAttendanceScreen> {
                 ? Center(
               child: Text(
                 'No attendance records found',
-                style: TextStyle(color: Colors.grey[400]),
+                style: AdminTextStyles.cardSubtitle,
               ),
             )
                 : ListView.builder(
@@ -515,9 +484,14 @@ class _EditAttendanceScreenState extends State<EditAttendanceScreen> {
                     onPressed: () => Navigator.of(context).pop(),
                     style: OutlinedButton.styleFrom(
                       padding: EdgeInsets.symmetric(vertical: 16),
-                      side: BorderSide(color: Color(0xFFBB86FC)),
+                      side: BorderSide(color: AdminColors.primaryAccent),
                     ),
-                    child: Text('Cancel'),
+                    child: Text(
+                      'Cancel',
+                      style: AdminTextStyles.secondaryButton.copyWith(
+                        color: AdminColors.primaryAccent,
+                      ),
+                    ),
                   ),
                 ),
                 SizedBox(width: 16),
@@ -525,7 +499,7 @@ class _EditAttendanceScreenState extends State<EditAttendanceScreen> {
                   child: ElevatedButton(
                     onPressed: isSaving ? null : saveAttendanceChanges,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Color(0xFFBB86FC),
+                      backgroundColor: AdminColors.primaryAccent,
                       padding: EdgeInsets.symmetric(vertical: 16),
                     ),
                     child: isSaving
@@ -534,11 +508,14 @@ class _EditAttendanceScreenState extends State<EditAttendanceScreen> {
                       height: 20,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        valueColor:
-                        AlwaysStoppedAnimation<Color>(Colors.white),
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                            AdminColors.primaryText),
                       ),
                     )
-                        : Text('Update'),
+                        : Text(
+                      'Update',
+                      style: AdminTextStyles.primaryButton,
+                    ),
                   ),
                 ),
               ],
@@ -548,4 +525,5 @@ class _EditAttendanceScreenState extends State<EditAttendanceScreen> {
       ),
     );
   }
+
 }

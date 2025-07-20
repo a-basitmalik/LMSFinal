@@ -1,11 +1,12 @@
 import 'dart:io' as io;
 import 'dart:typed_data';
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter/animation.dart';
+import 'package:newapp/admin/themes/theme_colors.dart';
+import 'package:newapp/admin/themes/theme_text_styles.dart';
 import 'package:universal_html/html.dart' as html;
 import 'dart:math';
 import 'MarkAttendance.dart';
@@ -14,6 +15,7 @@ import 'EditAttendance.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:open_file/open_file.dart';
 import 'dart:io';
+
 
 class AttendanceDashboard extends StatefulWidget {
   final int campusId;
@@ -28,7 +30,6 @@ class AttendanceDashboard extends StatefulWidget {
   @override
   _AttendanceDashboardState createState() => _AttendanceDashboardState();
 }
-
 
 class _AttendanceDashboardState extends State<AttendanceDashboard> with SingleTickerProviderStateMixin {
   String _userType = 'Student';
@@ -107,7 +108,7 @@ class _AttendanceDashboardState extends State<AttendanceDashboard> with SingleTi
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error: ${e.toString()}'),
-          backgroundColor: Colors.redAccent,
+          backgroundColor: AdminColors.dangerAccent,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
@@ -190,33 +191,22 @@ class _AttendanceDashboardState extends State<AttendanceDashboard> with SingleTi
       builder: (context) => Container(
         padding: EdgeInsets.all(20),
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Colors.blue.shade900.withOpacity(0.9),
-              Colors.indigo.shade900.withOpacity(0.9),
-            ],
-          ),
+          gradient: AdminColors.accentGradient(AdminColors.primaryAccent),
           borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.print, size: 40, color: Colors.cyanAccent),
+            Icon(Icons.print, size: 40, color: AdminColors.primaryAccent),
             SizedBox(height: 16),
             Text(
               'Generating $_userType Attendance Summary',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+              style: AdminTextStyles.sectionHeader,
             ),
             SizedBox(height: 16),
             LinearProgressIndicator(
-              backgroundColor: Colors.white.withOpacity(0.2),
-              valueColor: AlwaysStoppedAnimation<Color>(Colors.cyanAccent),
+              backgroundColor: AdminColors.primaryText.withOpacity(0.2),
+              valueColor: AlwaysStoppedAnimation<Color>(AdminColors.primaryAccent),
             ),
             SizedBox(height: 24),
           ],
@@ -228,7 +218,7 @@ class _AttendanceDashboardState extends State<AttendanceDashboard> with SingleTi
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: AdminColors.primaryBackground,
       extendBodyBehindAppBar: true,
       body: Stack(
         children: [
@@ -242,9 +232,9 @@ class _AttendanceDashboardState extends State<AttendanceDashboard> with SingleTi
                     center: Alignment.center,
                     radius: 1.5,
                     colors: [
-                      Colors.blue.shade900.withOpacity(_fadeAnimation.value * 0.3),
-                      Colors.indigo.shade900.withOpacity(_fadeAnimation.value * 0.3),
-                      Colors.black,
+                      AdminColors.secondaryAccent.withOpacity(_fadeAnimation.value * 0.3),
+                      AdminColors.infoAccent.withOpacity(_fadeAnimation.value * 0.3),
+                      AdminColors.primaryBackground,
                     ],
                     stops: [0.1, 0.5, 1.0],
                   ),
@@ -270,15 +260,14 @@ class _AttendanceDashboardState extends State<AttendanceDashboard> with SingleTi
                     builder: (context, child) {
                       return Text(
                         'ATTENDANCE DASHBOARD',
-                        style: TextStyle(
+                        style: AdminTextStyles.sectionHeader.copyWith(
                           fontSize: 18,
-                          fontWeight: FontWeight.bold,
                           letterSpacing: 2,
-                          color: Colors.white.withOpacity(_fadeAnimation.value),
+                          color: AdminColors.primaryText.withOpacity(_fadeAnimation.value),
                           shadows: [
                             Shadow(
                               blurRadius: 10 * _fadeAnimation.value,
-                              color: Colors.cyanAccent.withOpacity(_fadeAnimation.value),
+                              color: AdminColors.primaryAccent.withOpacity(_fadeAnimation.value),
                             ),
                           ],
                         ),
@@ -292,9 +281,9 @@ class _AttendanceDashboardState extends State<AttendanceDashboard> with SingleTi
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                         colors: [
-                          Colors.blue.shade900.withOpacity(0.7),
-                          Colors.indigo.shade800.withOpacity(0.7),
-                          Colors.purple.shade900.withOpacity(0.7),
+                          AdminColors.secondaryAccent.withOpacity(0.7),
+                          AdminColors.infoAccent.withOpacity(0.7),
+                          AdminColors.curriculumColor.withOpacity(0.7),
                         ],
                       ),
                     ),
@@ -315,9 +304,7 @@ class _AttendanceDashboardState extends State<AttendanceDashboard> with SingleTi
                             children: [
                               Text(
                                 'SELECT USER TYPE',
-                                style: TextStyle(
-                                  color: Colors.white.withOpacity(0.8),
-                                  fontSize: 14,
+                                style: AdminTextStyles.cardSubtitle.copyWith(
                                   fontWeight: FontWeight.bold,
                                   letterSpacing: 1.5,
                                 ),
@@ -368,25 +355,25 @@ class _AttendanceDashboardState extends State<AttendanceDashboard> with SingleTi
                             icon: Icons.fingerprint,
                             label: 'Mark\nAttendance',
                             onTap: _handleMarkAttendance,
-                            color: Colors.blueAccent,
+                            color: AdminColors.studentColor,
                           ),
                           _buildHolographicButton(
                             icon: Icons.calendar_today,
                             label: 'View\nRecords',
                             onTap: _handleViewRecords,
-                            color: Colors.purpleAccent,
+                            color: AdminColors.facultyColor,
                           ),
                           _buildHolographicButton(
                             icon: Icons.edit,
                             label: 'Edit\nAttendance',
                             onTap: _handleEditAttendance,
-                            color: Colors.greenAccent,
+                            color: AdminColors.attendanceColor,
                           ),
                           _buildHolographicButton(
                             icon: Icons.download,
                             label: 'Download\nReports',
                             onTap: _navigateToAttendanceReportScreen,
-                            color: Colors.amberAccent,
+                            color: AdminColors.reportsColor,
                           ),
                         ],
                       ),
@@ -398,7 +385,7 @@ class _AttendanceDashboardState extends State<AttendanceDashboard> with SingleTi
                         onLeave: _studentOnLeave,
                         absent: _studentAbsent,
                         total: _totalStudents,
-                        color: Colors.blueAccent,
+                        color: AdminColors.studentColor,
                       ),
                       SizedBox(height: 24),
                       // Teacher Overview
@@ -408,7 +395,7 @@ class _AttendanceDashboardState extends State<AttendanceDashboard> with SingleTi
                         onLeave: _teacherOnLeave,
                         absent: _teacherAbsent,
                         total: _totalTeachers,
-                        color: Colors.purpleAccent,
+                        color: AdminColors.facultyColor,
                       ),
                       SizedBox(height: 32),
                     ],
@@ -423,7 +410,7 @@ class _AttendanceDashboardState extends State<AttendanceDashboard> with SingleTi
         onPressed: _printAttendanceSummary,
         icon: Icon(Icons.print, color: Colors.black),
         label: Text('PRINT SUMMARY', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.cyanAccent,
+        backgroundColor: AdminColors.primaryAccent,
         elevation: 8,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(30),
@@ -472,14 +459,13 @@ class _AttendanceDashboardState extends State<AttendanceDashboard> with SingleTi
                           ),
                         ],
                       ),
-                      child: Icon(icon, color: Colors.white, size: 24),
+                      child: Icon(icon, color: AdminColors.primaryText, size: 24),
                     ),
                     SizedBox(height: 12),
                     Text(
                       label,
                       textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: Colors.white,
+                      style: AdminTextStyles.cardTitle.copyWith(
                         fontSize: 13,
                         fontWeight: FontWeight.bold,
                         shadows: [
@@ -519,9 +505,7 @@ class _AttendanceDashboardState extends State<AttendanceDashboard> with SingleTi
           padding: const EdgeInsets.symmetric(horizontal: 8.0),
           child: Text(
             title,
-            style: TextStyle(
-              color: Colors.white.withOpacity(0.8),
-              fontSize: 16,
+            style: AdminTextStyles.cardSubtitle.copyWith(
               fontWeight: FontWeight.bold,
               letterSpacing: 1.5,
             ),
@@ -534,21 +518,21 @@ class _AttendanceDashboardState extends State<AttendanceDashboard> with SingleTi
               value: presentPercentage,
               label: 'PRESENT',
               count: '$present/$total',
-              color: Colors.greenAccent,
+              color: AdminColors.successAccent,
             ),
             SizedBox(width: 12),
             _buildHolographicStatCard(
               value: onLeavePercentage,
               label: 'ON LEAVE',
               count: '$onLeave/$total',
-              color: Colors.orangeAccent,
+              color: AdminColors.warningAccent,
             ),
             SizedBox(width: 12),
             _buildHolographicStatCard(
               value: absentPercentage,
               label: 'ABSENT',
               count: '$absent/$total',
-              color: Colors.redAccent,
+              color: AdminColors.dangerAccent,
             ),
           ],
         ),
@@ -582,10 +566,7 @@ class _AttendanceDashboardState extends State<AttendanceDashboard> with SingleTi
                     ),
                     Text(
                       '$value%',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
+                      style: AdminTextStyles.statValue.copyWith(
                         shadows: [
                           Shadow(
                             blurRadius: 5,
@@ -600,9 +581,7 @@ class _AttendanceDashboardState extends State<AttendanceDashboard> with SingleTi
               SizedBox(height: 12),
               Text(
                 label,
-                style: TextStyle(
-                  color: Colors.white.withOpacity(0.8),
-                  fontSize: 12,
+                style: AdminTextStyles.cardSubtitle.copyWith(
                   fontWeight: FontWeight.bold,
                   letterSpacing: 1.2,
                 ),
@@ -610,10 +589,7 @@ class _AttendanceDashboardState extends State<AttendanceDashboard> with SingleTi
               SizedBox(height: 4),
               Text(
                 count,
-                style: TextStyle(
-                  color: Colors.white.withOpacity(0.6),
-                  fontSize: 11,
-                ),
+                style: AdminTextStyles.cardSubtitle,
               ),
             ],
           ),
@@ -639,27 +615,9 @@ class GlassCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(borderRadius),
-        border: Border.all(
-          color: borderColor ?? Colors.white.withOpacity(0.2),
-          width: 1,
-        ),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Colors.white.withOpacity(0.1),
-            Colors.white.withOpacity(0.05),
-          ],
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.2),
-            blurRadius: 10,
-            spreadRadius: 2,
-          ),
-        ],
+      decoration: AdminColors.glassDecoration(
+        borderColor: borderColor,
+        borderRadius: borderRadius,
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(borderRadius),
@@ -689,17 +647,10 @@ class AnimatedChoiceChip extends StatelessWidget {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
         gradient: selected
-            ? LinearGradient(
-          colors: [
-            Colors.cyanAccent.withOpacity(0.7),
-            Colors.blueAccent.withOpacity(0.7),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        )
+            ? AdminColors.accentGradient(AdminColors.primaryAccent)
             : null,
         border: Border.all(
-          color: selected ? Colors.cyanAccent : Colors.white.withOpacity(0.3),
+          color: selected ? AdminColors.primaryAccent : AdminColors.cardBorder,
           width: 1,
         ),
       ),
@@ -713,8 +664,8 @@ class AnimatedChoiceChip extends StatelessWidget {
             child: Center(
               child: Text(
                 label,
-                style: TextStyle(
-                  color: selected ? Colors.black : Colors.white.withOpacity(0.8),
+                style: AdminTextStyles.cardTitle.copyWith(
+                  color: selected ? Colors.black : AdminColors.primaryText.withOpacity(0.8),
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -773,7 +724,7 @@ class _ParticlePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = Colors.cyanAccent.withOpacity(0.1)
+      ..color = AdminColors.primaryAccent.withOpacity(0.1)
       ..style = PaintingStyle.fill;
 
     final random = Random(42);
@@ -788,7 +739,7 @@ class _ParticlePainter extends CustomPainter {
       canvas.drawCircle(
         Offset(x, y),
         radius * (0.8 + 0.4 * animation.value),
-        paint..color = Colors.cyanAccent.withOpacity(opacity * animation.value),
+        paint..color = AdminColors.primaryAccent.withOpacity(opacity * animation.value),
       );
     }
   }
@@ -813,7 +764,7 @@ class _ReportsScreenState extends State<ReportsScreen> with SingleTickerProvider
   String? _errorMessage;
   bool _isAttendanceReport = true;
 
-  final List<int> campusIds = [1, 2, 3, 4,5,6]; // Replace with your actual campus IDs
+  final List<int> campusIds = [1, 2, 3, 4, 5, 6]; // Replace with your actual campus IDs
   final List<int> years = [0, 1, 2]; // 0 represents "All Years"
 
   @override
@@ -837,8 +788,6 @@ class _ReportsScreenState extends State<ReportsScreen> with SingleTickerProvider
     _animationController.dispose();
     super.dispose();
   }
-
-
 
   Future<void> _generateReport() async {
     if (!_formKey.currentState!.validate()) return;
@@ -890,7 +839,7 @@ class _ReportsScreenState extends State<ReportsScreen> with SingleTickerProvider
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('$reportType report downloaded successfully!'),
-            backgroundColor: Colors.greenAccent,
+            backgroundColor: AdminColors.successAccent,
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(10),
@@ -912,7 +861,6 @@ class _ReportsScreenState extends State<ReportsScreen> with SingleTickerProvider
       });
     }
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -936,19 +884,17 @@ class _ReportsScreenState extends State<ReportsScreen> with SingleTickerProvider
                   Row(
                     children: [
                       GlassCard(
-                        borderColor: Colors.cyanAccent.withOpacity(0.5),
+                        borderColor: AdminColors.primaryAccent.withOpacity(0.5),
                         child: IconButton(
-                          icon: Icon(Icons.arrow_back, color: Colors.white),
+                          icon: Icon(Icons.arrow_back, color: AdminColors.primaryText),
                           onPressed: () => Navigator.pop(context),
                         ),
                       ),
                       SizedBox(width: 16),
                       Text(
                         'DOWNLOAD REPORTS',
-                        style: TextStyle(
-                          color: Colors.white,
+                        style: AdminTextStyles.sectionHeader.copyWith(
                           fontSize: 24,
-                          fontWeight: FontWeight.bold,
                           letterSpacing: 1.5,
                         ),
                       ),
@@ -958,7 +904,7 @@ class _ReportsScreenState extends State<ReportsScreen> with SingleTickerProvider
 
                   // Main content
                   GlassCard(
-                    borderColor: Colors.blueAccent.withOpacity(0.5),
+                    borderColor: AdminColors.studentColor.withOpacity(0.5),
                     child: Padding(
                       padding: const EdgeInsets.all(24.0),
                       child: Form(
@@ -971,9 +917,7 @@ class _ReportsScreenState extends State<ReportsScreen> with SingleTickerProvider
                               children: [
                                 Text(
                                   'REPORT TYPE:',
-                                  style: TextStyle(
-                                    color: Colors.white.withOpacity(0.8),
-                                    fontSize: 14,
+                                  style: AdminTextStyles.cardSubtitle.copyWith(
                                     letterSpacing: 1.2,
                                   ),
                                 ),
@@ -987,8 +931,8 @@ class _ReportsScreenState extends State<ReportsScreen> with SingleTickerProvider
                                   },
                                   borderRadius: BorderRadius.circular(20),
                                   selectedColor: Colors.black,
-                                  fillColor: Colors.cyanAccent,
-                                  color: Colors.white,
+                                  fillColor: AdminColors.primaryAccent,
+                                  color: AdminColors.primaryText,
                                   constraints: BoxConstraints(
                                     minHeight: 40,
                                     minWidth: 100,
@@ -1010,17 +954,15 @@ class _ReportsScreenState extends State<ReportsScreen> with SingleTickerProvider
 
                             // Campus ID Dropdown
                             GlassCard(
-                              borderColor: Colors.blueAccent.withOpacity(0.3),
+                              borderColor: AdminColors.studentColor.withOpacity(0.3),
                               child: Padding(
                                 padding: const EdgeInsets.symmetric(horizontal: 16.0),
                                 child: DropdownButtonFormField<int>(
-                                  dropdownColor: Color(0xFF1E1E2D),
-                                  style: TextStyle(color: Colors.white),
+                                  dropdownColor: AdminColors.primaryBackground,
+                                  style: AdminTextStyles.cardTitle,
                                   decoration: InputDecoration(
                                     labelText: 'CAMPUS ID',
-                                    labelStyle: TextStyle(
-                                      color: Colors.white.withOpacity(0.6),
-                                    ),
+                                    labelStyle: AdminTextStyles.cardSubtitle,
                                     border: InputBorder.none,
                                   ),
                                   value: _selectedCampusId,
@@ -1029,7 +971,7 @@ class _ReportsScreenState extends State<ReportsScreen> with SingleTickerProvider
                                       value: id,
                                       child: Text(
                                         'Campus $id',
-                                        style: TextStyle(color: Colors.white),
+                                        style: AdminTextStyles.cardTitle,
                                       ),
                                     );
                                   }).toList(),
@@ -1051,17 +993,15 @@ class _ReportsScreenState extends State<ReportsScreen> with SingleTickerProvider
 
                             // Year Dropdown
                             GlassCard(
-                              borderColor: Colors.purpleAccent.withOpacity(0.3),
+                              borderColor: AdminColors.facultyColor.withOpacity(0.3),
                               child: Padding(
                                 padding: const EdgeInsets.symmetric(horizontal: 16.0),
                                 child: DropdownButtonFormField<int>(
-                                  dropdownColor: Color(0xFF1E1E2D),
-                                  style: TextStyle(color: Colors.white),
+                                  dropdownColor: AdminColors.primaryBackground,
+                                  style: AdminTextStyles.cardTitle,
                                   decoration: InputDecoration(
                                     labelText: 'YEAR (0 FOR ALL YEARS)',
-                                    labelStyle: TextStyle(
-                                      color: Colors.white.withOpacity(0.6),
-                                    ),
+                                    labelStyle: AdminTextStyles.cardSubtitle,
                                     border: InputBorder.none,
                                   ),
                                   value: _selectedYear,
@@ -1070,7 +1010,7 @@ class _ReportsScreenState extends State<ReportsScreen> with SingleTickerProvider
                                       value: year,
                                       child: Text(
                                         year == 0 ? 'All Years' : 'Year $year',
-                                        style: TextStyle(color: Colors.white),
+                                        style: AdminTextStyles.cardTitle,
                                       ),
                                     );
                                   }).toList(),
@@ -1087,12 +1027,12 @@ class _ReportsScreenState extends State<ReportsScreen> with SingleTickerProvider
                             // Error Message
                             if (_errorMessage != null)
                               GlassCard(
-                                borderColor: Colors.redAccent.withOpacity(0.5),
+                                borderColor: AdminColors.dangerAccent.withOpacity(0.5),
                                 child: Padding(
                                   padding: const EdgeInsets.all(16.0),
                                   child: Text(
                                     _errorMessage!,
-                                    style: TextStyle(color: Colors.white),
+                                    style: AdminTextStyles.cardTitle,
                                   ),
                                 ),
                               ),
@@ -1105,7 +1045,7 @@ class _ReportsScreenState extends State<ReportsScreen> with SingleTickerProvider
                                 return Transform.scale(
                                   scale: 0.9 + 0.1 * _fadeAnimation.value,
                                   child: GlassCard(
-                                    borderColor: Colors.cyanAccent.withOpacity(0.7),
+                                    borderColor: AdminColors.primaryAccent.withOpacity(0.7),
                                     child: InkWell(
                                       borderRadius: BorderRadius.circular(16),
                                       onTap: _isLoading ? null : _generateReport,
@@ -1120,20 +1060,18 @@ class _ReportsScreenState extends State<ReportsScreen> with SingleTickerProvider
                                                 height: 20,
                                                 child: CircularProgressIndicator(
                                                   strokeWidth: 2,
-                                                  color: Colors.white,
+                                                  color: AdminColors.primaryText,
                                                 ),
                                               )
                                             else
                                               Icon(
                                                 Icons.download,
-                                                color: Colors.white,
+                                                color: AdminColors.primaryText,
                                               ),
                                             SizedBox(width: 12),
                                             Text(
                                               _isLoading ? 'GENERATING...' : 'GENERATE REPORT',
-                                              style: TextStyle(
-                                                color: Colors.white,
-                                                fontWeight: FontWeight.bold,
+                                              style: AdminTextStyles.primaryButton.copyWith(
                                                 letterSpacing: 1.2,
                                               ),
                                             ),

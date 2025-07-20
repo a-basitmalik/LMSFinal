@@ -1,10 +1,16 @@
 import 'dart:io';
-
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter/services.dart';
+import 'package:newapp/admin/themes/theme_colors.dart';
+import 'package:newapp/admin/themes/theme_text_styles.dart';
+
+import 'AddStudent.dart';
+import 'AdminDashboard.dart';
+
+
 class SubjectGroup {
   final int id;
   final String name;
@@ -74,7 +80,6 @@ class AnnouncementApiService {
       Uri.parse('$baseUrl/announcement/create'),
     );
 
-    // Add form fields
     request.fields['subject'] = subject;
     request.fields['announcement'] = announcement;
     request.fields['audience_type'] = audienceType;
@@ -84,7 +89,6 @@ class AnnouncementApiService {
       request.fields['subject_group_ids'] = json.encode(subjectGroupIds);
     }
 
-    // Add attachments
     if (attachments != null) {
       for (var attachment in attachments) {
         request.files.add(attachment);
@@ -232,26 +236,24 @@ class _AnnouncementCreatorState extends State<AnnouncementCreator> {
             return Container(
               height: MediaQuery.of(context).size.height * 0.7,
               decoration: BoxDecoration(
-                color: const Color(0xFF1A1A2E),
+                color: AdminColors.primaryBackground,
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
               ),
               padding: const EdgeInsets.all(16),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Text(
+                  Text(
                     'SELECT GROUPS',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: AdminTextStyles.sectionHeader,
                   ),
                   const SizedBox(height: 16),
                   Expanded(
                     child: _isLoadingGroups
-                        ? const Center(
-                      child: CircularProgressIndicator(color: Colors.cyanAccent),
+                        ? Center(
+                      child: CircularProgressIndicator(
+                        color: AdminColors.primaryAccent,
+                      ),
                     )
                         : ListView.builder(
                       itemCount: _availableGroups.length,
@@ -261,10 +263,10 @@ class _AnnouncementCreatorState extends State<AnnouncementCreator> {
                         return ListTile(
                           title: Text(
                             group.name,
-                            style: const TextStyle(color: Colors.white),
+                            style: AdminTextStyles.cardTitle,
                           ),
                           trailing: isSelected
-                              ? const Icon(Icons.check_circle, color: Colors.cyanAccent)
+                              ? Icon(Icons.check_circle, color: AdminColors.primaryAccent)
                               : null,
                           onTap: () {
                             setModalState(() {
@@ -286,13 +288,16 @@ class _AnnouncementCreatorState extends State<AnnouncementCreator> {
                       onPressed: () => Navigator.pop(context),
                       style: ElevatedButton.styleFrom(
                         foregroundColor: Colors.black,
-                        backgroundColor: Colors.cyanAccent,
+                        backgroundColor: AdminColors.primaryAccent,
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      child: const Text('DONE'),
+                      child: Text(
+                        'DONE',
+                        style: AdminTextStyles.primaryButton,
+                      ),
                     ),
                   ),
                 ],
@@ -304,47 +309,43 @@ class _AnnouncementCreatorState extends State<AnnouncementCreator> {
     );
   }
 
-
   Widget _buildAttachmentPreview() {
-    if (_attachments.isEmpty) return SizedBox();
+    if (_attachments.isEmpty) return const SizedBox();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SizedBox(height: 16),
+        const SizedBox(height: 16),
         Text(
           'ATTACHMENTS',
-          style: TextStyle(
-            color: Colors.white70,
-            fontSize: 14,
+          style: AdminTextStyles.cardSubtitle.copyWith(
             fontWeight: FontWeight.bold,
           ),
         ),
-        SizedBox(height: 8),
+        const SizedBox(height: 8),
         ListView.builder(
           shrinkWrap: true,
-          physics: NeverScrollableScrollPhysics(),
+          physics: const NeverScrollableScrollPhysics(),
           itemCount: _attachments.length,
           itemBuilder: (context, index) {
             final file = _attachments[index];
-            return Card(
-              color: Color(0xFF1A1A2E),
-              margin: EdgeInsets.only(bottom: 8),
+            return GlassCard(
+              borderRadius: 8,
               child: ListTile(
                 leading: Icon(
                   _getAttachmentIcon(file.path.split('.').last),
-                  color: Colors.cyanAccent,
+                  color: AdminColors.primaryAccent,
                 ),
                 title: Text(
                   file.path.split('/').last,
-                  style: TextStyle(color: Colors.white),
+                  style: AdminTextStyles.cardTitle,
                 ),
                 subtitle: Text(
                   '${(file.lengthSync() / 1024).toStringAsFixed(2)} KB',
-                  style: TextStyle(color: Colors.white70),
+                  style: AdminTextStyles.cardSubtitle,
                 ),
                 trailing: IconButton(
-                  icon: Icon(Icons.delete, color: Colors.red),
+                  icon: Icon(Icons.delete, color: AdminColors.dangerAccent),
                   onPressed: () => _removeAttachment(index),
                 ),
               ),
@@ -358,27 +359,25 @@ class _AnnouncementCreatorState extends State<AnnouncementCreator> {
   Widget _buildAddAttachmentButton() {
     return InkWell(
       onTap: _pickFiles,
-      child: Container(
-        height: 100,
-        decoration: BoxDecoration(
-          color: Color(0xFF1A1A2E),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: Colors.white24,
-            width: 1,
+      child: GlassCard(
+        borderRadius: 12,
+        child: Container(
+          height: 100,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
           ),
-        ),
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.add, color: Colors.white54),
-              SizedBox(height: 8),
-              Text(
-                'Add files',
-                style: TextStyle(color: Colors.white54),
-              ),
-            ],
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.add, color: AdminColors.secondaryText),
+                const SizedBox(height: 8),
+                Text(
+                  'Add files',
+                  style: AdminTextStyles.cardSubtitle,
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -398,7 +397,7 @@ class _AnnouncementCreatorState extends State<AnnouncementCreator> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('Announcement posted successfully!'),
-        backgroundColor: Colors.green,
+        backgroundColor: AdminColors.successAccent,
       ),
     );
     Navigator.pop(context, true);
@@ -408,7 +407,7 @@ class _AnnouncementCreatorState extends State<AnnouncementCreator> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: Colors.red,
+        backgroundColor: AdminColors.dangerAccent,
       ),
     );
   }
@@ -418,12 +417,15 @@ class _AnnouncementCreatorState extends State<AnnouncementCreator> {
     return Scaffold(
       backgroundColor: Colors.transparent,
       appBar: AppBar(
-        title: Text('CREATE ANNOUNCEMENT'),
+        title: Text(
+          'CREATE ANNOUNCEMENT',
+          style: AdminTextStyles.sectionHeader,
+        ),
         backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
         leading: IconButton(
-          icon: Icon(Icons.close),
+          icon: Icon(Icons.close, color: AdminColors.primaryText),
           onPressed: () => Navigator.pop(context),
         ),
         actions: [
@@ -432,19 +434,19 @@ class _AnnouncementCreatorState extends State<AnnouncementCreator> {
               onPressed: _postAnnouncement,
               child: Text(
                 'POST',
-                style: TextStyle(color: Colors.cyanAccent),
+                style: AdminTextStyles.accentText(AdminColors.primaryAccent),
               ),
             ),
           if (_isLoading)
             Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Center(
                 child: SizedBox(
                   width: 20,
                   height: 20,
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
-                    color: Colors.cyanAccent,
+                    color: AdminColors.primaryAccent,
                   ),
                 ),
               ),
@@ -452,29 +454,27 @@ class _AnnouncementCreatorState extends State<AnnouncementCreator> {
         ],
       ),
       body: SingleChildScrollView(
-        padding: EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
         child: Form(
           key: _formKey,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Audience Selection
-              Card(
-                color: Color(0xFF1A1A2E),
+              GlassCard(
+                borderRadius: 12,
                 child: Padding(
-                  padding: EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(16),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         'TARGET AUDIENCE',
-                        style: TextStyle(
-                          color: Colors.white70,
-                          fontSize: 14,
+                        style: AdminTextStyles.cardSubtitle.copyWith(
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      SizedBox(height: 16),
+                      const SizedBox(height: 16),
                       Row(
                         children: [
                           Radio(
@@ -485,9 +485,9 @@ class _AnnouncementCreatorState extends State<AnnouncementCreator> {
                                 _isAllStudents = value as bool;
                               });
                             },
-                            activeColor: Colors.cyanAccent,
+                            activeColor: AdminColors.primaryAccent,
                           ),
-                          Text('All Students', style: TextStyle(color: Colors.white)),
+                          Text('All Students', style: AdminTextStyles.cardTitle),
                         ],
                       ),
                       Row(
@@ -500,37 +500,43 @@ class _AnnouncementCreatorState extends State<AnnouncementCreator> {
                                 _isAllStudents = value as bool;
                               });
                             },
-                            activeColor: Colors.cyanAccent,
+                            activeColor: AdminColors.primaryAccent,
                           ),
-                          Text('Specific Groups', style: TextStyle(color: Colors.white)),
+                          Text('Specific Groups', style: AdminTextStyles.cardTitle),
                         ],
                       ),
                       if (!_isAllStudents) ...[
-                        SizedBox(height: 16),
+                        const SizedBox(height: 16),
                         SizedBox(
                           width: double.infinity,
                           child: ElevatedButton(
                             onPressed: () => _selectGroups(context),
                             style: ElevatedButton.styleFrom(
                               foregroundColor: Colors.black,
-                              backgroundColor: Colors.cyanAccent,
+                              backgroundColor: AdminColors.primaryAccent,
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12),
                               ),
                             ),
-                            child: Text('SELECT GROUPS'),
+                            child: Text(
+                              'SELECT GROUPS',
+                              style: AdminTextStyles.primaryButton,
+                            ),
                           ),
                         ),
                         if (_selectedGroupIds.isNotEmpty) ...[
-                          SizedBox(height: 16),
+                          const SizedBox(height: 16),
                           Wrap(
                             spacing: 8,
                             runSpacing: 8,
                             children: _selectedGroupIds.map((id) {
                               final group = _availableGroups.firstWhere((g) => g.id == id);
                               return Chip(
-                                label: Text(group.name),
-                                backgroundColor: Colors.cyanAccent.withOpacity(0.2),
+                                label: Text(
+                                  group.name,
+                                  style: AdminTextStyles.cardSubtitle,
+                                ),
+                                backgroundColor: AdminColors.primaryAccent.withOpacity(0.2),
                                 deleteIcon: Icon(Icons.close, size: 16),
                                 onDeleted: () {
                                   setState(() {
@@ -546,19 +552,24 @@ class _AnnouncementCreatorState extends State<AnnouncementCreator> {
                   ),
                 ),
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
 
               // Subject Input
               TextFormField(
                 controller: _subjectController,
                 decoration: InputDecoration(
                   labelText: 'Subject',
-                  labelStyle: TextStyle(color: Colors.white70),
-                  border: OutlineInputBorder(),
+                  labelStyle: AdminTextStyles.cardSubtitle,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                      color: AdminColors.cardBorder,
+                    ),
+                  ),
                   filled: true,
-                  fillColor: Color(0xFF1A1A2E),
+                  fillColor: AdminColors.primaryBackground,
                 ),
-                style: TextStyle(color: Colors.white),
+                style: AdminTextStyles.cardTitle,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Please enter a subject';
@@ -566,20 +577,25 @@ class _AnnouncementCreatorState extends State<AnnouncementCreator> {
                   return null;
                 },
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
 
               // Announcement Content
               TextFormField(
                 controller: _announcementController,
                 decoration: InputDecoration(
                   labelText: 'Announcement Content',
-                  labelStyle: TextStyle(color: Colors.white70),
-                  border: OutlineInputBorder(),
+                  labelStyle: AdminTextStyles.cardSubtitle,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                      color: AdminColors.cardBorder,
+                    ),
+                  ),
                   filled: true,
-                  fillColor: Color(0xFF1A1A2E),
+                  fillColor: AdminColors.primaryBackground,
                   alignLabelWithHint: true,
                 ),
-                style: TextStyle(color: Colors.white),
+                style: AdminTextStyles.cardTitle,
                 maxLines: 5,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
@@ -588,21 +604,19 @@ class _AnnouncementCreatorState extends State<AnnouncementCreator> {
                   return null;
                 },
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
 
               // Attachments
               Text(
                 'ATTACHMENTS',
-                style: TextStyle(
-                  color: Colors.white70,
-                  fontSize: 14,
+                style: AdminTextStyles.cardSubtitle.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              SizedBox(height: 8),
+              const SizedBox(height: 8),
               _buildAddAttachmentButton(),
               _buildAttachmentPreview(),
-              SizedBox(height: 32),
+              const SizedBox(height: 32),
 
               // Submit Button
               if (!_isLoading)
@@ -612,15 +626,15 @@ class _AnnouncementCreatorState extends State<AnnouncementCreator> {
                     onPressed: _postAnnouncement,
                     style: ElevatedButton.styleFrom(
                       foregroundColor: Colors.black,
-                      backgroundColor: Colors.cyanAccent,
-                      padding: EdgeInsets.symmetric(vertical: 16),
+                      backgroundColor: AdminColors.primaryAccent,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
                     child: Text(
                       'POST ANNOUNCEMENT',
-                      style: TextStyle(
+                      style: AdminTextStyles.primaryButton.copyWith(
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
                       ),
@@ -629,7 +643,9 @@ class _AnnouncementCreatorState extends State<AnnouncementCreator> {
                 ),
               if (_isLoading)
                 Center(
-                  child: CircularProgressIndicator(color: Colors.cyanAccent),
+                  child: CircularProgressIndicator(
+                    color: AdminColors.primaryAccent,
+                  ),
                 ),
             ],
           ),

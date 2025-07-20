@@ -2,13 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
+import 'package:newapp/admin/themes/theme_colors.dart';
+import 'package:newapp/admin/themes/theme_text_styles.dart';
 import 'AddSubject.dart';
 import 'SubjectDetails.dart';
+
+
 
 class SubjectDashboard extends StatefulWidget {
   final int campusId;
   final String campusName;
-  final int subjectGroupId; // Added to receive subject group ID
+  final int subjectGroupId;
 
   const SubjectDashboard({
     Key? key,
@@ -117,10 +121,11 @@ class _SubjectDashboardState extends State<SubjectDashboard> {
   }
 
   void _showErrorSnackbar(String message) {
+    final colors = AdminColors();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.redAccent,
+        content: Text(message, style: AdminTextStyles.cardSubtitle),
+        backgroundColor: AdminColors.dangerAccent,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(10),
@@ -131,8 +136,11 @@ class _SubjectDashboardState extends State<SubjectDashboard> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AdminColors();
+    final textStyles = AdminTextStyles();
+
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: AdminColors.primaryBackground,
       body: CustomScrollView(
         slivers: [
           SliverAppBar(
@@ -142,15 +150,13 @@ class _SubjectDashboardState extends State<SubjectDashboard> {
             flexibleSpace: FlexibleSpaceBar(
               title: Text(
                 _subjectGroupName.toUpperCase(),
-                style: TextStyle(
-                  color: Colors.white,
+                style: AdminTextStyles.sectionHeader.copyWith(
                   fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 2,
+                  letterSpacing: 1.5,
                   shadows: [
                     Shadow(
                       blurRadius: 10,
-                      color: Colors.blueAccent.withOpacity(0.7),
+                      color: AdminColors.primaryAccent.withOpacity(0.7),
                     ),
                   ],
                 ),
@@ -161,9 +167,9 @@ class _SubjectDashboardState extends State<SubjectDashboard> {
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                     colors: [
-                      Colors.blue.shade900,
-                      Colors.indigo.shade800,
-                      Colors.purple.shade900,
+                      AdminColors.primaryAccent.withOpacity(0.7),
+                      AdminColors.secondaryAccent.withOpacity(0.7),
+                      AdminColors.infoAccent.withOpacity(0.7),
                     ],
                   ),
                 ),
@@ -177,7 +183,7 @@ class _SubjectDashboardState extends State<SubjectDashboard> {
                         child: Icon(
                           Icons.school,
                           size: 200,
-                          color: Colors.white,
+                          color: AdminColors.primaryText,
                         ),
                       ),
                     ),
@@ -191,24 +197,14 @@ class _SubjectDashboardState extends State<SubjectDashboard> {
             child: Padding(
               padding: const EdgeInsets.all(16.0),
               child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.grey[900],
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.blueAccent.withOpacity(0.2),
-                      blurRadius: 10,
-                      spreadRadius: 2,
-                    ),
-                  ],
-                ),
+                decoration: AdminColors.glassDecoration(),
                 child: TextField(
                   controller: _searchController,
-                  style: TextStyle(color: Colors.white),
+                  style: AdminTextStyles.cardTitle,
                   decoration: InputDecoration(
-                    prefixIcon: Icon(Icons.search, color: Colors.blueAccent),
+                    prefixIcon: Icon(Icons.search, color: AdminColors.primaryAccent),
                     hintText: 'Search subjects...',
-                    hintStyle: TextStyle(color: Colors.grey),
+                    hintStyle: AdminTextStyles.cardSubtitle,
                     border: InputBorder.none,
                     contentPadding: EdgeInsets.symmetric(vertical: 16, horizontal: 20),
                   ),
@@ -224,7 +220,7 @@ class _SubjectDashboardState extends State<SubjectDashboard> {
               ? SliverFillRemaining(
             child: Center(
               child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(Colors.blueAccent),
+                valueColor: AlwaysStoppedAnimation<Color>(AdminColors.primaryAccent),
                 strokeWidth: 3,
               ),
             ),
@@ -238,31 +234,24 @@ class _SubjectDashboardState extends State<SubjectDashboard> {
                   Icon(
                     Icons.search_off,
                     size: 60,
-                    color: Colors.grey[700],
+                    color: AdminColors.disabledText,
                   ),
                   SizedBox(height: 16),
                   Text(
                     'No subjects found for this group',
-                    style: TextStyle(
-                      color: Colors.grey[400],
-                      fontSize: 18,
-                    ),
+                    style: AdminTextStyles.cardSubtitle,
                   ),
                   SizedBox(height: 10),
-                  ElevatedButton(
+                  TextButton(
                     onPressed: _fetchSubjects,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.transparent,
+                    style: TextButton.styleFrom(
+                      foregroundColor: AdminColors.primaryAccent,
+                      side: BorderSide(color: AdminColors.primaryAccent),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(20),
-                        side: BorderSide(color: Colors.blueAccent),
                       ),
-                      elevation: 0,
                     ),
-                    child: Text(
-                      'Refresh',
-                      style: TextStyle(color: Colors.blueAccent),
-                    ),
+                    child: Text('Refresh', style: AdminTextStyles.secondaryButton),
                   ),
                 ],
               ),
@@ -273,7 +262,7 @@ class _SubjectDashboardState extends State<SubjectDashboard> {
                   (context, index) {
                 final item = _subjectItems[index];
                 if (item.type == SubjectItemType.header) {
-                  return _buildHeader(item.title!);
+                  return _buildHeader(item.title!, colors, textStyles);
                 } else {
                   return AnimationConfiguration.staggeredList(
                     position: index,
@@ -281,7 +270,7 @@ class _SubjectDashboardState extends State<SubjectDashboard> {
                     child: SlideAnimation(
                       verticalOffset: 50.0,
                       child: FadeInAnimation(
-                        child: _buildSubjectItem(item.subject!),
+                        child: _buildSubjectItem(item.subject!, colors, textStyles),
                       ),
                     ),
                   );
@@ -300,7 +289,6 @@ class _SubjectDashboardState extends State<SubjectDashboard> {
               pageBuilder: (_, __, ___) => AddSubjectScreen(
                 campusId: widget.campusId,
                 campusName: widget.campusName,
-
               ),
               transitionsBuilder: (_, animation, __, child) =>
                   FadeTransition(opacity: animation, child: child),
@@ -312,20 +300,16 @@ class _SubjectDashboardState extends State<SubjectDashboard> {
           height: 60,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            gradient: LinearGradient(
-              colors: [Colors.blueAccent, Colors.indigoAccent],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
+            gradient: AdminColors.accentGradient(AdminColors.primaryAccent),
             boxShadow: [
               BoxShadow(
-                color: Colors.blueAccent.withOpacity(0.4),
+                color: AdminColors.primaryAccent.withOpacity(0.3),
                 blurRadius: 15,
                 spreadRadius: 2,
               ),
             ],
           ),
-          child: Icon(Icons.add, color: Colors.white, size: 28),
+          child: Icon(Icons.add, color: AdminColors.primaryText, size: 28),
         ),
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -333,43 +317,21 @@ class _SubjectDashboardState extends State<SubjectDashboard> {
     );
   }
 
-  Widget _buildHeader(String title) {
+  Widget _buildHeader(String title, AdminColors colors, AdminTextStyles textStyles) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
       child: Text(
         title,
-        style: TextStyle(
-          fontSize: 20,
-          fontWeight: FontWeight.bold,
-          color: Colors.blueAccent,
-          letterSpacing: 1.2,
-        ),
+        style: AdminTextStyles.sectionTitle(AdminColors.primaryAccent),
       ),
     );
   }
 
-  Widget _buildSubjectItem(Subject subject) {
+  Widget _buildSubjectItem(Subject subject, AdminColors colors, AdminTextStyles textStyles) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Colors.grey[900]!,
-              Colors.grey[850]!,
-            ],
-          ),
-          borderRadius: BorderRadius.circular(15),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.blueAccent.withOpacity(0.1),
-              blurRadius: 10,
-              spreadRadius: 2,
-            ),
-          ],
-        ),
+        decoration: AdminColors.glassDecoration(),
         child: Material(
           color: Colors.transparent,
           child: InkWell(
@@ -397,24 +359,23 @@ class _SubjectDashboardState extends State<SubjectDashboard> {
                       Expanded(
                         child: Text(
                           subject.name,
-                          style: TextStyle(
+                          style: AdminTextStyles.cardTitle.copyWith(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
-                            color: Colors.white,
                           ),
                         ),
                       ),
                       Container(
                         padding: EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                         decoration: BoxDecoration(
-                          color: Colors.blueAccent.withOpacity(0.2),
+                          color: AdminColors.cardBackground,
                           borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: AdminColors.cardBorder),
                         ),
                         child: Text(
                           '${subject.studentCount}',
-                          style: TextStyle(
-                            color: Colors.blueAccent,
-                            fontWeight: FontWeight.bold,
+                          style: AdminTextStyles.statValue.copyWith(
+                            color: AdminColors.primaryAccent,
                           ),
                         ),
                       ),
@@ -423,36 +384,30 @@ class _SubjectDashboardState extends State<SubjectDashboard> {
                   SizedBox(height: 8),
                   Row(
                     children: [
-                      Icon(Icons.person_outline, size: 16, color: Colors.grey),
+                      Icon(Icons.person_outline, size: 16, color: AdminColors.secondaryText),
                       SizedBox(width: 8),
                       Text(
                         subject.teacher,
-                        style: TextStyle(
-                          color: Colors.grey[400],
-                          fontSize: 14,
-                        ),
+                        style: AdminTextStyles.cardSubtitle,
                       ),
                     ],
                   ),
                   SizedBox(height: 8),
                   Row(
                     children: [
-                      Icon(Icons.schedule, size: 16, color: Colors.grey),
+                      Icon(Icons.schedule, size: 16, color: AdminColors.secondaryText),
                       SizedBox(width: 8),
                       Text(
                         '${subject.day} ${subject.time != null ? 'at ${subject.time}' : ''}',
-                        style: TextStyle(
-                          color: Colors.grey[400],
-                          fontSize: 14,
-                        ),
+                        style: AdminTextStyles.cardSubtitle,
                       ),
                     ],
                   ),
                   SizedBox(height: 8),
                   LinearProgressIndicator(
                     value: subject.studentCount / 100, // Adjust based on your data
-                    backgroundColor: Colors.grey[800],
-                    valueColor: AlwaysStoppedAnimation<Color>(Colors.blueAccent),
+                    backgroundColor: AdminColors.secondaryBackground,
+                    valueColor: AlwaysStoppedAnimation<Color>(AdminColors.primaryAccent),
                   ),
                 ],
               ),
