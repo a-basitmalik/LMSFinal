@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:intl/intl.dart';
-
+import 'package:newapp/Teacher/themes/theme_colors.dart';
+import 'package:newapp/Teacher/themes/theme_extensions.dart';
+import 'package:newapp/Teacher/themes/theme_text_styles.dart';
 class CreateAssessmentScreen extends StatefulWidget {
   final int subjectId;
   final Color subjectColor;
@@ -52,12 +53,38 @@ class _CreateAssessmentScreenState extends State<CreateAssessmentScreen> {
       initialDate: _selectedDate ?? DateTime.now(),
       firstDate: DateTime(2000),
       lastDate: DateTime(2100),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: ColorScheme.light(
+              primary: widget.subjectColor,
+              onPrimary: TeacherColors.primaryText,
+              onSurface: TeacherColors.primaryText,
+            ),
+            dialogBackgroundColor: TeacherColors.primaryBackground,
+          ),
+          child: child!,
+        );
+      },
     );
 
     if (pickedDate != null) {
       final TimeOfDay? pickedTime = await showTimePicker(
         context: context,
         initialTime: TimeOfDay.fromDateTime(_selectedDate ?? DateTime.now()),
+        builder: (context, child) {
+          return Theme(
+            data: Theme.of(context).copyWith(
+              colorScheme: ColorScheme.light(
+                primary: widget.subjectColor,
+                onPrimary: TeacherColors.primaryText,
+                onSurface: TeacherColors.primaryText,
+              ),
+              dialogBackgroundColor: TeacherColors.primaryBackground,
+            ),
+            child: child!,
+          );
+        },
       );
 
       if (pickedTime != null) {
@@ -108,7 +135,10 @@ class _CreateAssessmentScreenState extends State<CreateAssessmentScreen> {
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: ${e.toString()}')),
+        SnackBar(
+          content: Text('Error: ${e.toString()}'),
+          backgroundColor: TeacherColors.dangerAccent,
+        ),
       );
     } finally {
       setState(() => _isLoading = false);
@@ -117,18 +147,20 @@ class _CreateAssessmentScreenState extends State<CreateAssessmentScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.teacherColors;
+    final textStyles = context.teacherTextStyles;
+
     return Scaffold(
+      backgroundColor: TeacherColors.primaryBackground,
       appBar: AppBar(
         title: Text(
           'Create Assessment',
-          style: GoogleFonts.poppins(
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-          ),
+          style: TeacherTextStyles.sectionHeader.copyWith(color: TeacherColors.primaryText),
         ),
         backgroundColor: widget.subjectColor,
         elevation: 0,
         centerTitle: true,
+        iconTheme: IconThemeData(color: TeacherColors.primaryText),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
@@ -139,92 +171,116 @@ class _CreateAssessmentScreenState extends State<CreateAssessmentScreen> {
             children: [
               Text(
                 'Assessment Details',
-                style: GoogleFonts.poppins(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TeacherTextStyles.sectionHeader,
               ),
               const SizedBox(height: 24),
 
               // Assessment Type Dropdown
-              DropdownButtonFormField<String>(
-                value: _assessmentType,
-                decoration: InputDecoration(
-                  labelText: 'Assessment Type',
-                  border: const OutlineInputBorder(),
-                  filled: true,
+              Container(
+                decoration: TeacherColors.glassDecoration(
+                  borderRadius: 12,
+                  borderColor: widget.subjectColor.withOpacity(0.3),
                 ),
-                items: const [
-                  DropdownMenuItem(value: 'Monthly', child: Text('Monthly')),
-                  DropdownMenuItem(value: 'Send Up', child: Text('Send Up')),
-                  DropdownMenuItem(value: 'Mocks', child: Text('Mocks')),
-                  DropdownMenuItem(value: 'Other', child: Text('Other')),
-                  DropdownMenuItem(value: 'Test Session', child: Text('Test Session')),
-                  DropdownMenuItem(value: 'Weekly', child: Text('Weekly')),
-                  DropdownMenuItem(value: 'Half Book', child: Text('Half Book')),
-                  DropdownMenuItem(value: 'Full Book', child: Text('Full Book')),
-                ],
-                onChanged: (value) {
-                  setState(() {
-                    _assessmentType = value!;
-                    // Set default marks based on type
-                    if (_assessmentType == 'Quiz' && _totalMarksController.text.isEmpty) {
-                      _totalMarksController.text = '15';
-                    } else if (_assessmentType == 'Monthly' && _totalMarksController.text.isEmpty) {
-                      _totalMarksController.text = '35';
-                    }
-                  });
-                },
+                child: DropdownButtonFormField<String>(
+                  value: _assessmentType,
+                  dropdownColor: TeacherColors.secondaryBackground,
+                  style: TeacherTextStyles.listItemTitle,
+                  decoration: InputDecoration(
+                    labelText: 'Assessment Type',
+                    labelStyle: TeacherTextStyles.listItemSubtitle,
+                    border: InputBorder.none,
+                    contentPadding: EdgeInsets.symmetric(horizontal: 16),
+                    filled: false,
+                  ),
+                  items: const [
+                    DropdownMenuItem(value: 'Monthly', child: Text('Monthly')),
+                    DropdownMenuItem(value: 'Send Up', child: Text('Send Up')),
+                    DropdownMenuItem(value: 'Mocks', child: Text('Mocks')),
+                    DropdownMenuItem(value: 'Other', child: Text('Other')),
+                    DropdownMenuItem(value: 'Test Session', child: Text('Test Session')),
+                    DropdownMenuItem(value: 'Weekly', child: Text('Weekly')),
+                    DropdownMenuItem(value: 'Half Book', child: Text('Half Book')),
+                    DropdownMenuItem(value: 'Full Book', child: Text('Full Book')),
+                  ],
+                  onChanged: (value) {
+                    setState(() {
+                      _assessmentType = value!;
+                      // Set default marks based on type
+                      if (_assessmentType == 'Quiz' && _totalMarksController.text.isEmpty) {
+                        _totalMarksController.text = '15';
+                      } else if (_assessmentType == 'Monthly' && _totalMarksController.text.isEmpty) {
+                        _totalMarksController.text = '35';
+                      }
+                    });
+                  },
+                ),
               ),
 
               const SizedBox(height: 16),
 
               // Total Marks Field
-              TextFormField(
-                controller: _totalMarksController,
-                keyboardType: TextInputType.number,
-                decoration: InputDecoration(
-                  labelText: 'Total Marks',
-                  hintText: _assessmentType == 'Quiz' ? '15' :
-                  _assessmentType == 'Monthly' ? '35' : '',
-                  border: const OutlineInputBorder(),
-                  filled: true,
+              Container(
+                decoration: TeacherColors.glassDecoration(
+                  borderRadius: 12,
+                  borderColor: widget.subjectColor.withOpacity(0.3),
                 ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    if (_assessmentType == 'Quiz') return 'Default is 15';
-                    if (_assessmentType == 'Monthly') return 'Default is 35';
-                    return 'Please enter total marks';
-                  }
-                  if (int.tryParse(value) == null) {
-                    return 'Please enter a valid number';
-                  }
-                  return null;
-                },
+                child: TextFormField(
+                  controller: _totalMarksController,
+                  style: TeacherTextStyles.listItemTitle,
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(
+                    labelText: 'Total Marks',
+                    labelStyle: TeacherTextStyles.listItemSubtitle,
+                    hintText: _assessmentType == 'Quiz' ? '15' :
+                    _assessmentType == 'Monthly' ? '35' : '',
+                    hintStyle: TeacherTextStyles.listItemSubtitle,
+                    border: InputBorder.none,
+                    contentPadding: EdgeInsets.symmetric(horizontal: 16),
+                  ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      if (_assessmentType == 'Quiz') return 'Default is 15';
+                      if (_assessmentType == 'Monthly') return 'Default is 35';
+                      return 'Please enter total marks';
+                    }
+                    if (int.tryParse(value) == null) {
+                      return 'Please enter a valid number';
+                    }
+                    return null;
+                  },
+                ),
               ),
 
               const SizedBox(height: 16),
 
               // Date and Time Picker
-              TextFormField(
-                controller: _createdAtController,
-                decoration: InputDecoration(
-                  labelText: 'Date and Time',
-                  border: const OutlineInputBorder(),
-                  filled: true,
-                  suffixIcon: IconButton(
-                    icon: const Icon(Icons.calendar_today),
-                    onPressed: () => _selectDateTime(context),
-                  ),
+              Container(
+                decoration: TeacherColors.glassDecoration(
+                  borderRadius: 12,
+                  borderColor: widget.subjectColor.withOpacity(0.3),
                 ),
-                readOnly: true,
-                onTap: () => _selectDateTime(context),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please select date and time';
-                  }
-                  return null;
-                },
+                child: TextFormField(
+                  controller: _createdAtController,
+                  style: TeacherTextStyles.listItemTitle,
+                  decoration: InputDecoration(
+                    labelText: 'Date and Time',
+                    labelStyle: TeacherTextStyles.listItemSubtitle,
+                    border: InputBorder.none,
+                    contentPadding: EdgeInsets.symmetric(horizontal: 16),
+                    suffixIcon: IconButton(
+                      icon: Icon(Icons.calendar_today, color: widget.subjectColor),
+                      onPressed: () => _selectDateTime(context),
+                    ),
+                  ),
+                  readOnly: true,
+                  onTap: () => _selectDateTime(context),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please select date and time';
+                    }
+                    return null;
+                  },
+                ),
               ),
 
               const SizedBox(height: 24),
@@ -232,47 +288,71 @@ class _CreateAssessmentScreenState extends State<CreateAssessmentScreen> {
               // Grading Criteria Section
               Text(
                 'Grading Criteria',
-                style: GoogleFonts.poppins(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TeacherTextStyles.sectionHeader,
               ),
               const SizedBox(height: 16),
 
               ..._gradeControllers.entries.map((entry) {
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 8),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        flex: 1,
-                        child: Text(
-                          '${entry.key}:',
-                          style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        flex: 3,
-                        child: TextFormField(
-                          controller: entry.value,
-                          keyboardType: TextInputType.number,
-                          decoration: const InputDecoration(
-                            border: OutlineInputBorder(),
-                            contentPadding: EdgeInsets.symmetric(horizontal: 12),
+                  child: Container(
+                    decoration: TeacherColors.glassDecoration(
+                      borderRadius: 12,
+                      borderColor: widget.subjectColor.withOpacity(0.3),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            flex: 1,
+                            child: Text(
+                              '${entry.key}:',
+                              style: TeacherTextStyles.listItemTitle,
+                            ),
                           ),
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Required';
-                            }
-                            if (int.tryParse(value) == null) {
-                              return 'Invalid number';
-                            }
-                            return null;
-                          },
-                        ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            flex: 3,
+                            child: TextFormField(
+                              controller: entry.value,
+                              style: TeacherTextStyles.listItemTitle,
+                              keyboardType: TextInputType.number,
+                              decoration: InputDecoration(
+                                contentPadding: EdgeInsets.symmetric(horizontal: 12),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                  borderSide: BorderSide(
+                                    color: TeacherColors.cardBorder,
+                                  ),
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                  borderSide: BorderSide(
+                                    color: TeacherColors.cardBorder,
+                                  ),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                  borderSide: BorderSide(
+                                    color: widget.subjectColor,
+                                  ),
+                                ),
+                              ),
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Required';
+                                }
+                                if (int.tryParse(value) == null) {
+                                  return 'Invalid number';
+                                }
+                                return null;
+                              },
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
+                    ),
                   ),
                 );
               }).toList(),
@@ -290,15 +370,20 @@ class _CreateAssessmentScreenState extends State<CreateAssessmentScreen> {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
+                    elevation: 0,
                   ),
                   child: _isLoading
-                      ? const CircularProgressIndicator(color: Colors.white)
+                      ? SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(
+                      color: TeacherColors.primaryText,
+                      strokeWidth: 2,
+                    ),
+                  )
                       : Text(
                     'Create Assessment',
-                    style: GoogleFonts.poppins(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                    ),
+                    style: TeacherTextStyles.primaryButton,
                   ),
                 ),
               ),

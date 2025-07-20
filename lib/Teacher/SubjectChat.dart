@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:intl/intl.dart';
-import 'package:flutter_speed_dial/flutter_speed_dial.dart';
+import 'package:newapp/Teacher/themes/theme_colors.dart';
+import 'package:newapp/Teacher/themes/theme_extensions.dart';
+import 'package:newapp/Teacher/themes/theme_text_styles.dart';
+
 
 class SubjectChatScreen extends StatefulWidget {
   final Map<String, dynamic> subject;
@@ -116,7 +119,13 @@ class _SubjectChatScreenState extends State<SubjectChatScreen> {
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to send message: ${e.toString()}')),
+        SnackBar(
+          content: Text(
+            'Failed to send message: ${e.toString()}',
+            style: TeacherTextStyles.cardSubtitle.copyWith(color: TeacherColors.primaryText),
+          ),
+          backgroundColor: TeacherColors.dangerAccent,
+        ),
       );
       _messageController.text = message;
     }
@@ -140,7 +149,13 @@ class _SubjectChatScreenState extends State<SubjectChatScreen> {
 
       if (response.statusCode == 200) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Assignment created successfully')),
+          SnackBar(
+            content: Text(
+              'Assignment created successfully',
+              style: TeacherTextStyles.cardSubtitle.copyWith(color: TeacherColors.primaryText),
+            ),
+            backgroundColor: TeacherColors.successAccent,
+          ),
         );
         setState(() {
           _showAssignmentDialog = false;
@@ -155,7 +170,13 @@ class _SubjectChatScreenState extends State<SubjectChatScreen> {
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to create assignment: ${e.toString()}')),
+        SnackBar(
+          content: Text(
+            'Failed to create assignment: ${e.toString()}',
+            style: TeacherTextStyles.cardSubtitle.copyWith(color: TeacherColors.primaryText),
+          ),
+          backgroundColor: TeacherColors.dangerAccent,
+        ),
       );
     }
   }
@@ -163,15 +184,43 @@ class _SubjectChatScreenState extends State<SubjectChatScreen> {
   Future<void> _pickDueDate() async {
     final pickedDate = await showDatePicker(
       context: context,
-      initialDate: DateTime.now().add(Duration(days: 7)),
+      initialDate: DateTime.now().add(const Duration(days: 7)),
       firstDate: DateTime.now(),
       lastDate: DateTime(2100),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: ColorScheme.light(
+              primary: TeacherColors.assignmentColor,
+              onPrimary: TeacherColors.primaryText,
+              onSurface: TeacherColors.primaryText,
+            ),
+            dialogBackgroundColor: TeacherColors.primaryBackground,
+          ),
+          child: child!,
+        );
+      },
     );
+
     if (pickedDate != null) {
       final pickedTime = await showTimePicker(
         context: context,
-        initialTime: TimeOfDay(hour: 23, minute: 59),
+        initialTime: const TimeOfDay(hour: 23, minute: 59),
+        builder: (context, child) {
+          return Theme(
+            data: Theme.of(context).copyWith(
+              colorScheme: ColorScheme.light(
+                primary: TeacherColors.assignmentColor,
+                onPrimary: TeacherColors.primaryText,
+                onSurface: TeacherColors.primaryText,
+              ),
+              dialogBackgroundColor: TeacherColors.primaryBackground,
+            ),
+            child: child!,
+          );
+        },
       );
+
       if (pickedTime != null) {
         setState(() {
           _dueDate = DateTime(
@@ -196,7 +245,7 @@ class _SubjectChatScreenState extends State<SubjectChatScreen> {
     return Align(
       alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
-        margin: EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+        margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
         constraints: BoxConstraints(
           maxWidth: MediaQuery.of(context).size.width * 0.75,
         ),
@@ -205,42 +254,43 @@ class _SubjectChatScreenState extends State<SubjectChatScreen> {
           isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
           children: [
             Container(
-              padding: EdgeInsets.all(12),
+              padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 color: isMe
-                    ? Theme.of(context).primaryColor
-                    : Colors.grey[200],
+                    ? TeacherColors.primaryAccent
+                    : TeacherColors.cardBackground,
                 borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(12),
-                  topRight: Radius.circular(12),
-                  bottomLeft: isMe ? Radius.circular(12) : Radius.circular(0),
-                  bottomRight: isMe ? Radius.circular(0) : Radius.circular(12),
+                  topLeft: const Radius.circular(12),
+                  topRight: const Radius.circular(12),
+                  bottomLeft: isMe ? const Radius.circular(12) : Radius.zero,
+                  bottomRight: isMe ? Radius.zero : const Radius.circular(12),
+                ),
+                border: Border.all(
+                  color: TeacherColors.cardBorder,
+                  width: 1,
                 ),
               ),
               child: Text(
                 message['message_text'] ?? '',
-                style: TextStyle(
-                  color: isMe ? Colors.white : Colors.black,
-                ),
+                style: isMe
+                    ? TeacherTextStyles.primaryButton
+                    : TeacherTextStyles.listItemTitle,
               ),
             ),
-            SizedBox(height: 4),
+            const SizedBox(height: 4),
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
                   timeString,
-                  style: TextStyle(
-                    fontSize: 10,
-                    color: Colors.grey,
-                  ),
+                  style: TeacherTextStyles.cardSubtitle,
                 ),
                 if (isMe && message['read_receipts'] != null) ...[
-                  SizedBox(width: 4),
+                  const SizedBox(width: 4),
                   Icon(
                     Icons.done_all,
                     size: 12,
-                    color: Colors.blue,
+                    color: TeacherColors.infoAccent,
                   ),
                 ],
               ],
@@ -252,57 +302,135 @@ class _SubjectChatScreenState extends State<SubjectChatScreen> {
   }
 
   Widget _buildAssignmentDialog() {
-    return AlertDialog(
-      title: Text('Create New Assignment'),
-      content: SingleChildScrollView(
+    return Dialog(
+      backgroundColor: TeacherColors.primaryBackground,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: TeacherColors.cardBorder),
+      ),
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
         child: Form(
           key: _assignmentFormKey,
           child: Column(
             mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              Text(
+                'Create New Assignment',
+                style: TeacherTextStyles.sectionHeader.copyWith(
+                  color: TeacherColors.assignmentColor,
+                ),
+              ),
+              const SizedBox(height: 16),
               TextFormField(
                 controller: _titleController,
-                decoration: InputDecoration(labelText: 'Title'),
+                style: TeacherTextStyles.listItemTitle,
+                decoration: InputDecoration(
+                  labelText: 'Title',
+                  labelStyle: TeacherTextStyles.cardSubtitle,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(color: TeacherColors.cardBorder),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(color: TeacherColors.cardBorder),
+                  ),
+                ),
                 validator: (value) =>
                 value?.isEmpty ?? true ? 'Title is required' : null,
               ),
+              const SizedBox(height: 12),
               TextFormField(
                 controller: _descriptionController,
-                decoration: InputDecoration(labelText: 'Description'),
+                style: TeacherTextStyles.listItemTitle,
+                decoration: InputDecoration(
+                  labelText: 'Description',
+                  labelStyle: TeacherTextStyles.cardSubtitle,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(color: TeacherColors.cardBorder),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(color: TeacherColors.cardBorder),
+                  ),
+                ),
                 maxLines: 3,
               ),
+              const SizedBox(height: 12),
               TextFormField(
                 controller: _pointsController,
-                decoration: InputDecoration(labelText: 'Total Points'),
+                style: TeacherTextStyles.listItemTitle,
+                decoration: InputDecoration(
+                  labelText: 'Total Points',
+                  labelStyle: TeacherTextStyles.cardSubtitle,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(color: TeacherColors.cardBorder),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(color: TeacherColors.cardBorder),
+                  ),
+                ),
                 keyboardType: TextInputType.number,
                 validator: (value) =>
                 value?.isEmpty ?? true ? 'Points are required' : null,
               ),
+              const SizedBox(height: 12),
               ListTile(
                 title: Text(
                   _dueDate == null
                       ? 'Select Due Date'
                       : 'Due: ${DateFormat('MMM dd, yyyy - hh:mm a').format(_dueDate!)}',
+                  style: TeacherTextStyles.listItemTitle,
                 ),
-                trailing: Icon(Icons.calendar_today),
+                trailing: Icon(
+                  Icons.calendar_today,
+                  color: TeacherColors.assignmentColor,
+                ),
                 onTap: _pickDueDate,
+                tileColor: TeacherColors.cardBackground,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  side: BorderSide(color: TeacherColors.cardBorder),
+                ),
               ),
-              // Attachment upload would go here
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
                   ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: TeacherColors.dangerAccent,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
                     onPressed: () {
                       setState(() {
                         _showAssignmentDialog = false;
                       });
                     },
-                    child: Text('Cancel'),
+                    child: Text(
+                      'Cancel',
+                      style: TeacherTextStyles.primaryButton,
+                    ),
                   ),
                   ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: TeacherColors.assignmentColor,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
                     onPressed: _createAssignment,
-                    child: Text('Create'),
+                    child: Text(
+                      'Create',
+                      style: TeacherTextStyles.primaryButton,
+                    ),
                   ),
                 ],
               ),
@@ -315,23 +443,27 @@ class _SubjectChatScreenState extends State<SubjectChatScreen> {
 
   Widget _buildFloatingActionButtons() {
     return SpeedDial(
-      animatedIcon: AnimatedIcons.menu_close,
-      animatedIconTheme: IconThemeData(size: 22.0),
-      visible: true,
-      curve: Curves.bounceIn,
+      icon: Icons.add,
+      activeIcon: Icons.close,
+      backgroundColor: TeacherColors.assignmentColor,
+      foregroundColor: TeacherColors.primaryText,
+      overlayColor: Colors.black,
+      overlayOpacity: 0.5,
+      spacing: 12,
+      spaceBetweenChildren: 8,
       children: [
         SpeedDialChild(
-          child: Icon(Icons.assignment),
-          backgroundColor: Colors.blue,
+          child: Icon(Icons.assignment, color: TeacherColors.primaryText),
+          backgroundColor: TeacherColors.assignmentColor,
           label: 'New Assignment',
-          labelStyle: TextStyle(fontSize: 18.0),
+          labelStyle: TeacherTextStyles.sectionHeader,
           onTap: () => setState(() => _showAssignmentDialog = true),
         ),
         SpeedDialChild(
-          child: Icon(Icons.delete),
-          backgroundColor: Colors.red,
+          child: Icon(Icons.delete, color: TeacherColors.primaryText),
+          backgroundColor: TeacherColors.dangerAccent,
           label: 'Clear Chat',
-          labelStyle: TextStyle(fontSize: 18.0),
+          labelStyle: TeacherTextStyles.sectionHeader,
           onTap: _roomId != null
               ? () async {
             try {
@@ -347,7 +479,14 @@ class _SubjectChatScreenState extends State<SubjectChatScreen> {
               }
             } catch (e) {
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Failed to clear chat: ${e.toString()}')),
+                SnackBar(
+                  content: Text(
+                    'Failed to clear chat: ${e.toString()}',
+                    style: TeacherTextStyles.cardSubtitle
+                        .copyWith(color: TeacherColors.primaryText),
+                  ),
+                  backgroundColor: TeacherColors.dangerAccent,
+                ),
               );
             }
           }
@@ -357,15 +496,68 @@ class _SubjectChatScreenState extends State<SubjectChatScreen> {
     );
   }
 
+  Widget _buildMessageInput() {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: TeacherColors.secondaryBackground,
+        border: Border(
+          top: BorderSide(
+            color: TeacherColors.cardBorder,
+            width: 1,
+          ),
+        ),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: TextField(
+              controller: _messageController,
+              style: TeacherTextStyles.listItemTitle,
+              decoration: InputDecoration(
+                hintText: 'Type a message...',
+                hintStyle: TeacherTextStyles.cardSubtitle,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(24),
+                  borderSide: BorderSide.none,
+                ),
+                filled: true,
+                fillColor: TeacherColors.cardBackground,
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
+              ),
+              onSubmitted: (_) => _sendMessage(),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Container(
+            decoration: TeacherColors.primaryAccent.toCircleDecoration(),
+            child: IconButton(
+              icon: Icon(
+                Icons.send,
+                color: TeacherColors.primaryText,
+              ),
+              onPressed: _sendMessage,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: TeacherColors.primaryBackground,
       appBar: AppBar(
         title: Text(
           '${widget.subject['name']} Chat',
-          style: GoogleFonts.poppins(),
+          style: TeacherTextStyles.className,
         ),
-        backgroundColor: widget.subject['color'] ?? Theme.of(context).primaryColor,
+        backgroundColor: TeacherColors.classColor,
+        iconTheme: IconThemeData(color: TeacherColors.primaryText),
       ),
       body: Stack(
         children: [
@@ -373,14 +565,28 @@ class _SubjectChatScreenState extends State<SubjectChatScreen> {
             children: [
               Expanded(
                 child: _isLoading
-                    ? Center(child: CircularProgressIndicator())
+                    ? Center(
+                  child: CircularProgressIndicator(
+                    color: TeacherColors.primaryAccent,
+                  ),
+                )
                     : _errorMessage.isNotEmpty
-                    ? Center(child: Text(_errorMessage))
+                    ? Center(
+                  child: Text(
+                    _errorMessage,
+                    style: TeacherTextStyles.cardTitle,
+                  ),
+                )
                     : _messages.isEmpty
-                    ? Center(child: Text('No messages yet'))
+                    ? Center(
+                  child: Text(
+                    'No messages yet',
+                    style: TeacherTextStyles.cardTitle,
+                  ),
+                )
                     : ListView.builder(
                   controller: _scrollController,
-                  padding: EdgeInsets.all(8),
+                  padding: const EdgeInsets.all(8),
                   itemCount: _messages.length,
                   itemBuilder: (context, index) {
                     return _buildMessageBubble(_messages[index]);
@@ -397,58 +603,11 @@ class _SubjectChatScreenState extends State<SubjectChatScreen> {
     );
   }
 
-  Widget _buildMessageInput() {
-    return Container(
-      padding: EdgeInsets.all(8),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black12,
-            blurRadius: 2,
-            offset: Offset(0, -2),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: TextField(
-              controller: _messageController,
-              decoration: InputDecoration(
-                hintText: 'Type a message...',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(24),
-                  borderSide: BorderSide.none,
-                ),
-                filled: true,
-                fillColor: Colors.grey[100],
-                contentPadding: EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 12,
-                ),
-              ),
-              onSubmitted: (_) => _sendMessage(),
-            ),
-          ),
-          SizedBox(width: 8),
-          CircleAvatar(
-            backgroundColor: Theme.of(context).primaryColor,
-            child: IconButton(
-              icon: Icon(Icons.send, color: Colors.white),
-              onPressed: _sendMessage,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   void _scrollToBottom() {
     if (_scrollController.hasClients) {
       _scrollController.animateTo(
         _scrollController.position.maxScrollExtent,
-        duration: Duration(milliseconds: 300),
+        duration: const Duration(milliseconds: 300),
         curve: Curves.easeOut,
       );
     }

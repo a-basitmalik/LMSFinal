@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'package:dio/dio.dart';
+import 'package:newapp/Teacher/themes/theme_colors.dart';
+import 'package:newapp/Teacher/themes/theme_text_styles.dart';
 import 'package:open_file/open_file.dart';
 import 'package:path_provider/path_provider.dart';
 
@@ -44,7 +45,8 @@ class _SubjectAssignmentsScreenState extends State<SubjectAssignmentsScreen> {
 
     try {
       final response = await http.get(
-        Uri.parse('$_baseUrl/subjects/${widget.subject['subject_id']}/assignments'),
+        Uri.parse(
+            '$_baseUrl/subjects/${widget.subject['subject_id']}/assignments'),
       );
 
       if (response.statusCode == 200) {
@@ -67,14 +69,18 @@ class _SubjectAssignmentsScreenState extends State<SubjectAssignmentsScreen> {
   Future<void> _createAssignment() async {
     if (!_formKey.currentState!.validate() || _dueDate == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Please fill all required fields')),
+        SnackBar(
+          content: Text('Please fill all required fields'),
+          backgroundColor: TeacherColors.warningAccent,
+        ),
       );
       return;
     }
 
     try {
       final response = await http.post(
-        Uri.parse('$_baseUrl/subjects/${widget.subject['subject_id']}/assignments'),
+        Uri.parse(
+            '$_baseUrl/subjects/${widget.subject['subject_id']}/assignments'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
           'title': _titleController.text,
@@ -87,7 +93,10 @@ class _SubjectAssignmentsScreenState extends State<SubjectAssignmentsScreen> {
 
       if (response.statusCode == 201) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Assignment created successfully')),
+          SnackBar(
+            content: Text('Assignment created successfully'),
+            backgroundColor: TeacherColors.successAccent,
+          ),
         );
         setState(() {
           _showAssignmentDialog = false;
@@ -103,7 +112,10 @@ class _SubjectAssignmentsScreenState extends State<SubjectAssignmentsScreen> {
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to create assignment: ${e.toString()}')),
+        SnackBar(
+          content: Text('Failed to create assignment: ${e.toString()}'),
+          backgroundColor: TeacherColors.dangerAccent,
+        ),
       );
     }
   }
@@ -111,14 +123,28 @@ class _SubjectAssignmentsScreenState extends State<SubjectAssignmentsScreen> {
   Future<void> _pickDueDate() async {
     final pickedDate = await showDatePicker(
       context: context,
-      initialDate: DateTime.now().add(Duration(days: 7)),
+      initialDate: DateTime.now().add(const Duration(days: 7)),
       firstDate: DateTime.now(),
       lastDate: DateTime(2100),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: ColorScheme.light(
+              primary: TeacherColors.assignmentColor,
+              onPrimary: TeacherColors.primaryText,
+              surface: TeacherColors.secondaryBackground,
+              onSurface: TeacherColors.primaryText,
+            ),
+            dialogBackgroundColor: TeacherColors.primaryBackground,
+          ),
+          child: child!,
+        );
+      },
     );
     if (pickedDate != null) {
       final pickedTime = await showTimePicker(
         context: context,
-        initialTime: TimeOfDay(hour: 23, minute: 59),
+        initialTime: const TimeOfDay(hour: 23, minute: 59),
       );
       if (pickedTime != null) {
         setState(() {
@@ -136,7 +162,11 @@ class _SubjectAssignmentsScreenState extends State<SubjectAssignmentsScreen> {
 
   Widget _buildAssignmentDialog() {
     return AlertDialog(
-      title: Text('Create New Assignment'),
+      backgroundColor: TeacherColors.secondaryBackground,
+      title: Text(
+        'Create New Assignment',
+        style: TeacherTextStyles.sectionHeader,
+      ),
       content: SingleChildScrollView(
         child: Form(
           key: _formKey,
@@ -145,45 +175,75 @@ class _SubjectAssignmentsScreenState extends State<SubjectAssignmentsScreen> {
             children: [
               TextFormField(
                 controller: _titleController,
-                decoration: InputDecoration(labelText: 'Title'),
+                style: TeacherTextStyles.listItemTitle,
+                decoration: InputDecoration(
+                  labelText: 'Title',
+                  labelStyle: TeacherTextStyles.cardSubtitle,
+                ),
                 validator: (value) =>
                 value?.isEmpty ?? true ? 'Title is required' : null,
               ),
-              SizedBox(height: 12),
+              const SizedBox(height: 12),
               TextFormField(
                 controller: _descriptionController,
-                decoration: InputDecoration(labelText: 'Description'),
+                style: TeacherTextStyles.listItemTitle,
+                decoration: InputDecoration(
+                  labelText: 'Description',
+                  labelStyle: TeacherTextStyles.cardSubtitle,
+                ),
                 maxLines: 3,
               ),
-              SizedBox(height: 12),
+              const SizedBox(height: 12),
               TextFormField(
                 controller: _pointsController,
-                decoration: InputDecoration(labelText: 'Total Points'),
+                style: TeacherTextStyles.listItemTitle,
+                decoration: InputDecoration(
+                  labelText: 'Total Points',
+                  labelStyle: TeacherTextStyles.cardSubtitle,
+                ),
                 keyboardType: TextInputType.number,
                 validator: (value) =>
                 value?.isEmpty ?? true ? 'Points are required' : null,
               ),
-              SizedBox(height: 12),
+              const SizedBox(height: 12),
               ListTile(
                 title: Text(
                   _dueDate == null
                       ? 'Select Due Date'
-                      : 'Due: ${DateFormat('MMM dd, yyyy - hh:mm a').format(_dueDate!)}',
+                      : 'Due: ${DateFormat('MMM dd, yyyy - hh:mm a').format(
+                      _dueDate!)}',
+                  style: TeacherTextStyles.listItemTitle,
                 ),
-                trailing: Icon(Icons.calendar_today),
+                trailing: Icon(
+                  Icons.calendar_today,
+                  color: TeacherColors.primaryAccent,
+                ),
                 onTap: _pickDueDate,
               ),
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
                   ElevatedButton(
-                    onPressed: () => setState(() => _showAssignmentDialog = false),
-                    child: Text('Cancel'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: TeacherColors.dangerAccent,
+                    ),
+                    onPressed: () =>
+                        setState(() => _showAssignmentDialog = false),
+                    child: Text(
+                      'Cancel',
+                      style: TeacherTextStyles.primaryButton,
+                    ),
                   ),
                   ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: TeacherColors.successAccent,
+                    ),
                     onPressed: _createAssignment,
-                    child: Text('Create'),
+                    child: Text(
+                      'Create',
+                      style: TeacherTextStyles.primaryButton,
+                    ),
                   ),
                 ],
               ),
@@ -198,28 +258,29 @@ class _SubjectAssignmentsScreenState extends State<SubjectAssignmentsScreen> {
     return SpeedDial(
       animatedIcon: AnimatedIcons.menu_close,
       animatedIconTheme: IconThemeData(size: 22.0),
-      visible: true,
-      curve: Curves.bounceIn,
+      backgroundColor: TeacherColors.assignmentColor,
+      overlayColor: Colors.black,
+      overlayOpacity: 0.4,
       children: [
         SpeedDialChild(
-          child: Icon(Icons.assignment_add),
-          backgroundColor: Colors.blue,
+          child: Icon(Icons.assignment_add, color: TeacherColors.primaryText),
+          backgroundColor: TeacherColors.assignmentColor,
           label: 'New Assignment',
-          labelStyle: TextStyle(fontSize: 18.0),
+          labelStyle: TeacherTextStyles.primaryButton,
           onTap: () => setState(() => _showAssignmentDialog = true),
         ),
         SpeedDialChild(
-          child: Icon(Icons.refresh),
-          backgroundColor: Colors.green,
+          child: Icon(Icons.refresh, color: TeacherColors.primaryText),
+          backgroundColor: TeacherColors.primaryAccent,
           label: 'Refresh',
-          labelStyle: TextStyle(fontSize: 18.0),
+          labelStyle: TeacherTextStyles.primaryButton,
           onTap: _fetchAssignments,
         ),
       ],
     );
   }
 
-  Widget _buildAssignmentCard(dynamic assignment, ThemeData theme, Color subjectColor) {
+  Widget _buildAssignmentCard(dynamic assignment) {
     final dueDate = DateTime.parse(assignment['due_date']);
     final formattedDate = DateFormat('MMM d, y').format(dueDate);
     final timeLeft = dueDate.difference(DateTime.now());
@@ -227,14 +288,21 @@ class _SubjectAssignmentsScreenState extends State<SubjectAssignmentsScreen> {
     final isActive = assignment['status'] == 'active';
 
     return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      margin: EdgeInsets.only(bottom: 16),
+      elevation: 0,
+      margin: const EdgeInsets.only(bottom: 16),
+      color: TeacherColors.cardBackground,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(
+          color: TeacherColors.cardBorder,
+          width: 1,
+        ),
+      ),
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
         onTap: () => _navigateToSubmissions(assignment),
         child: Padding(
-          padding: EdgeInsets.all(16),
+          padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -243,107 +311,104 @@ class _SubjectAssignmentsScreenState extends State<SubjectAssignmentsScreen> {
                 child: Chip(
                   label: Text(
                     isActive ? 'ACTIVE' : 'COMPLETED',
-                    style: GoogleFonts.poppins(
-                      fontSize: 12,
-                      color: Colors.white,
-                    ),
+                    style: TeacherTextStyles.primaryButton.copyWith(
+                        fontSize: 12),
                   ),
-                  backgroundColor: isActive ? Colors.green : Colors.blueGrey,
+                  backgroundColor: isActive
+                      ? TeacherColors.successAccent
+                      : TeacherColors.secondaryText,
                 ),
               ),
-              SizedBox(height: 8),
+              const SizedBox(height: 8),
               Text(
                 assignment['title'],
-                style: GoogleFonts.poppins(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TeacherTextStyles.assignmentTitle,
               ),
-              SizedBox(height: 8),
+              const SizedBox(height: 8),
               Text(
                 assignment['description'],
-                style: GoogleFonts.poppins(
-                  color: theme.colorScheme.onSurface.withOpacity(0.7),
-                ),
+                style: TeacherTextStyles.cardSubtitle,
               ),
-              SizedBox(height: 12),
+              const SizedBox(height: 12),
               Row(
                 children: [
                   Icon(
                     Icons.calendar_today,
                     size: 16,
-                    color: theme.colorScheme.onSurface.withOpacity(0.6),
+                    color: TeacherColors.secondaryText,
                   ),
-                  SizedBox(width: 4),
+                  const SizedBox(width: 4),
                   Text(
                     'Due $formattedDate',
-                    style: GoogleFonts.poppins(
-                      fontSize: 14,
-                      color: theme.colorScheme.onSurface.withOpacity(0.8),
-                    ),
+                    style: TeacherTextStyles.listItemSubtitle,
                   ),
-                  Spacer(),
+                  const Spacer(),
                   Text(
                     isActive
                         ? '${timeLeft.inDays}d left'
                         : 'Completed',
-                    style: GoogleFonts.poppins(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
+                    style: TeacherTextStyles.listItemSubtitle.copyWith(
                       color: isActive
-                          ? (timeLeft.inDays < 3 ? Colors.red : Colors.green)
-                          : Colors.blueGrey,
+                          ? (timeLeft.inDays < 3
+                          ? TeacherColors.dangerAccent
+                          : TeacherColors.successAccent)
+                          : TeacherColors.secondaryText,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
                 ],
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     'Submissions: ${assignment['submitted']}/${assignment['total']}',
-                    style: GoogleFonts.poppins(fontWeight: FontWeight.w500),
+                    style: TeacherTextStyles.listItemTitle,
                   ),
-                  SizedBox(height: 4),
+                  const SizedBox(height: 4),
                   LinearProgressIndicator(
                     value: progress,
-                    backgroundColor: subjectColor.withOpacity(0.1),
-                    valueColor: AlwaysStoppedAnimation<Color>(subjectColor),
+                    backgroundColor: TeacherColors.assignmentColor.withOpacity(
+                        0.1),
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                        TeacherColors.assignmentColor),
                   ),
                 ],
               ),
-              if (assignment['attachments'] != null && assignment['attachments'].isNotEmpty) ...[
-                SizedBox(height: 12),
+              if (assignment['attachments'] != null &&
+                  assignment['attachments'].isNotEmpty) ...[
+                const SizedBox(height: 12),
                 Wrap(
                   spacing: 8,
                   children: [
                     Icon(
                       Icons.attach_file,
                       size: 16,
-                      color: theme.colorScheme.onSurface.withOpacity(0.6),
+                      color: TeacherColors.secondaryText,
                     ),
                     ...(assignment['attachments'] as List).map<Widget>(
-                          (file) => Chip(
-                        label: Text(
-                          file['file_name'],
-                          style: GoogleFonts.poppins(fontSize: 12),
-                        ),
-                        backgroundColor: theme.colorScheme.surface,
-                      ),
+                          (file) =>
+                          Chip(
+                            label: Text(
+                              file['file_name'],
+                              style: TeacherTextStyles.cardSubtitle,
+                            ),
+                            backgroundColor: TeacherColors.secondaryBackground,
+                          ),
                     ),
                   ],
                 ),
               ],
-              SizedBox(height: 8),
+              const SizedBox(height: 8),
               Align(
                 alignment: Alignment.centerRight,
                 child: TextButton(
                   onPressed: () => _navigateToSubmissions(assignment),
                   child: Text(
                     'VIEW SUBMISSIONS',
-                    style: GoogleFonts.poppins(
-                      color: subjectColor,
+                    style: TeacherTextStyles.secondaryButton.copyWith(
+                      color: TeacherColors.assignmentColor,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -360,61 +425,70 @@ class _SubjectAssignmentsScreenState extends State<SubjectAssignmentsScreen> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => AssignmentSubmissionsScreen(
-          assignment: assignment,
-          subjectColor: widget.subject['color'] ?? Theme.of(context).primaryColor,
-          baseUrl: _baseUrl,
-        ),
+        builder: (context) =>
+            AssignmentSubmissionsScreen(
+              assignment: assignment,
+              subjectColor: TeacherColors.assignmentColor,
+              baseUrl: _baseUrl,
+            ),
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final subjectColor = widget.subject['color'] ?? theme.primaryColor;
-
     return Scaffold(
       appBar: AppBar(
         title: Text(
           '${widget.subject['name']} Assignments',
-          style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
+          style: TeacherTextStyles.className,
         ),
-        backgroundColor: subjectColor,
+        backgroundColor: TeacherColors.assignmentColor,
         centerTitle: true,
         elevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(bottom: Radius.circular(20)),
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(bottom: Radius.circular(16)),
         ),
       ),
       body: Stack(
         children: [
-          isLoading
-              ? Center(child: CircularProgressIndicator())
-              : errorMessage.isNotEmpty
-              ? Center(child: Text(errorMessage))
-              : assignments.isEmpty
-              ? Center(
-            child: Text(
-              'No assignments yet',
-              style: GoogleFonts.poppins(
-                fontSize: 16,
-                color: theme.colorScheme.onSurface.withOpacity(0.6),
+          if (isLoading)
+            Center(
+              child: CircularProgressIndicator(
+                color: TeacherColors.primaryAccent,
               ),
-            ),
-          )
-              : RefreshIndicator(
-            onRefresh: _fetchAssignments,
-            child: ListView.builder(
-              padding: EdgeInsets.all(16),
-              itemCount: assignments.length,
-              itemBuilder: (context, index) => _buildAssignmentCard(
-                assignments[index],
-                theme,
-                subjectColor,
-              ),
-            ),
-          ),
+            )
+          else
+            if (errorMessage.isNotEmpty)
+              Center(
+                child: Text(
+                  errorMessage,
+                  style: TeacherTextStyles.cardSubtitle.copyWith(
+                    color: TeacherColors.dangerAccent,
+                  ),
+                ),
+              )
+            else
+              if (assignments.isEmpty)
+                Center(
+                  child: Text(
+                    'No assignments yet',
+                    style: TeacherTextStyles.cardSubtitle,
+                  ),
+                )
+              else
+                RefreshIndicator(
+                  onRefresh: _fetchAssignments,
+                  color: TeacherColors.assignmentColor,
+                  child: ListView.builder(
+                    padding: const EdgeInsets.all(16),
+                    itemCount: assignments.length,
+                    itemBuilder: (context, index) =>
+                        _buildAssignmentCard(
+                          assignments[index],
+                        ),
+                  ),
+                ),
           if (_showAssignmentDialog) _buildAssignmentDialog(),
         ],
       ),
@@ -422,7 +496,6 @@ class _SubjectAssignmentsScreenState extends State<SubjectAssignmentsScreen> {
     );
   }
 }
-
 class AssignmentSubmissionsScreen extends StatefulWidget {
   final dynamic assignment;
   final Color subjectColor;
@@ -525,7 +598,10 @@ class _AssignmentSubmissionsScreenState extends State<AssignmentSubmissionsScree
     final grade = int.tryParse(_gradeControllers[submissionId]!.text);
     if (grade == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Please enter a valid grade')),
+        SnackBar(
+          content: Text('Please enter a valid grade'),
+          backgroundColor: TeacherColors.warningAccent,
+        ),
       );
       return;
     }
@@ -542,7 +618,10 @@ class _AssignmentSubmissionsScreenState extends State<AssignmentSubmissionsScree
 
       if (response.statusCode == 200) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Submission graded successfully')),
+          SnackBar(
+            content: Text('Submission graded successfully'),
+            backgroundColor: TeacherColors.successAccent,
+          ),
         );
         await _loadData();
       } else {
@@ -550,7 +629,10 @@ class _AssignmentSubmissionsScreenState extends State<AssignmentSubmissionsScree
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to grade submission: ${e.toString()}')),
+        SnackBar(
+          content: Text('Failed to grade submission: ${e.toString()}'),
+          backgroundColor: TeacherColors.dangerAccent,
+        ),
       );
     }
   }
@@ -565,19 +647,24 @@ class _AssignmentSubmissionsScreenState extends State<AssignmentSubmissionsScree
 
       if (response.statusCode == 200) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Reminder sent successfully')),
+          SnackBar(
+            content: Text('Reminder sent successfully'),
+            backgroundColor: TeacherColors.successAccent,
+          ),
         );
       } else {
         throw Exception('Failed to send reminder: ${response.statusCode}');
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to send reminder: ${e.toString()}')),
+        SnackBar(
+          content: Text('Failed to send reminder: ${e.toString()}'),
+          backgroundColor: TeacherColors.dangerAccent,
+        ),
       );
     }
   }
-
-  Widget _buildSubmissionCard(dynamic submission, ThemeData theme) {
+  Widget _buildSubmissionCard(dynamic submission) {
     final isSubmitted = submission['status'] == 'submitted' || submission['status'] == 'graded';
     final submittedAt = submission['submission_date'] != null
         ? DateFormat('MMM d, h:mm a').format(DateTime.parse(submission['submission_date']))
@@ -585,69 +672,62 @@ class _AssignmentSubmissionsScreenState extends State<AssignmentSubmissionsScree
     final isGraded = submission['status'] == 'graded';
 
     return Card(
-      elevation: 1,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-      margin: EdgeInsets.only(bottom: 12),
+      elevation: 0,
+      margin: const EdgeInsets.only(bottom: 12),
+      color: TeacherColors.cardBackground,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8),
+        side: BorderSide(color: TeacherColors.cardBorder, width: 1),
+      ),
       child: Padding(
-        padding: EdgeInsets.all(12),
+        padding: const EdgeInsets.all(12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Student Name and Status Chip
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
                   submission['student_name'],
-                  style: GoogleFonts.poppins(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                  ),
+                  style: TeacherTextStyles.listItemTitle,
                 ),
                 Chip(
                   label: Text(
                     isGraded ? 'GRADED' : 'SUBMITTED',
-                    style: GoogleFonts.poppins(
-                      fontSize: 12,
-                      color: Colors.white,
-                    ),
+                    style: TeacherTextStyles.primaryButton.copyWith(fontSize: 12),
                   ),
-                  backgroundColor: isGraded ? Colors.green : Colors.blue,
+                  backgroundColor: isGraded
+                      ? TeacherColors.successAccent
+                      : TeacherColors.primaryAccent,
                 ),
               ],
             ),
-            SizedBox(height: 8),
+            const SizedBox(height: 8),
+
+            // Submission Date
             Row(
               children: [
-                Icon(
-                  Icons.calendar_today,
-                  size: 14,
-                  color: theme.colorScheme.onSurface.withOpacity(0.6),
-                ),
-                SizedBox(width: 4),
+                Icon(Icons.calendar_today, size: 14, color: TeacherColors.secondaryText),
+                const SizedBox(width: 4),
                 Text(
                   submittedAt,
-                  style: GoogleFonts.poppins(
-                    fontSize: 12,
-                    color: theme.colorScheme.onSurface.withOpacity(0.8),
-                  ),
+                  style: TeacherTextStyles.listItemSubtitle,
                 ),
               ],
             ),
-            SizedBox(height: 8),
+            const SizedBox(height: 8),
+
+            // File Attachment
             Row(
               children: [
-                Icon(
-                  Icons.attach_file,
-                  size: 14,
-                  color: theme.colorScheme.onSurface.withOpacity(0.6),
-                ),
-                SizedBox(width: 4),
+                Icon(Icons.attach_file, size: 14, color: TeacherColors.secondaryText),
+                const SizedBox(width: 4),
                 GestureDetector(
                   onTap: () => _viewSubmissionFile(submission),
                   child: Text(
                     submission['file_name'],
-                    style: GoogleFonts.poppins(
-                      fontSize: 12,
+                    style: TeacherTextStyles.listItemSubtitle.copyWith(
                       color: widget.subjectColor,
                       decoration: TextDecoration.underline,
                     ),
@@ -655,66 +735,71 @@ class _AssignmentSubmissionsScreenState extends State<AssignmentSubmissionsScree
                 ),
               ],
             ),
+
+            // If graded, show grade and feedback
             if (isGraded) ...[
-              SizedBox(height: 8),
+              const SizedBox(height: 8),
               Row(
                 children: [
-                  Icon(Icons.grade, size: 14, color: Colors.amber),
-                  SizedBox(width: 4),
+                  Icon(Icons.grade, size: 14, color: TeacherColors.warningAccent),
+                  const SizedBox(width: 4),
                   Text(
                     'Grade: ${submission['grade']}',
-                    style: GoogleFonts.poppins(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: TeacherTextStyles.listItemTitle,
                   ),
                 ],
               ),
               if (submission['feedback'] != null && submission['feedback'].isNotEmpty) ...[
-                SizedBox(height: 8),
+                const SizedBox(height: 8),
                 Text(
                   'Feedback: ${submission['feedback']}',
-                  style: GoogleFonts.poppins(fontSize: 12),
+                  style: TeacherTextStyles.listItemSubtitle,
                 ),
               ],
             ],
+
+            // If submitted but not graded
             if (isSubmitted && !isGraded) ...[
-              SizedBox(height: 12),
+              const SizedBox(height: 12),
               TextFormField(
                 controller: _gradeControllers[submission['submission_id']],
+                style: TeacherTextStyles.listItemTitle,
                 decoration: InputDecoration(
                   labelText: 'Grade',
-                  border: OutlineInputBorder(),
+                  labelStyle: TeacherTextStyles.cardSubtitle,
+                  border: OutlineInputBorder(
+                    borderSide: BorderSide(color: TeacherColors.cardBorder),
+                  ),
                 ),
                 keyboardType: TextInputType.number,
               ),
-              SizedBox(height: 8),
+              const SizedBox(height: 8),
               TextFormField(
                 controller: _feedbackControllers[submission['submission_id']],
+                style: TeacherTextStyles.listItemTitle,
                 decoration: InputDecoration(
                   labelText: 'Feedback',
-                  border: OutlineInputBorder(),
+                  labelStyle: TeacherTextStyles.cardSubtitle,
+                  border: OutlineInputBorder(
+                    borderSide: BorderSide(color: TeacherColors.cardBorder),
+                  ),
                 ),
                 maxLines: 3,
               ),
-              SizedBox(height: 8),
+              const SizedBox(height: 8),
               Align(
                 alignment: Alignment.centerRight,
                 child: ElevatedButton(
+                  onPressed: () => _gradeSubmission(submission['submission_id']),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: widget.subjectColor,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   ),
-                  onPressed: () => _gradeSubmission(submission['submission_id']),
                   child: Text(
                     'Submit Grade',
-                    style: GoogleFonts.poppins(
-                      fontSize: 12,
-                      color: Colors.white,
-                    ),
+                    style: TeacherTextStyles.primaryButton,
                   ),
                 ),
               ),
@@ -724,14 +809,17 @@ class _AssignmentSubmissionsScreenState extends State<AssignmentSubmissionsScree
       ),
     );
   }
-
-  Widget _buildNonSubmitterCard(dynamic student, ThemeData theme) {
+  Widget _buildNonSubmitterCard(dynamic student) {
     return Card(
-      elevation: 1,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-      margin: EdgeInsets.only(bottom: 12),
+      elevation: 0,
+      margin: const EdgeInsets.only(bottom: 12),
+      color: TeacherColors.cardBackground,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8),
+        side: BorderSide(color: TeacherColors.cardBorder, width: 1),
+      ),
       child: Padding(
-        padding: EdgeInsets.all(12),
+        padding: const EdgeInsets.all(12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -740,59 +828,46 @@ class _AssignmentSubmissionsScreenState extends State<AssignmentSubmissionsScree
               children: [
                 Text(
                   student['student_name'],
-                  style: GoogleFonts.poppins(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                  ),
+                  style: TeacherTextStyles.listItemTitle,
                 ),
                 Chip(
                   label: Text(
                     'NOT SUBMITTED',
-                    style: GoogleFonts.poppins(
-                      fontSize: 12,
-                      color: Colors.white,
-                    ),
+                    style: TeacherTextStyles.primaryButton.copyWith(fontSize: 12),
                   ),
-                  backgroundColor: Colors.red,
+                  backgroundColor: TeacherColors.dangerAccent,
                 ),
               ],
             ),
-            SizedBox(height: 8),
+            const SizedBox(height: 8),
             Row(
               children: [
                 Icon(
                   Icons.email,
                   size: 14,
-                  color: theme.colorScheme.onSurface.withOpacity(0.6),
+                  color: TeacherColors.secondaryText,
                 ),
-                SizedBox(width: 4),
+                const SizedBox(width: 4),
                 Text(
                   student['email'] ?? 'No email',
-                  style: GoogleFonts.poppins(
-                    fontSize: 12,
-                    color: theme.colorScheme.onSurface.withOpacity(0.8),
-                  ),
+                  style: TeacherTextStyles.listItemSubtitle,
                 ),
               ],
             ),
-            SizedBox(height: 8),
+            const SizedBox(height: 8),
             Align(
               alignment: Alignment.centerRight,
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.orange,
+                  backgroundColor: TeacherColors.warningAccent,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 ),
                 onPressed: () => _sendReminder(student['RFID']),
                 child: Text(
                   'Send Reminder',
-                  style: GoogleFonts.poppins(
-                    fontSize: 12,
-                    color: Colors.white,
-                  ),
+                  style: TeacherTextStyles.primaryButton,
                 ),
               ),
             ),
@@ -804,54 +879,73 @@ class _AssignmentSubmissionsScreenState extends State<AssignmentSubmissionsScree
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return DefaultTabController(
       length: 2,
       child: Scaffold(
         appBar: AppBar(
           title: Text(
             widget.assignment['title'],
-            style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
+            style: TeacherTextStyles.className,
           ),
           backgroundColor: widget.subjectColor,
           centerTitle: true,
           elevation: 0,
           bottom: TabBar(
-            indicatorColor: Colors.white,
+            indicatorColor: TeacherColors.primaryText,
             tabs: [
-              Tab(text: 'Submissions (${submissions.length})'),
-              Tab(text: 'Not Submitted (${nonSubmitters.length})'),
+              Tab(
+                child: Text(
+                  'Submissions (${submissions.length})',
+                  style: TeacherTextStyles.primaryButton,
+                ),
+              ),
+              Tab(
+                child: Text(
+                  'Not Submitted (${nonSubmitters.length})',
+                  style: TeacherTextStyles.primaryButton,
+                ),
+              ),
             ],
           ),
         ),
         body: isLoading
-            ? Center(child: CircularProgressIndicator())
+            ? Center(
+          child: CircularProgressIndicator(
+            color: TeacherColors.primaryAccent,
+          ),
+        )
             : errorMessage.isNotEmpty
-            ? Center(child: Text(errorMessage))
+            ? Center(
+          child: Text(
+            errorMessage,
+            style: TeacherTextStyles.cardSubtitle.copyWith(
+              color: TeacherColors.dangerAccent,
+            ),
+          ),
+        )
             : TabBarView(
           children: [
             // Submissions Tab
             RefreshIndicator(
               onRefresh: _loadData,
+              color: widget.subjectColor,
               child: ListView.builder(
-                padding: EdgeInsets.all(16),
+                padding: const EdgeInsets.all(16),
                 itemCount: submissions.length,
                 itemBuilder: (context, index) => _buildSubmissionCard(
                   submissions[index],
-                  theme,
                 ),
               ),
             ),
             // Non-submitters Tab
             RefreshIndicator(
               onRefresh: _loadData,
+              color: widget.subjectColor,
               child: ListView.builder(
-                padding: EdgeInsets.all(16),
+                padding: const EdgeInsets.all(16),
                 itemCount: nonSubmitters.length,
                 itemBuilder: (context, index) => _buildNonSubmitterCard(
                   nonSubmitters[index],
-                  theme,
                 ),
               ),
             ),
@@ -863,49 +957,36 @@ class _AssignmentSubmissionsScreenState extends State<AssignmentSubmissionsScree
 
   Future<void> _viewSubmissionFile(dynamic submission) async {
     try {
-      final filePath = submission['file_path']; // From your API
-      const String baseUrl = 'http://193.203.162.232:5050/'; // Replace with your real base URL
+      final filePath = submission['file_path'];
+      const String baseUrl = 'http://193.203.162.232:5050/';
 
       if (filePath == null || filePath.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('File path not available')),
+          SnackBar(
+            content: Text('File path not available'),
+            backgroundColor: TeacherColors.warningAccent,
+          ),
         );
         return;
       }
 
-      // Construct full file URL
       final fileUrl = '$baseUrl$filePath';
-
-      print('🔗 File URL: $fileUrl'); // For debugging
-
-      // Open the file
       final result = await OpenFile.open(fileUrl);
 
       if (result.type != ResultType.done) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Could not open file: ${result.message}')),
+          SnackBar(
+            content: Text('Could not open file: ${result.message}'),
+            backgroundColor: TeacherColors.dangerAccent,
+          ),
         );
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error opening file: ${e.toString()}')),
-      );
-    }
-  }
-
-  Future<void> _openPdf(String fileUrl, String fileName) async {
-    try {
-      // Open the file directly from the URL
-      final result = await OpenFile.open(fileUrl);
-
-      if (result.type != ResultType.done) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Could not open file: ${result.message}')),
-        );
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to open file: ${e.toString()}')),
+        SnackBar(
+          content: Text('Error opening file: ${e.toString()}'),
+          backgroundColor: TeacherColors.dangerAccent,
+        ),
       );
     }
   }

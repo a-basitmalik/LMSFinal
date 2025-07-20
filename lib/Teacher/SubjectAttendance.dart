@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:http/http.dart' as http;
+import 'package:newapp/Teacher/themes/theme_colors.dart';
+import 'package:newapp/Teacher/themes/theme_text_styles.dart';
 import 'dart:convert';
+
 
 class SubjectAttendanceScreen extends StatefulWidget {
   final Map<String, dynamic> subject;
@@ -76,6 +78,7 @@ class _SubjectAttendanceScreenState extends State<SubjectAttendanceScreen> {
       {'student_id': '110', 'status': 'absent'},
     ],
   };
+
   @override
   void initState() {
     super.initState();
@@ -124,6 +127,7 @@ class _SubjectAttendanceScreenState extends State<SubjectAttendanceScreen> {
       });
     }
   }
+
   void _loadDummyAttendanceForDate() {
     final dateKey = DateFormat('yyyy-MM-dd').format(selectedDate);
     if (_dummyAttendanceData.containsKey(dateKey)) {
@@ -224,7 +228,7 @@ class _SubjectAttendanceScreenState extends State<SubjectAttendanceScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Attendance saved successfully!'),
-            backgroundColor: Colors.green,
+            backgroundColor: TeacherColors.successAccent,
           ),
         );
       } else {
@@ -234,7 +238,7 @@ class _SubjectAttendanceScreenState extends State<SubjectAttendanceScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Failed to save attendance: ${e.toString()}'),
-          backgroundColor: Colors.red,
+          backgroundColor: TeacherColors.dangerAccent,
         ),
       );
     } finally {
@@ -254,33 +258,30 @@ class _SubjectAttendanceScreenState extends State<SubjectAttendanceScreen> {
       attendanceStatus.updateAll((key, value) => status);
     });
   }
-
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final subjectColor = widget.subject['color'] ?? theme.primaryColor;
-    final presentCount =
-        attendanceStatus.values.where((status) => status == 'present').length;
+    final presentCount = attendanceStatus.values.where((status) => status == 'present').length;
     final absentCount = students.length - presentCount;
 
     return Scaffold(
       appBar: AppBar(
         title: Text(
           '${widget.subject['name']} Attendance',
-          style: GoogleFonts.poppins(
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-          ),
+          style: TeacherTextStyles.className.copyWith(color: TeacherColors.primaryText),
         ),
-        backgroundColor: subjectColor,
+        backgroundColor: TeacherColors.classColor,
         centerTitle: true,
         elevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(bottom: Radius.circular(20)),
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(bottom: Radius.circular(16)),
         ),
       ),
       body: isLoading
-          ? Center(child: CircularProgressIndicator())
+          ? Center(
+        child: CircularProgressIndicator(
+          color: TeacherColors.primaryAccent,
+        ),
+      )
           : errorMessage.isNotEmpty
           ? Center(
         child: Column(
@@ -288,99 +289,89 @@ class _SubjectAttendanceScreenState extends State<SubjectAttendanceScreen> {
           children: [
             Text(
               errorMessage,
-              style: GoogleFonts.poppins(color: Colors.red),
+              style: TeacherTextStyles.cardSubtitle.copyWith(
+                color: TeacherColors.dangerAccent,
+              ),
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             ElevatedButton(
               onPressed: _fetchStudentsForSubject,
-              child: Text('Retry'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: TeacherColors.primaryAccent,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: Text(
+                'Retry',
+                style: TeacherTextStyles.primaryButton,
+              ),
             ),
           ],
         ),
       )
           : Column(
         children: [
-          _buildDateSelector(theme, subjectColor),
-          _buildAttendanceSummary(
-            presentCount,
-            absentCount,
-            subjectColor,
-          ),
-          _buildQuickActions(theme, subjectColor),
+          _buildDateSelector(),
+          _buildAttendanceSummary(presentCount, absentCount),
+          _buildQuickActions(),
           Expanded(
             child: students.isEmpty
                 ? Center(
               child: Text(
                 'No students enrolled in this subject',
-                style: GoogleFonts.poppins(),
+                style: TeacherTextStyles.cardSubtitle,
               ),
             )
                 : ListView.builder(
-              padding: EdgeInsets.symmetric(horizontal: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 16),
               itemCount: students.length,
-              itemBuilder: (context, index) =>
-                  _buildStudentCard(
-                    students[index],
-                    theme,
-                    subjectColor,
-                  ),
+              itemBuilder: (context, index) => _buildStudentCard(students[index]),
             ),
           ),
-          _buildSubmitButton(theme, subjectColor),
+          _buildSubmitButton(),
         ],
       ),
     );
   }
-  Widget _buildDateSelector(ThemeData theme, Color subjectColor) {
+
+
+  Widget _buildDateSelector() {
     return Container(
-      margin: EdgeInsets.all(16),
-      padding: EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: theme.cardColor,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 6,
-            spreadRadius: 1,
-          ),
-        ],
+      margin: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(12),
+      decoration: TeacherColors.glassDecoration(
+        borderColor: TeacherColors.cardBorder,
+        borderRadius: 12,
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           IconButton(
-            icon: Icon(Icons.chevron_left),
-            color: subjectColor,
+            icon: const Icon(Icons.chevron_left),
+            color: TeacherColors.primaryAccent,
             onPressed: () => _changeDate(-1),
           ),
           Column(
             children: [
               Text(
                 DateFormat('EEEE').format(selectedDate),
-                style: GoogleFonts.poppins(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: theme.textTheme.titleLarge?.color,
-                ),
+                style: TeacherTextStyles.sectionHeader,
               ),
               Text(
                 DateFormat('MMMM d, y').format(selectedDate),
-                style: GoogleFonts.poppins(
-                  fontSize: 14,
-                  color: theme.textTheme.bodyMedium?.color,
-                ),
+                style: TeacherTextStyles.cardSubtitle,
               ),
             ],
           ),
           IconButton(
-            icon: Icon(Icons.chevron_right),
-            color: subjectColor,
+            icon: const Icon(Icons.chevron_right),
+            color: TeacherColors.primaryAccent,
             onPressed: () => _changeDate(1),
           ),
           IconButton(
-            icon: Icon(Icons.calendar_today),
-            color: subjectColor,
+            icon: const Icon(Icons.calendar_today),
+            color: TeacherColors.primaryAccent,
             onPressed: () async {
               final DateTime? picked = await showDatePicker(
                 context: context,
@@ -391,12 +382,12 @@ class _SubjectAttendanceScreenState extends State<SubjectAttendanceScreen> {
                   return Theme(
                     data: Theme.of(context).copyWith(
                       colorScheme: ColorScheme.light(
-                        primary: subjectColor,
-                        onPrimary: Colors.white,
-                        surface: Colors.white,
-                        onSurface: Colors.black,
+                        primary: TeacherColors.classColor,
+                        onPrimary: TeacherColors.primaryText,
+                        surface: TeacherColors.secondaryBackground,
+                        onSurface: TeacherColors.primaryText,
                       ),
-                      dialogBackgroundColor: Colors.white,
+                      dialogBackgroundColor: TeacherColors.primaryBackground,
                     ),
                     child: child!,
                   );
@@ -415,114 +406,85 @@ class _SubjectAttendanceScreenState extends State<SubjectAttendanceScreen> {
     );
   }
 
-  Widget _buildAttendanceSummary(int present, int absent, Color subjectColor) {
+  Widget _buildAttendanceSummary(int present, int absent) {
     return Container(
-      margin: EdgeInsets.symmetric(horizontal: 16),
-      padding: EdgeInsets.all(12),
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            subjectColor.withOpacity(0.8),
-            subjectColor.withOpacity(0.6),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        gradient: TeacherColors.accentGradient(TeacherColors.classColor),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          _buildSummaryItem(
-            'Present',
-            present,
-            Icons.check_circle,
-            Colors.green,
-          ),
-          _buildSummaryItem('Absent', absent, Icons.cancel, Colors.red),
-          _buildSummaryItem(
-            'Total',
-            students.length,
-            Icons.people,
-            subjectColor,
-          ),
+          _buildSummaryItem('Present', present, Icons.check_circle, TeacherColors.successAccent),
+          _buildSummaryItem('Absent', absent, Icons.cancel, TeacherColors.dangerAccent),
+          _buildSummaryItem('Total', students.length, Icons.people, TeacherColors.primaryAccent),
         ],
       ),
     );
   }
 
-  Widget _buildSummaryItem(
-    String label,
-    int count,
-    IconData icon,
-    Color color,
-  ) {
+  Widget _buildSummaryItem(String label, int count, IconData icon, Color color) {
     return Column(
       children: [
         Container(
-          padding: EdgeInsets.all(8),
+          padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.2),
+            color: TeacherColors.glassEffectLight,
             shape: BoxShape.circle,
           ),
-          child: Icon(icon, color: Colors.white, size: 20),
+          child: Icon(icon, color: color, size: 20),
         ),
-        SizedBox(height: 4),
+        const SizedBox(height: 4),
         Text(
           count.toString(),
-          style: GoogleFonts.poppins(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-            fontSize: 18,
-          ),
+          style: TeacherTextStyles.statValue.copyWith(color: color),
         ),
         Text(
           label,
-          style: GoogleFonts.poppins(
-            color: Colors.white.withOpacity(0.9),
-            fontSize: 12,
-          ),
+          style: TeacherTextStyles.statLabel,
         ),
       ],
     );
   }
 
-  Widget _buildQuickActions(ThemeData theme, Color subjectColor) {
+  Widget _buildQuickActions() {
     return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
         children: [
           Expanded(
             child: OutlinedButton.icon(
-              icon: Icon(Icons.check_circle, color: Colors.green),
+              icon: Icon(Icons.check_circle, color: TeacherColors.successAccent),
               label: Text(
                 'All Present',
-                style: GoogleFonts.poppins(color: Colors.green),
+                style: TeacherTextStyles.secondaryButton.copyWith(color: TeacherColors.successAccent),
               ),
               style: OutlinedButton.styleFrom(
-                padding: EdgeInsets.symmetric(vertical: 12),
+                padding: const EdgeInsets.symmetric(vertical: 12),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
-                side: BorderSide(color: Colors.green),
+                side: BorderSide(color: TeacherColors.successAccent),
               ),
               onPressed: () => _setAllStatus('present'),
             ),
           ),
-          SizedBox(width: 8),
+          const SizedBox(width: 8),
           Expanded(
             child: OutlinedButton.icon(
-              icon: Icon(Icons.cancel, color: Colors.red),
+              icon: Icon(Icons.cancel, color: TeacherColors.dangerAccent),
               label: Text(
                 'All Absent',
-                style: GoogleFonts.poppins(color: Colors.red),
+                style: TeacherTextStyles.secondaryButton.copyWith(color: TeacherColors.dangerAccent),
               ),
               style: OutlinedButton.styleFrom(
-                padding: EdgeInsets.symmetric(vertical: 12),
+                padding: const EdgeInsets.symmetric(vertical: 12),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
-                side: BorderSide(color: Colors.red),
+                side: BorderSide(color: TeacherColors.dangerAccent),
               ),
               onPressed: () => _setAllStatus('absent'),
             ),
@@ -532,81 +494,81 @@ class _SubjectAttendanceScreenState extends State<SubjectAttendanceScreen> {
     );
   }
 
-  Widget _buildStudentCard(
-      Map<String, dynamic> student,
-      ThemeData theme,
-      Color subjectColor,
-      ) {
-    // Use rfid instead of id since that's what we used as the key
+  Widget _buildStudentCard(Map<String, dynamic> student) {
     final isPresent = attendanceStatus[student['rfid'].toString()] == 'present';
 
     return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      margin: EdgeInsets.only(bottom: 12),
+      elevation: 0,
+      margin: const EdgeInsets.only(bottom: 12),
+      color: TeacherColors.cardBackground,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: TeacherColors.cardBorder, width: 1),
+      ),
       child: Padding(
-        padding: EdgeInsets.all(12),
+        padding: const EdgeInsets.all(12),
         child: Row(
           children: [
-            CircleAvatar(
-              backgroundColor: subjectColor.withOpacity(0.2),
-              radius: 20,
+            Container(
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: TeacherColors.accentGradient(TeacherColors.classColor),
+              ),
+              padding: const EdgeInsets.all(8),
               child: Text(
                 student['name'].isNotEmpty ? student['name'][0] : '?',
-                style: TextStyle(fontSize: 16),
+                style: TeacherTextStyles.cardTitle.copyWith(fontSize: 16),
               ),
             ),
-            SizedBox(width: 16),
+            const SizedBox(width: 16),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     student['name'] ?? 'Unknown Student',
-                    style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
+                    style: TeacherTextStyles.listItemTitle,
                   ),
-                  SizedBox(height: 2),
+                  const SizedBox(height: 2),
                   Text(
                     'ID: ${student['id'] ?? 'N/A'}',
-                    style: GoogleFonts.poppins(
-                      fontSize: 12,
-                      color: Colors.grey[600],
-                    ),
+                    style: TeacherTextStyles.listItemSubtitle,
                   ),
                 ],
               ),
             ),
             ToggleButtons(
               borderRadius: BorderRadius.circular(8),
-              constraints: BoxConstraints(minWidth: 80, minHeight: 36),
+              constraints: const BoxConstraints(minWidth: 80, minHeight: 36),
               isSelected: [isPresent, !isPresent],
               onPressed: (index) {
                 setState(() {
-                  attendanceStatus[student['rfid'].toString()] =
-                  index == 0 ? 'present' : 'absent';
+                  attendanceStatus[student['rfid'].toString()] = index == 0 ? 'present' : 'absent';
                 });
               },
-              fillColor: isPresent ? Colors.green[50] : Colors.red[50],
-              selectedColor: isPresent ? Colors.green : Colors.red,
-              color: theme.colorScheme.onSurface.withOpacity(0.6),
+              fillColor: isPresent
+                  ? TeacherColors.successAccent.withOpacity(0.1)
+                  : TeacherColors.dangerAccent.withOpacity(0.1),
+              selectedColor: isPresent ? TeacherColors.successAccent : TeacherColors.dangerAccent,
+              color: TeacherColors.secondaryText,
               children: [
                 Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 8),
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
                   child: Row(
                     children: [
                       Icon(Icons.check, size: 16),
-                      SizedBox(width: 4),
-                      Text('Present'),
+                      const SizedBox(width: 4),
+                      Text('Present', style: TeacherTextStyles.secondaryButton),
                     ],
                   ),
                 ),
                 Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 8),
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
                   child: Row(
                     children: [
                       Icon(Icons.close, size: 16),
-                      SizedBox(width: 4),
-                      Text('Absent'),
+                      const SizedBox(width: 4),
+                      Text('Absent', style: TeacherTextStyles.secondaryButton),
                     ],
                   ),
                 ),
@@ -618,37 +580,33 @@ class _SubjectAttendanceScreenState extends State<SubjectAttendanceScreen> {
     );
   }
 
-  Widget _buildSubmitButton(ThemeData theme, Color subjectColor) {
+  Widget _buildSubmitButton() {
     return Padding(
-      padding: EdgeInsets.all(16),
+      padding: const EdgeInsets.all(16),
       child: SizedBox(
         width: double.infinity,
         child: ElevatedButton(
           onPressed: isSubmitting ? null : _submitAttendance,
           style: ElevatedButton.styleFrom(
-            backgroundColor: subjectColor,
-            padding: EdgeInsets.symmetric(vertical: 16),
+            backgroundColor: TeacherColors.classColor,
+            padding: const EdgeInsets.symmetric(vertical: 16),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
             ),
           ),
-          child:
-              isSubmitting
-                  ? SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                    ),
-                  )
-                  : Text(
-                    'Submit Attendance',
-                    style: GoogleFonts.poppins(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                    ),
-                  ),
+          child: isSubmitting
+              ? SizedBox(
+            width: 20,
+            height: 20,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              valueColor: AlwaysStoppedAnimation<Color>(TeacherColors.primaryText),
+            ),
+          )
+              : Text(
+            'Submit Attendance',
+            style: TeacherTextStyles.primaryButton.copyWith(fontSize: 16),
+          ),
         ),
       ),
     );

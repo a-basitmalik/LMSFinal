@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
+import 'package:newapp/Teacher/themes/theme_colors.dart';
+import 'package:newapp/Teacher/themes/theme_text_styles.dart';
 import 'dart:convert';
 import 'package:newapp/login_screen.dart';
+
+
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
 
@@ -30,11 +33,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
   bool _isLoading = false;
   bool _showChangePassword = false;
   final _passwordFormKey = GlobalKey<FormState>();
-  final TextEditingController _currentPasswordController =
-      TextEditingController();
+  final TextEditingController _currentPasswordController = TextEditingController();
   final TextEditingController _newPasswordController = TextEditingController();
-  final TextEditingController _confirmPasswordController =
-      TextEditingController();
+  final TextEditingController _confirmPasswordController = TextEditingController();
 
   @override
   void initState() {
@@ -59,9 +60,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
         throw Exception('Failed to load profile');
       }
     } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Error loading profile: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error loading profile: $e')),
+      );
     } finally {
       setState(() => _isLoading = false);
     }
@@ -71,16 +72,34 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Logout'),
-        content: const Text('Are you sure you want to logout?'),
+        title: Text(
+          'Logout',
+          style: TeacherTextStyles.sectionHeader,
+        ),
+        content: Text(
+          'Are you sure you want to logout?',
+          style: TeacherTextStyles.cardSubtitle,
+        ),
+        backgroundColor: TeacherColors.secondaryBackground,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Text(
+              'Cancel',
+              style: TeacherTextStyles.secondaryButton,
+            ),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Logout'),
+            child: Text(
+              'Logout',
+              style: TeacherTextStyles.secondaryButton.copyWith(
+                color: TeacherColors.dangerAccent,
+              ),
+            ),
           ),
         ],
       ),
@@ -95,7 +114,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
         );
 
         if (response.statusCode == 200) {
-          // Navigate to login screen and remove all previous routes
           Navigator.pushAndRemoveUntil(
             context,
             MaterialPageRoute(builder: (context) => const LoginScreen()),
@@ -135,7 +153,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
       if (response.statusCode == 200) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Password changed successfully')),
+          SnackBar(
+            content: Text('Password changed successfully'),
+            backgroundColor: TeacherColors.successAccent,
+          ),
         );
         setState(() => _showChangePassword = false);
         _currentPasswordController.clear();
@@ -147,9 +168,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
         );
       }
     } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(e.toString())));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.toString()),
+          backgroundColor: TeacherColors.dangerAccent,
+        ),
+      );
     } finally {
       setState(() => _isLoading = false);
     }
@@ -165,10 +189,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-
     return Scaffold(
+      backgroundColor: TeacherColors.primaryBackground,
       body: CustomScrollView(
         slivers: [
           SliverAppBar(
@@ -178,17 +200,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
             flexibleSpace: FlexibleSpaceBar(
               title: Text(
                 'My Profile',
-                style: GoogleFonts.poppins(
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
+                style: TeacherTextStyles.className,
               ),
               background: Container(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
-                      Theme.of(context).colorScheme.primary.withOpacity(0.8),
-                      Theme.of(context).colorScheme.secondary.withOpacity(0.6),
+                      TeacherColors.primaryAccent.withOpacity(0.8),
+                      TeacherColors.secondaryAccent.withOpacity(0.6),
                     ],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
@@ -204,7 +223,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         child: Icon(
                           Icons.person_outline,
                           size: 150,
-                          color: Colors.white,
+                          color: TeacherColors.primaryText,
                         ),
                       ),
                     ),
@@ -218,10 +237,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
               padding: EdgeInsets.all(20),
               child: Column(
                 children: [
-                  _buildProfileCard(theme),
+                  _buildProfileCard(),
                   SizedBox(height: 24),
-                  if (_showChangePassword) _buildChangePasswordForm(theme),
-                  if (!_showChangePassword) _buildProfileActions(theme),
+                  if (_showChangePassword) _buildChangePasswordForm(),
+                  if (!_showChangePassword) _buildProfileActions(),
                 ],
               ),
             ),
@@ -231,10 +250,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildProfileCard(ThemeData theme) {
-    return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+  Widget _buildProfileCard() {
+    return Container(
+      decoration: TeacherColors.glassDecoration(),
       child: Padding(
         padding: EdgeInsets.all(20),
         child: Column(
@@ -247,13 +265,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   height: 120,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: theme.colorScheme.primary.withOpacity(0.1),
+                    gradient: TeacherColors.accentGradient(TeacherColors.primaryAccent),
                     image: DecorationImage(
                       image: AssetImage(_userProfile['avatar']),
                       fit: BoxFit.cover,
                     ),
                     border: Border.all(
-                      color: theme.colorScheme.primary,
+                      color: TeacherColors.primaryAccent,
                       width: 3,
                     ),
                   ),
@@ -261,46 +279,38 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 Container(
                   padding: EdgeInsets.all(6),
                   decoration: BoxDecoration(
-                    color: theme.colorScheme.primary,
+                    color: TeacherColors.primaryAccent,
                     shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white, width: 2),
+                    border: Border.all(color: TeacherColors.primaryText, width: 2),
                   ),
-                  child: Icon(Icons.edit, size: 18, color: Colors.white),
+                  child: Icon(Icons.edit, size: 18, color: TeacherColors.primaryText),
                 ),
               ],
             ),
             SizedBox(height: 20),
             Text(
               _userProfile['name'],
-              style: GoogleFonts.poppins(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TeacherTextStyles.className,
             ),
             SizedBox(height: 8),
             Text(
               _userProfile['email'],
-              style: GoogleFonts.poppins(
-                color: theme.colorScheme.onSurface.withOpacity(0.7),
-              ),
+              style: TeacherTextStyles.cardSubtitle,
             ),
             SizedBox(height: 16),
-            Divider(),
+            Divider(color: TeacherColors.cardBorder),
             SizedBox(height: 16),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
                 _buildProfileStat(
-                  theme,
                   label: 'Department',
                   value: _userProfile['department'],
                   icon: Icons.school,
                 ),
                 _buildProfileStat(
-                  theme,
                   label: 'Member Since',
-                  value:
-                      _userProfile['joinDate'].split('-')[0], // Just show year
+                  value: _userProfile['joinDate'].split('-')[0],
                   icon: Icons.calendar_today,
                 ),
               ],
@@ -311,8 +321,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildProfileStat(
-    ThemeData theme, {
+  Widget _buildProfileStat({
     required String label,
     required String value,
     required IconData icon,
@@ -322,51 +331,44 @@ class _ProfileScreenState extends State<ProfileScreen> {
         Container(
           padding: EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: theme.colorScheme.primary.withOpacity(0.1),
+            gradient: TeacherColors.accentGradient(TeacherColors.primaryAccent),
             shape: BoxShape.circle,
           ),
-          child: Icon(icon, color: theme.colorScheme.primary),
+          child: Icon(icon, color: TeacherColors.primaryText),
         ),
         SizedBox(height: 8),
         Text(
           value,
-          style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 16),
+          style: TeacherTextStyles.statValue,
         ),
         SizedBox(height: 4),
         Text(
           label,
-          style: GoogleFonts.poppins(
-            color: theme.colorScheme.onSurface.withOpacity(0.6),
-            fontSize: 12,
-          ),
+          style: TeacherTextStyles.statLabel,
         ),
       ],
     );
   }
 
-  Widget _buildProfileActions(ThemeData theme) {
+  Widget _buildProfileActions() {
     return Column(
       children: [
         _buildProfileActionTile(
-          theme,
           icon: Icons.lock_outline,
           title: 'Change Password',
           onTap: () => setState(() => _showChangePassword = true),
         ),
         _buildProfileActionTile(
-          theme,
           icon: Icons.notifications_active_outlined,
           title: 'Notification Settings',
           onTap: () {},
         ),
         _buildProfileActionTile(
-          theme,
           icon: Icons.help_outline,
           title: 'Help & Support',
           onTap: () {},
         ),
         _buildProfileActionTile(
-          theme,
           icon: Icons.info_outline,
           title: 'About',
           onTap: () {},
@@ -376,73 +378,66 @@ class _ProfileScreenState extends State<ProfileScreen> {
           width: double.infinity,
           child: ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red[400],
+              backgroundColor: TeacherColors.dangerAccent,
               padding: EdgeInsets.symmetric(vertical: 16),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
             ),
             onPressed: _logout,
-            child:
-                _isLoading
-                    ? SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                      ),
-                    )
-                    : Text(
-                      'Logout',
-                      style: GoogleFonts.poppins(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
-                    ),
+            child: _isLoading
+                ? SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                valueColor: AlwaysStoppedAnimation<Color>(TeacherColors.primaryText),
+              ),
+            )
+                : Text(
+              'Logout',
+              style: TeacherTextStyles.primaryButton,
+            ),
           ),
         ),
       ],
     );
   }
 
-  Widget _buildProfileActionTile(
-    ThemeData theme, {
+  Widget _buildProfileActionTile({
     required IconData icon,
     required String title,
     required VoidCallback onTap,
   }) {
-    return Card(
+    return Container(
       margin: EdgeInsets.only(bottom: 12),
-      elevation: 1,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      decoration: TeacherColors.glassDecoration(),
       child: ListTile(
         leading: Container(
           width: 40,
           height: 40,
           decoration: BoxDecoration(
-            color: theme.colorScheme.primary.withOpacity(0.1),
+            gradient: TeacherColors.accentGradient(TeacherColors.primaryAccent),
             borderRadius: BorderRadius.circular(8),
           ),
-          child: Icon(icon, color: theme.colorScheme.primary),
+          child: Icon(icon, color: TeacherColors.primaryText),
         ),
         title: Text(
           title,
-          style: GoogleFonts.poppins(fontWeight: FontWeight.w500),
+          style: TeacherTextStyles.listItemTitle,
         ),
         trailing: Icon(
           Icons.chevron_right,
-          color: theme.colorScheme.onSurface.withOpacity(0.5),
+          color: TeacherColors.secondaryText,
         ),
         onTap: onTap,
       ),
     );
   }
 
-  Widget _buildChangePasswordForm(ThemeData theme) {
-    return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+  Widget _buildChangePasswordForm() {
+    return Container(
+      decoration: TeacherColors.glassDecoration(),
       child: Padding(
         padding: EdgeInsets.all(20),
         child: Form(
@@ -455,15 +450,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 children: [
                   Text(
                     'Change Password',
-                    style: GoogleFonts.poppins(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: TeacherTextStyles.sectionHeader,
                   ),
                   IconButton(
-                    icon: Icon(Icons.close),
-                    onPressed:
-                        () => setState(() => _showChangePassword = false),
+                    icon: Icon(Icons.close, color: TeacherColors.primaryText),
+                    onPressed: () => setState(() => _showChangePassword = false),
                   ),
                 ],
               ),
@@ -471,12 +462,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
               TextFormField(
                 controller: _currentPasswordController,
                 obscureText: true,
+                style: TeacherTextStyles.listItemTitle,
                 decoration: InputDecoration(
                   labelText: 'Current Password',
-                  prefixIcon: Icon(Icons.lock_outline),
+                  labelStyle: TeacherTextStyles.cardSubtitle,
+                  prefixIcon: Icon(Icons.lock_outline, color: TeacherColors.secondaryText),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: TeacherColors.cardBorder),
                   ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: TeacherColors.cardBorder),
+                  ),
+                  filled: true,
+                  fillColor: TeacherColors.cardBackground,
                 ),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
@@ -489,12 +489,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
               TextFormField(
                 controller: _newPasswordController,
                 obscureText: true,
+                style: TeacherTextStyles.listItemTitle,
                 decoration: InputDecoration(
                   labelText: 'New Password',
-                  prefixIcon: Icon(Icons.lock_outline),
+                  labelStyle: TeacherTextStyles.cardSubtitle,
+                  prefixIcon: Icon(Icons.lock_outline, color: TeacherColors.secondaryText),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: TeacherColors.cardBorder),
                   ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: TeacherColors.cardBorder),
+                  ),
+                  filled: true,
+                  fillColor: TeacherColors.cardBackground,
                 ),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
@@ -510,12 +519,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
               TextFormField(
                 controller: _confirmPasswordController,
                 obscureText: true,
+                style: TeacherTextStyles.listItemTitle,
                 decoration: InputDecoration(
                   labelText: 'Confirm New Password',
-                  prefixIcon: Icon(Icons.lock_outline),
+                  labelStyle: TeacherTextStyles.cardSubtitle,
+                  prefixIcon: Icon(Icons.lock_outline, color: TeacherColors.secondaryText),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: TeacherColors.cardBorder),
                   ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: TeacherColors.cardBorder),
+                  ),
+                  filled: true,
+                  fillColor: TeacherColors.cardBackground,
                 ),
                 validator: (value) {
                   if (value != _newPasswordController.text) {
@@ -529,32 +547,28 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 width: double.infinity,
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: theme.colorScheme.primary,
+                    backgroundColor: TeacherColors.primaryAccent,
                     padding: EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
                   onPressed: _isLoading ? null : _changePassword,
-                  child:
-                      _isLoading
-                          ? SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(
-                                Colors.white,
-                              ),
-                            ),
-                          )
-                          : Text(
-                            'Update Password',
-                            style: GoogleFonts.poppins(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                            ),
-                          ),
+                  child: _isLoading
+                      ? SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        TeacherColors.primaryText,
+                      ),
+                    ),
+                  )
+                      : Text(
+                    'Update Password',
+                    style: TeacherTextStyles.primaryButton,
+                  ),
                 ),
               ),
             ],

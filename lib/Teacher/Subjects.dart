@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
+import 'package:newapp/Teacher/themes/theme_colors.dart';
+import 'package:newapp/Teacher/themes/theme_text_styles.dart';
 import 'dart:convert';
 import 'SubjectDetails.dart';
+
 
 class SubjectsScreen extends StatefulWidget {
   final String teacherId;
@@ -74,11 +76,11 @@ class _SubjectsScreenState extends State<SubjectsScreen> {
 
   Color _getColorForSubject(int subjectId) {
     final colors = [
-      Color(0xFF4361EE),
-      Color(0xFF7209B7),
-      Color(0xFF4CC9F0),
-      Color(0xFFF72585),
-      Color(0xFF4895EF),
+      TeacherColors.studentColor,
+      TeacherColors.classColor,
+      TeacherColors.attendanceColor,
+      TeacherColors.assignmentColor,
+      TeacherColors.gradeColor,
     ];
     return colors[subjectId % colors.length];
   }
@@ -121,7 +123,10 @@ class _SubjectsScreenState extends State<SubjectsScreen> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => SubjectDashboardScreen(subject: subject,teacherId: widget.teacherId,),
+        builder: (context) => SubjectDashboardScreen(
+          subject: subject,
+          teacherId: widget.teacherId,
+        ),
       ),
     );
   }
@@ -129,31 +134,24 @@ class _SubjectsScreenState extends State<SubjectsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.surface,
+      backgroundColor: TeacherColors.primaryBackground,
       appBar: AppBar(
         title: Text(
           'My Subjects',
-          style: GoogleFonts.poppins(
-            fontWeight: FontWeight.bold,
-            fontSize: 22,
-            color: Colors.white,
-          ),
+          style: TeacherTextStyles.className,
         ),
         elevation: 0,
-        backgroundColor: Theme.of(context).colorScheme.primary,
+        backgroundColor: TeacherColors.primaryBackground,
         centerTitle: true,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(bottom: Radius.circular(20)),
-        ),
         actions: [
           IconButton(
-            icon: Icon(Icons.refresh, color: Colors.white),
+            icon: Icon(Icons.refresh, color: TeacherColors.primaryText),
             onPressed: _fetchSubjects,
           ),
         ],
       ),
       body: isLoading
-          ? Center(child: CircularProgressIndicator())
+          ? Center(child: CircularProgressIndicator(color: TeacherColors.primaryAccent))
           : errorMessage.isNotEmpty
           ? Center(
         child: Column(
@@ -161,12 +159,21 @@ class _SubjectsScreenState extends State<SubjectsScreen> {
           children: [
             Text(
               errorMessage,
-              style: GoogleFonts.poppins(color: Colors.red),
+              style: TeacherTextStyles.listItemSubtitle.copyWith(color: TeacherColors.dangerAccent),
             ),
             SizedBox(height: 16),
             ElevatedButton(
               onPressed: _fetchSubjects,
-              child: Text('Retry'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: TeacherColors.primaryAccent,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: Text(
+                'Retry',
+                style: TeacherTextStyles.primaryButton,
+              ),
             ),
           ],
         ),
@@ -175,10 +182,7 @@ class _SubjectsScreenState extends State<SubjectsScreen> {
           ? Center(
         child: Text(
           'No subjects assigned',
-          style: GoogleFonts.poppins(
-            fontSize: 16,
-            color: Colors.grey[600],
-          ),
+          style: TeacherTextStyles.cardSubtitle,
         ),
       )
           : SingleChildScrollView(
@@ -188,7 +192,6 @@ class _SubjectsScreenState extends State<SubjectsScreen> {
             // Summary Card
             _buildSummaryCard(context),
             SizedBox(height: 24),
-
             // Subjects List
             _buildSubjectsList(),
           ],
@@ -213,8 +216,8 @@ class _SubjectsScreenState extends State<SubjectsScreen> {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            Theme.of(context).colorScheme.primary.withOpacity(0.8),
-            Theme.of(context).colorScheme.secondary.withOpacity(0.8),
+            TeacherColors.primaryAccent.withOpacity(0.8),
+            TeacherColors.secondaryAccent.withOpacity(0.8),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -253,18 +256,11 @@ class _SubjectsScreenState extends State<SubjectsScreen> {
         SizedBox(height: 8),
         Text(
           value,
-          style: GoogleFonts.poppins(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-          ),
+          style: TeacherTextStyles.statValue.copyWith(color: Colors.white),
         ),
         Text(
           label,
-          style: GoogleFonts.poppins(
-            fontSize: 14,
-            color: Colors.white.withOpacity(0.9),
-          ),
+          style: TeacherTextStyles.statLabel.copyWith(color: Colors.white.withOpacity(0.9)),
         ),
       ],
     );
@@ -284,9 +280,8 @@ class _SubjectsScreenState extends State<SubjectsScreen> {
   }
 
   Widget _buildSubjectCard(Map<String, dynamic> subject) {
-    return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+    return Container(
+      decoration: TeacherColors.glassDecoration(),
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
         onTap: () => _navigateToSubjectDetail(subject),
@@ -313,26 +308,25 @@ class _SubjectsScreenState extends State<SubjectsScreen> {
                       children: [
                         Text(
                           subject['name'],
-                          style: GoogleFonts.poppins(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 18,
-                            color: Colors.black87,
-                          ),
+                          style: TeacherTextStyles.cardTitle,
                         ),
                         Text(
                           subject['code'],
-                          style: GoogleFonts.poppins(color: Colors.grey[600]),
+                          style: TeacherTextStyles.cardSubtitle,
                         ),
                       ],
                     ),
                   ),
-                  Chip(
-                    backgroundColor: subject['color'].withOpacity(0.1),
-                    label: Text(
+                  Container(
+                    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: subject['color'].withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
                       '${subject['students']} students',
-                      style: GoogleFonts.poppins(
+                      style: TeacherTextStyles.cardSubtitle.copyWith(
                         color: subject['color'],
-                        fontSize: 12,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -342,33 +336,33 @@ class _SubjectsScreenState extends State<SubjectsScreen> {
               SizedBox(height: 16),
               Row(
                 children: [
-                  Icon(Icons.schedule, size: 16, color: Colors.grey),
+                  Icon(Icons.schedule, size: 16, color: TeacherColors.secondaryText),
                   SizedBox(width: 8),
                   Text(
                     subject['schedule'],
-                    style: GoogleFonts.poppins(color: Colors.grey[600]),
+                    style: TeacherTextStyles.listItemSubtitle,
                   ),
                 ],
               ),
               SizedBox(height: 8),
               Row(
                 children: [
-                  Icon(Icons.class_, size: 16, color: Colors.grey),
+                  Icon(Icons.class_, size: 16, color: TeacherColors.secondaryText),
                   SizedBox(width: 8),
                   Text(
                     subject['classes'].join(', '),
-                    style: GoogleFonts.poppins(color: Colors.grey[600]),
+                    style: TeacherTextStyles.listItemSubtitle,
                   ),
                 ],
               ),
               SizedBox(height: 8),
               Row(
                 children: [
-                  Icon(Icons.school, size: 16, color: Colors.grey),
+                  Icon(Icons.school, size: 16, color: TeacherColors.secondaryText),
                   SizedBox(width: 8),
                   Text(
                     'Grade ${subject['year']}',
-                    style: GoogleFonts.poppins(color: Colors.grey[600]),
+                    style: TeacherTextStyles.listItemSubtitle,
                   ),
                 ],
               ),

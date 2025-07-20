@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:intl/intl.dart';
+import 'package:newapp/Teacher/themes/theme_colors.dart';
+import 'package:newapp/Teacher/themes/theme_text_styles.dart';
 import 'CreateAssessment.dart';
 import 'EnterMarks.dart';
 import 'MarkedAssessment.dart';
@@ -50,49 +51,55 @@ class _SubjectResultsScreenState extends State<SubjectResultsScreen> {
         isLoading = false;
       });
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error loading assessments: $e')),
+        SnackBar(
+          content: Text(
+            'Error loading assessments: $e',
+            style: TeacherTextStyles.cardSubtitle.copyWith(color: TeacherColors.dangerAccent),
+          ),
+          backgroundColor: TeacherColors.dangerAccent.withOpacity(0.2),
+        ),
       );
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final subjectColor = widget.subject['color'] ?? theme.primaryColor;
+    final subjectColor = widget.subject['color'] ?? TeacherColors.primaryAccent;
 
     return DefaultTabController(
       length: 2,
       child: Scaffold(
+        backgroundColor: TeacherColors.primaryBackground,
         appBar: AppBar(
           title: Text(
             '${widget.subject['name']} Assessments',
-            style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
+            style: TeacherTextStyles.className,
           ),
-          backgroundColor: subjectColor,
+          backgroundColor: TeacherColors.primaryBackground,
           centerTitle: true,
           elevation: 0,
           bottom: TabBar(
             isScrollable: true,
-            indicatorColor: Colors.white,
+            indicatorColor: TeacherColors.primaryAccent,
             tabs: [
-              Tab(child: Text('Generate Reports', style: GoogleFonts.poppins())),
-              Tab(child: Text('Assessments', style: GoogleFonts.poppins())),
+              Tab(child: Text('Generate Reports', style: TeacherTextStyles.primaryButton)),
+              Tab(child: Text('Assessments', style: TeacherTextStyles.primaryButton)),
             ],
           ),
         ),
         body: isLoading
-            ? Center(child: CircularProgressIndicator())
+            ? Center(child: CircularProgressIndicator(color: TeacherColors.primaryAccent))
             : TabBarView(
           children: [
-            _buildReportsTab(theme, subjectColor),
-            _buildAssessmentsTab(theme, subjectColor),
+            _buildReportsTab(subjectColor),
+            _buildAssessmentsTab(subjectColor),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildReportsTab(ThemeData theme, Color subjectColor) {
+  Widget _buildReportsTab(Color subjectColor) {
     final assessmentTypes = [
       'Monthly',
       'Send Up',
@@ -109,8 +116,8 @@ class _SubjectResultsScreenState extends State<SubjectResultsScreen> {
       padding: EdgeInsets.all(16),
       child: Column(
         children: [
-          Card(
-            elevation: 4,
+          Container(
+            decoration: TeacherColors.glassDecoration(),
             child: Padding(
               padding: EdgeInsets.all(16),
               child: Column(
@@ -118,30 +125,39 @@ class _SubjectResultsScreenState extends State<SubjectResultsScreen> {
                 children: [
                   Text(
                     'Generate Assessment Report',
-                    style: GoogleFonts.poppins(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: TeacherTextStyles.sectionHeader,
                   ),
                   SizedBox(height: 20),
-                  DropdownButtonFormField<String>(
-                    value: selectedType,
-                    decoration: InputDecoration(
-                      labelText: 'Assessment Type',
-                      border: OutlineInputBorder(),
-                      filled: true,
+                  Container(
+                    decoration: BoxDecoration(
+                      color: TeacherColors.secondaryBackground,
+                      borderRadius: BorderRadius.circular(8),
                     ),
-                    items: assessmentTypes
-                        .map((type) => DropdownMenuItem(
-                      value: type,
-                      child: Text(type),
-                    ))
-                        .toList(),
-                    onChanged: (value) {
-                      setState(() {
-                        selectedType = value!;
-                      });
-                    },
+                    child: DropdownButtonFormField<String>(
+                      value: selectedType,
+                      decoration: InputDecoration(
+                        labelText: 'Assessment Type',
+                        labelStyle: TeacherTextStyles.cardSubtitle,
+                        border: OutlineInputBorder(
+                          borderSide: BorderSide(color: TeacherColors.cardBorder),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        contentPadding: EdgeInsets.symmetric(horizontal: 16),
+                      ),
+                      dropdownColor: TeacherColors.secondaryBackground,
+                      style: TeacherTextStyles.listItemTitle,
+                      items: assessmentTypes
+                          .map((type) => DropdownMenuItem(
+                        value: type,
+                        child: Text(type),
+                      ))
+                          .toList(),
+                      onChanged: (value) {
+                        setState(() {
+                          selectedType = value!;
+                        });
+                      },
+                    ),
                   ),
                   SizedBox(height: 20),
                   SizedBox(
@@ -159,10 +175,7 @@ class _SubjectResultsScreenState extends State<SubjectResultsScreen> {
                       ),
                       child: Text(
                         'Generate Report',
-                        style: GoogleFonts.poppins(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                        ),
+                        style: TeacherTextStyles.primaryButton,
                       ),
                     ),
                   ),
@@ -171,9 +184,9 @@ class _SubjectResultsScreenState extends State<SubjectResultsScreen> {
             ),
           ),
           SizedBox(height: 20),
-          // Placeholder for generated report preview
-          Card(
-            elevation: 4,
+          // Report preview
+          Container(
+            decoration: TeacherColors.glassDecoration(),
             child: Padding(
               padding: EdgeInsets.all(16),
               child: Column(
@@ -181,50 +194,70 @@ class _SubjectResultsScreenState extends State<SubjectResultsScreen> {
                 children: [
                   Text(
                     'Sample Report Preview',
-                    style: GoogleFonts.poppins(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: TeacherTextStyles.sectionHeader,
                   ),
                   SizedBox(height: 10),
                   Text(
                     'Monthly Assessment Report - July 2023',
-                    style: GoogleFonts.poppins(),
+                    style: TeacherTextStyles.listItemTitle,
                   ),
                   SizedBox(height: 10),
-                  DataTable(
-                    columns: [
-                      DataColumn(label: Text('Student')),
-                      DataColumn(label: Text('Marks')),
-                      DataColumn(label: Text('Grade')),
-                    ],
-                    rows: [
-                      DataRow(cells: [
-                        DataCell(Text('Alice Johnson')),
-                        DataCell(Text('85/100')),
-                        DataCell(Text('A')),
-                      ]),
-                      DataRow(cells: [
-                        DataCell(Text('Bob Smith')),
-                        DataCell(Text('72/100')),
-                        DataCell(Text('B')),
-                      ]),
-                    ],
+                  Container(
+                    decoration: BoxDecoration(
+                      color: TeacherColors.secondaryBackground.withOpacity(0.5),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: DataTable(
+                      headingRowColor: MaterialStateProperty.resolveWith<Color>(
+                            (Set<MaterialState> states) => subjectColor.withOpacity(0.2),
+                      ),
+                      columns: [
+                        DataColumn(
+                          label: Text('Student', style: TeacherTextStyles.cardTitle),
+                        ),
+                        DataColumn(
+                          label: Text('Marks', style: TeacherTextStyles.cardTitle),
+                        ),
+                        DataColumn(
+                          label: Text('Grade', style: TeacherTextStyles.cardTitle),
+                        ),
+                      ],
+                      rows: [
+                        DataRow(cells: [
+                          DataCell(Text('Alice Johnson', style: TeacherTextStyles.listItemSubtitle)),
+                          DataCell(Text('85/100', style: TeacherTextStyles.listItemSubtitle)),
+                          DataCell(Text('A', style: TeacherTextStyles.listItemSubtitle)),
+                        ]),
+                        DataRow(cells: [
+                          DataCell(Text('Bob Smith', style: TeacherTextStyles.listItemSubtitle)),
+                          DataCell(Text('72/100', style: TeacherTextStyles.listItemSubtitle)),
+                          DataCell(Text('B', style: TeacherTextStyles.listItemSubtitle)),
+                        ]),
+                      ],
+                    ),
                   ),
                   SizedBox(height: 10),
                   Align(
                     alignment: Alignment.centerRight,
                     child: ElevatedButton(
                       onPressed: () {
-                        // Download functionality
                         ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Report downloaded successfully')),
+                          SnackBar(
+                            content: Text(
+                              'Report downloaded successfully',
+                              style: TeacherTextStyles.cardSubtitle,
+                            ),
+                            backgroundColor: TeacherColors.successAccent.withOpacity(0.2),
+                          ),
                         );
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: subjectColor,
                       ),
-                      child: Text('Download Report'),
+                      child: Text(
+                        'Download Report',
+                        style: TeacherTextStyles.secondaryButton,
+                      ),
                     ),
                   ),
                 ],
@@ -237,18 +270,28 @@ class _SubjectResultsScreenState extends State<SubjectResultsScreen> {
   }
 
   Future<void> _generateReport(String type) async {
-    // In a real app, this would call your API
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Generating $type report...')),
+      SnackBar(
+        content: Text(
+          'Generating $type report...',
+          style: TeacherTextStyles.cardSubtitle,
+        ),
+        backgroundColor: TeacherColors.infoAccent.withOpacity(0.2),
+      ),
     );
     await Future.delayed(Duration(seconds: 1));
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('$type report generated successfully')),
+      SnackBar(
+        content: Text(
+          '$type report generated successfully',
+          style: TeacherTextStyles.cardSubtitle,
+        ),
+        backgroundColor: TeacherColors.successAccent.withOpacity(0.2),
+      ),
     );
   }
 
-  Widget _buildAssessmentsTab(ThemeData theme, Color subjectColor) {
-    // Combine assessments and quizzes
+  Widget _buildAssessmentsTab(Color subjectColor) {
     final allAssessments = [
       ...assessments.map((a) => {...a, 'is_quiz': false}),
       ...quizzes.map((q) => {...q, 'is_quiz': true}),
@@ -281,10 +324,7 @@ class _SubjectResultsScreenState extends State<SubjectResultsScreen> {
               ),
               child: Text(
                 'Create Assessment',
-                style: GoogleFonts.poppins(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                ),
+                style: TeacherTextStyles.primaryButton,
               ),
             ),
           ),
@@ -296,19 +336,31 @@ class _SubjectResultsScreenState extends State<SubjectResultsScreen> {
             itemBuilder: (context, index) {
               final assessment = allAssessments[index];
               final isMarked = (assessment['is_marked'] == 1);
-
               final isQuiz = assessment['is_quiz'] ?? false;
 
-              return Card(
+              return Container(
                 margin: EdgeInsets.only(bottom: 12),
+                decoration: TeacherColors.glassDecoration(),
                 child: ListTile(
+                  contentPadding: EdgeInsets.all(16),
+                  leading: Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: subjectColor.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(
+                      isQuiz ? Icons.quiz : Icons.assignment,
+                      color: subjectColor,
+                    ),
+                  ),
                   title: Text(
                     isQuiz
                         ? 'Quiz ${assessment['quiz_number']}'
                         : assessment['title'].toString(),
-                    style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
+                    style: TeacherTextStyles.cardTitle,
                   ),
-
                   subtitle: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -316,22 +368,26 @@ class _SubjectResultsScreenState extends State<SubjectResultsScreen> {
                         isQuiz
                             ? 'Quiz for ${assessment['monthly_assessment_title']}'
                             : 'Type: ${assessment['assessment_type']}',
+                        style: TeacherTextStyles.listItemSubtitle,
                       ),
                       Text(
                         'Date: ${DateFormat('MMM d, y').format(
                           DateFormat("EEE, dd MMM yyyy HH:mm:ss 'GMT'", 'en_US')
                               .parse(assessment['created_at'], true)
                               .toLocal(),
-                        )
-                        }',
+                        )}',
+                        style: TeacherTextStyles.listItemSubtitle,
                       ),
                       if (isQuiz)
-                        Text('Total Marks: ${assessment['total_marks'] ?? 15}'),
+                        Text(
+                          'Total Marks: ${assessment['total_marks'] ?? 15}',
+                          style: TeacherTextStyles.listItemSubtitle,
+                        ),
                     ],
                   ),
                   trailing: isMarked
-                      ? Icon(Icons.check_circle, color: Colors.green)
-                      : Icon(Icons.pending, color: Colors.orange),
+                      ? Icon(Icons.check_circle, color: TeacherColors.successAccent)
+                      : Icon(Icons.pending, color: TeacherColors.warningAccent),
                   onTap: () {
                     if (isMarked) {
                       Navigator.push(

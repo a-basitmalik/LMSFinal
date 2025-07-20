@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:intl/intl.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:mime/mime.dart';
 import 'package:http_parser/http_parser.dart';
+import 'package:newapp/Teacher/themes/theme_colors.dart';
+import 'package:newapp/Teacher/themes/theme_text_styles.dart';
 
 import '../Student/models/subject_model.dart';
 
@@ -23,7 +24,7 @@ class _AnnouncementScreenState extends State<SubjectAnnouncementScreen> {
   List<Map<String, dynamic>> announcements = [];
   bool isLoading = true;
   String errorMessage = '';
-  final String baseUrl = 'http://192.168.18.185:5050/SubjectAnnouncement';
+  final String baseUrl = 'http://193.203.162.232:5050/SubjectAnnouncement';
 
   @override
   void initState() {
@@ -69,9 +70,14 @@ class _AnnouncementScreenState extends State<SubjectAnnouncementScreen> {
       builder: (context) => StatefulBuilder(
         builder: (context, setState) {
           return AlertDialog(
+            backgroundColor: TeacherColors.primaryBackground,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+              side: BorderSide(color: TeacherColors.cardBorder),
+            ),
             title: Text(
               'New Announcement',
-              style: GoogleFonts.poppins(),
+              style: TeacherTextStyles.sectionHeader.copyWith(color: TeacherColors.primaryText),
             ),
             content: SingleChildScrollView(
               child: Column(
@@ -79,36 +85,56 @@ class _AnnouncementScreenState extends State<SubjectAnnouncementScreen> {
                 children: [
                   TextField(
                     controller: titleController,
+                    style: TeacherTextStyles.listItemTitle,
                     decoration: InputDecoration(
                       labelText: 'Title',
-                      border: OutlineInputBorder(),
+                      labelStyle: TeacherTextStyles.cardSubtitle,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: TeacherColors.cardBorder),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: TeacherColors.cardBorder),
+                      ),
+                      filled: true,
+                      fillColor: TeacherColors.secondaryBackground,
                     ),
                   ),
-                  SizedBox(height: 16),
+                  const SizedBox(height: 16),
                   TextField(
                     controller: descriptionController,
+                    style: TeacherTextStyles.listItemTitle,
                     maxLines: 4,
                     decoration: InputDecoration(
                       labelText: 'Description',
-                      border: OutlineInputBorder(),
+                      labelStyle: TeacherTextStyles.cardSubtitle,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: TeacherColors.cardBorder),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: TeacherColors.cardBorder),
+                      ),
+                      filled: true,
+                      fillColor: TeacherColors.secondaryBackground,
                     ),
                   ),
-                  SizedBox(height: 16),
+                  const SizedBox(height: 16),
                   if (selectedFiles.isNotEmpty)
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
                           'Attachments:',
-                          style: GoogleFonts.poppins(
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style: TeacherTextStyles.sectionHeader,
                         ),
                         ...selectedFiles.map((file) => ListTile(
-                          leading: Icon(Icons.attach_file),
-                          title: Text(file.name),
+                          leading: Icon(Icons.attach_file, color: TeacherColors.primaryAccent),
+                          title: Text(file.name, style: TeacherTextStyles.listItemTitle),
                           trailing: IconButton(
-                            icon: Icon(Icons.close),
+                            icon: Icon(Icons.close, color: TeacherColors.dangerAccent),
                             onPressed: () {
                               setState(() {
                                 selectedFiles.remove(file);
@@ -119,6 +145,13 @@ class _AnnouncementScreenState extends State<SubjectAnnouncementScreen> {
                       ],
                     ),
                   ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: TeacherColors.primaryAccent,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                    ),
                     onPressed: () async {
                       final result = await FilePicker.platform.pickFiles(
                         allowMultiple: true,
@@ -129,7 +162,7 @@ class _AnnouncementScreenState extends State<SubjectAnnouncementScreen> {
                         });
                       }
                     },
-                    child: Text('Add Attachments'),
+                    child: Text('Add Attachments', style: TeacherTextStyles.primaryButton),
                   ),
                 ],
               ),
@@ -137,13 +170,22 @@ class _AnnouncementScreenState extends State<SubjectAnnouncementScreen> {
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: Text('Cancel'),
+                child: Text('Cancel', style: TeacherTextStyles.secondaryButton),
               ),
               ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: TeacherColors.successAccent,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
                 onPressed: () async {
                   if (titleController.text.isEmpty) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Title is required')),
+                      SnackBar(
+                        content: Text('Title is required', style: TeacherTextStyles.listItemTitle),
+                        backgroundColor: TeacherColors.dangerAccent,
+                      ),
                     );
                     return;
                   }
@@ -154,7 +196,7 @@ class _AnnouncementScreenState extends State<SubjectAnnouncementScreen> {
                     'files': selectedFiles,
                   });
                 },
-                child: Text('Post'),
+                child: Text('Post', style: TeacherTextStyles.primaryButton),
               ),
             ],
           );
@@ -207,7 +249,10 @@ class _AnnouncementScreenState extends State<SubjectAnnouncementScreen> {
 
       if (response.statusCode == 201) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Announcement posted successfully')),
+          SnackBar(
+            content: Text('Announcement posted successfully', style: TeacherTextStyles.listItemTitle),
+            backgroundColor: TeacherColors.successAccent,
+          ),
         );
         _fetchAnnouncements();
       } else {
@@ -215,34 +260,75 @@ class _AnnouncementScreenState extends State<SubjectAnnouncementScreen> {
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: ${e.toString()}')),
+        SnackBar(
+          content: Text('Error: ${e.toString()}', style: TeacherTextStyles.listItemTitle),
+          backgroundColor: TeacherColors.dangerAccent,
+        ),
       );
     }
   }
 
   void _openAttachment(String fileUrl) {
-    // In a real app, you would use url_launcher or a file viewer
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Attachment'),
-        content: Text('Would you like to download or view this attachment?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('Cancel'),
+      builder: (context) => Dialog(
+        backgroundColor: TeacherColors.primaryBackground,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: BorderSide(color: TeacherColors.cardBorder),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Attachment',
+                style: TeacherTextStyles.sectionHeader,
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Would you like to download or view this attachment?',
+                style: TeacherTextStyles.listItemTitle,
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 24),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: Text(
+                      'Cancel',
+                      style: TeacherTextStyles.secondaryButton,
+                    ),
+                  ),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: TeacherColors.primaryAccent,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    onPressed: () {
+                      Navigator.pop(context);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Opening attachment...', style: TeacherTextStyles.listItemTitle),
+                          backgroundColor: TeacherColors.infoAccent,
+                        ),
+                      );
+                    },
+                    child: Text(
+                      'Open',
+                      style: TeacherTextStyles.primaryButton,
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              // Implement actual download/view logic here
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Opening attachment...')),
-              );
-            },
-            child: Text('Open'),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -250,17 +336,13 @@ class _AnnouncementScreenState extends State<SubjectAnnouncementScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FF),
+      backgroundColor: TeacherColors.primaryBackground,
       appBar: AppBar(
         title: Text(
           'All Announcements',
-          style: GoogleFonts.poppins(
-            fontWeight: FontWeight.bold,
-            fontSize: 20,
-            color: Colors.white,
-          ),
+          style: TeacherTextStyles.className,
         ),
-        backgroundColor: const Color(0xFF4361EE),
+        backgroundColor: TeacherColors.primaryAccent,
         elevation: 0,
         centerTitle: true,
         shape: const RoundedRectangleBorder(
@@ -268,11 +350,25 @@ class _AnnouncementScreenState extends State<SubjectAnnouncementScreen> {
         ),
       ),
       body: isLoading
-          ? Center(child: CircularProgressIndicator())
+          ? Center(
+        child: CircularProgressIndicator(
+          color: TeacherColors.primaryAccent,
+        ),
+      )
           : errorMessage.isNotEmpty
-          ? Center(child: Text(errorMessage))
+          ? Center(
+        child: Text(
+          errorMessage,
+          style: TeacherTextStyles.listItemTitle,
+        ),
+      )
           : announcements.isEmpty
-          ? Center(child: Text('No announcements yet'))
+          ? Center(
+        child: Text(
+          'No announcements yet',
+          style: TeacherTextStyles.listItemTitle,
+        ),
+      )
           : ListView.separated(
         padding: const EdgeInsets.all(16),
         itemCount: announcements.length,
@@ -291,16 +387,8 @@ class _AnnouncementScreenState extends State<SubjectAnnouncementScreen> {
               1;
 
           return Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 8,
-                  spreadRadius: 2,
-                ),
-              ],
+            decoration: TeacherColors.glassDecoration(
+              borderRadius: 16,
             ),
             child: Padding(
               padding: const EdgeInsets.all(16),
@@ -313,11 +401,7 @@ class _AnnouncementScreenState extends State<SubjectAnnouncementScreen> {
                       Expanded(
                         child: Text(
                           announcement['title'],
-                          style: GoogleFonts.poppins(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 18,
-                            color: Colors.black87,
-                          ),
+                          style: TeacherTextStyles.cardTitle,
                         ),
                       ),
                       if (isNew)
@@ -327,17 +411,13 @@ class _AnnouncementScreenState extends State<SubjectAnnouncementScreen> {
                             vertical: 2,
                           ),
                           decoration: BoxDecoration(
-                            color: Colors.red,
+                            color: TeacherColors.dangerAccent,
                             borderRadius:
                             BorderRadius.circular(10),
                           ),
                           child: Text(
                             'NEW',
-                            style: GoogleFonts.poppins(
-                              color: Colors.white,
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                            ),
+                            style: TeacherTextStyles.primaryButton.copyWith(fontSize: 10),
                           ),
                         ),
                     ],
@@ -351,17 +431,14 @@ class _AnnouncementScreenState extends State<SubjectAnnouncementScreen> {
                         width: 6,
                         height: 6,
                         margin: const EdgeInsets.only(right: 8),
-                        decoration: const BoxDecoration(
-                          color: Colors.grey,
+                        decoration: BoxDecoration(
+                          color: TeacherColors.secondaryText,
                           shape: BoxShape.circle,
                         ),
                       ),
                       Text(
                         formattedDate,
-                        style: GoogleFonts.poppins(
-                          fontSize: 14,
-                          color: Colors.grey[600],
-                        ),
+                        style: TeacherTextStyles.cardSubtitle,
                       ),
                     ],
                   ),
@@ -370,11 +447,7 @@ class _AnnouncementScreenState extends State<SubjectAnnouncementScreen> {
                   // Content
                   Text(
                     announcement['description'] ?? '',
-                    style: GoogleFonts.poppins(
-                      fontSize: 15,
-                      color: Colors.black87,
-                      height: 1.5,
-                    ),
+                    style: TeacherTextStyles.listItemSubtitle,
                   ),
                   const SizedBox(height: 12),
 
@@ -387,9 +460,7 @@ class _AnnouncementScreenState extends State<SubjectAnnouncementScreen> {
                       children: [
                         Text(
                           'Attachments:',
-                          style: GoogleFonts.poppins(
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style: TeacherTextStyles.sectionHeader,
                         ),
                         const SizedBox(height: 8),
                         Wrap(
@@ -403,7 +474,7 @@ class _AnnouncementScreenState extends State<SubjectAnnouncementScreen> {
                               child: Container(
                                 padding: const EdgeInsets.all(8),
                                 decoration: BoxDecoration(
-                                  color: Colors.grey[100],
+                                  color: TeacherColors.secondaryBackground,
                                   borderRadius:
                                   BorderRadius.circular(8),
                                 ),
@@ -413,12 +484,12 @@ class _AnnouncementScreenState extends State<SubjectAnnouncementScreen> {
                                     Icon(
                                       Icons.attach_file,
                                       size: 16,
+                                      color: TeacherColors.primaryAccent,
                                     ),
                                     const SizedBox(width: 4),
                                     Text(
                                       attachment['file_name'],
-                                      style:
-                                      GoogleFonts.poppins(),
+                                      style: TeacherTextStyles.listItemSubtitle,
                                     ),
                                   ],
                                 ),
@@ -437,7 +508,7 @@ class _AnnouncementScreenState extends State<SubjectAnnouncementScreen> {
       floatingActionButton: FloatingActionButton(
         onPressed: _addAnnouncement,
         child: Icon(Icons.add),
-        backgroundColor: const Color(0xFF4361EE),
+        backgroundColor: TeacherColors.primaryAccent,
       ),
     );
   }

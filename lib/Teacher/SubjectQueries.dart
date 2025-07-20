@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:http/http.dart' as http;
+import 'package:newapp/Teacher/themes/theme_colors.dart';
+import 'package:newapp/Teacher/themes/theme_text_styles.dart';
 import 'dart:convert';
+
 
 class SubjectQueriesScreen extends StatefulWidget {
   final Map<String, dynamic> subject;
@@ -45,23 +47,21 @@ class _SubjectQueriesScreenState extends State<SubjectQueriesScreen> {
 
         setState(() {
           queries = data.map<Map<String, dynamic>>((query) {
-            // Convert datetime to ISO string if it's not already
             String createdAt;
             if (query['created_at'] is String) {
               createdAt = query['created_at'];
             } else {
-              // Handle if created_at is a datetime object (from Python)
               createdAt = DateTime.now().toIso8601String();
             }
 
             return {
               'id': query['id']?.toString() ?? '',
               'student_name': query['student_name']?.toString() ?? 'Anonymous',
-              'student_avatar': '👤', // Default avatar since API doesn't provide
+              'student_avatar': '👤',
               'question': query['question']?.toString() ?? '',
               'status': query['status']?.toString()?.toLowerCase() ?? 'pending',
               'created_at': createdAt,
-              'answer': query['answer']?.toString(), // Note: API uses 'answer' not 'response'
+              'answer': query['answer']?.toString(),
             };
           }).toList();
           isLoading = false;
@@ -76,7 +76,10 @@ class _SubjectQueriesScreenState extends State<SubjectQueriesScreen> {
         isError = true;
       });
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error fetching queries: $e')),
+        SnackBar(
+          content: Text('Error fetching queries: $e'),
+          backgroundColor: TeacherColors.dangerAccent,
+        ),
       );
     }
   }
@@ -95,13 +98,16 @@ class _SubjectQueriesScreenState extends State<SubjectQueriesScreen> {
           'Authorization': 'Bearer YOUR_ACCESS_TOKEN',
           'Content-Type': 'application/json',
         },
-        body: json.encode({'answer': responseText}), // Changed from 'response' to 'answer'
+        body: json.encode({'answer': responseText}),
       );
 
       if (response.statusCode == 200) {
         await _fetchQueries();
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Response sent successfully')),
+          SnackBar(
+            content: Text('Response sent successfully', style: TeacherTextStyles.primaryButton),
+            backgroundColor: TeacherColors.successAccent,
+          ),
         );
       } else {
         throw Exception('Failed to send response: ${response.statusCode}');
@@ -111,16 +117,21 @@ class _SubjectQueriesScreenState extends State<SubjectQueriesScreen> {
         isLoading = false;
       });
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error sending response: $e')),
+        SnackBar(
+          content: Text('Error sending response: $e', style: TeacherTextStyles.primaryButton),
+          backgroundColor: TeacherColors.dangerAccent,
+        ),
       );
     }
   }
+
   void _showResponseDialog(Map<String, dynamic> query) {
-    final subjectColor = widget.subject['color'] ?? Theme.of(context).primaryColor;
+    final subjectColor = widget.subject['color'] ?? TeacherColors.primaryAccent;
 
     showDialog(
       context: context,
       builder: (context) => Dialog(
+        backgroundColor: TeacherColors.secondaryBackground,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
         ),
@@ -132,20 +143,28 @@ class _SubjectQueriesScreenState extends State<SubjectQueriesScreen> {
             children: [
               Text(
                 'Respond to ${query['student_name']}',
-                style: GoogleFonts.poppins(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 18,
-                ),
+                style: TeacherTextStyles.sectionHeader,
               ),
               const SizedBox(height: 16),
-              Text(query['question'], style: GoogleFonts.poppins()),
+              Text(query['question'], style: TeacherTextStyles.listItemSubtitle),
               const SizedBox(height: 16),
               TextField(
                 controller: _responseController,
+                style: TeacherTextStyles.listItemSubtitle,
                 decoration: InputDecoration(
                   labelText: 'Your Response',
+                  labelStyle: TeacherTextStyles.cardSubtitle,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(color: TeacherColors.cardBorder),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(color: TeacherColors.cardBorder),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(color: TeacherColors.primaryAccent),
                   ),
                 ),
                 maxLines: 4,
@@ -156,12 +175,15 @@ class _SubjectQueriesScreenState extends State<SubjectQueriesScreen> {
                 children: [
                   TextButton(
                     onPressed: () => Navigator.pop(context),
-                    child: const Text('Cancel'),
+                    child: Text('Cancel', style: TeacherTextStyles.secondaryButton),
                   ),
                   const SizedBox(width: 8),
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: subjectColor,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
                     ),
                     onPressed: () {
                       _respondToQuery(
@@ -171,7 +193,7 @@ class _SubjectQueriesScreenState extends State<SubjectQueriesScreen> {
                       _responseController.clear();
                       Navigator.pop(context);
                     },
-                    child: const Text('Send'),
+                    child: Text('Send', style: TeacherTextStyles.primaryButton),
                   ),
                 ],
               ),
@@ -184,14 +206,14 @@ class _SubjectQueriesScreenState extends State<SubjectQueriesScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final subjectColor = widget.subject['color'] ?? theme.primaryColor;
+    final subjectColor = widget.subject['color'] ?? TeacherColors.primaryAccent;
 
     return Scaffold(
+      backgroundColor: TeacherColors.primaryBackground,
       appBar: AppBar(
         title: Text(
           '${widget.subject['name']} Queries',
-          style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
+          style: TeacherTextStyles.className,
         ),
         backgroundColor: subjectColor,
         centerTitle: true,
@@ -200,13 +222,16 @@ class _SubjectQueriesScreenState extends State<SubjectQueriesScreen> {
           borderRadius: BorderRadius.vertical(bottom: Radius.circular(20)),
         ),
       ),
-      body: _buildBody(theme, subjectColor),
+      body: _buildBody(subjectColor),
     );
   }
 
-  Widget _buildBody(ThemeData theme, Color subjectColor) {
+
+  Widget _buildBody(Color subjectColor) {
     if (isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return Center(
+        child: CircularProgressIndicator(color: TeacherColors.primaryAccent),
+      );
     }
 
     if (isError) {
@@ -214,16 +239,19 @@ class _SubjectQueriesScreenState extends State<SubjectQueriesScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.error_outline, size: 48, color: Colors.red),
+            Icon(Icons.error_outline, size: 48, color: TeacherColors.dangerAccent),
             const SizedBox(height: 16),
             Text(
               'Failed to load queries',
-              style: GoogleFonts.poppins(fontSize: 16),
+              style: TeacherTextStyles.sectionHeader,
             ),
             const SizedBox(height: 16),
             ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: TeacherColors.primaryAccent,
+              ),
               onPressed: _fetchQueries,
-              child: const Text('Retry'),
+              child: Text('Retry', style: TeacherTextStyles.primaryButton),
             ),
           ],
         ),
@@ -234,22 +262,20 @@ class _SubjectQueriesScreenState extends State<SubjectQueriesScreen> {
       return Center(
         child: Text(
           'No queries yet',
-          style: GoogleFonts.poppins(
-            fontSize: 16,
-            color: theme.colorScheme.onSurface.withOpacity(0.6),
-          ),
+          style: TeacherTextStyles.cardSubtitle,
         ),
       );
     }
 
     return RefreshIndicator(
+      backgroundColor: TeacherColors.primaryBackground,
+      color: TeacherColors.primaryAccent,
       onRefresh: _fetchQueries,
       child: ListView.builder(
         padding: const EdgeInsets.all(16),
         itemCount: queries.length,
         itemBuilder: (context, index) => _buildQueryCard(
           queries[index],
-          theme,
           subjectColor,
         ),
       ),
@@ -258,19 +284,18 @@ class _SubjectQueriesScreenState extends State<SubjectQueriesScreen> {
 
   Widget _buildQueryCard(
       Map<String, dynamic> query,
-      ThemeData theme,
       Color subjectColor,
       ) {
     final isPending = query['status'] == 'pending';
     final date = DateFormat('MMM d, h:mm a').format(
       DateTime.parse(query['created_at']).toLocal(),
     );
-    final hasResponse = query['response'] != null;
 
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+    return Container(
       margin: const EdgeInsets.only(bottom: 16),
+      decoration: TeacherColors.glassDecoration(
+        borderColor: subjectColor.withOpacity(0.3),
+      ),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -278,22 +303,48 @@ class _SubjectQueriesScreenState extends State<SubjectQueriesScreen> {
           children: [
             Align(
               alignment: Alignment.centerRight,
-              child: Chip(
-                label: Text(
-                  isPending ? 'PENDING' : 'RESOLVED',
-                  style: GoogleFonts.poppins(fontSize: 12, color: Colors.white),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: isPending
+                      ? TeacherColors.warningAccent.withOpacity(0.2)
+                      : TeacherColors.successAccent.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: isPending
+                        ? TeacherColors.warningAccent
+                        : TeacherColors.successAccent,
+                    width: 1,
+                  ),
                 ),
-                backgroundColor: isPending ? Colors.orange : Colors.green,
+                child: Text(
+                  isPending ? 'PENDING' : 'RESOLVED',
+                  style: TeacherTextStyles.cardSubtitle.copyWith(
+                    color: isPending
+                        ? TeacherColors.warningAccent
+                        : TeacherColors.successAccent,
+                  ),
+                ),
               ),
             ),
             const SizedBox(height: 8),
             Row(
               children: [
-                CircleAvatar(
-                  backgroundColor: subjectColor.withAlpha(51),
-                  child: Text(
-                    query['student_avatar'] ?? '👤',
-                    style: const TextStyle(fontSize: 20),
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: subjectColor.withOpacity(0.1),
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: subjectColor.withOpacity(0.3),
+                    ),
+                  ),
+                  child: Center(
+                    child: Text(
+                      query['student_avatar'] ?? '👤',
+                      style: const TextStyle(fontSize: 20),
+                    ),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -302,14 +353,11 @@ class _SubjectQueriesScreenState extends State<SubjectQueriesScreen> {
                   children: [
                     Text(
                       query['student_name'] ?? 'Anonymous',
-                      style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
+                      style: TeacherTextStyles.listItemTitle,
                     ),
                     Text(
                       date,
-                      style: GoogleFonts.poppins(
-                        fontSize: 12,
-                        color: theme.colorScheme.onSurface.withOpacity(0.6),
-                      ),
+                      style: TeacherTextStyles.cardSubtitle,
                     ),
                   ],
                 ),
@@ -318,49 +366,44 @@ class _SubjectQueriesScreenState extends State<SubjectQueriesScreen> {
             const SizedBox(height: 12),
             Text(
               query['question'],
-              style: GoogleFonts.poppins(
-                color: theme.colorScheme.onSurface.withOpacity(0.8),
-              ),
+              style: TeacherTextStyles.listItemSubtitle,
             ),
-            if (query['answer'] != null || query['answer'] != null) ...[
+            if (query['answer'] != null) ...[
               const SizedBox(height: 16),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     'Your Response',
-                    style: GoogleFonts.poppins(fontWeight: FontWeight.w500),
+                    style: TeacherTextStyles.cardTitle,
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    query['answer'] ?? query['answer'] ?? '',
-                    style: GoogleFonts.poppins(),
+                    query['answer'] ?? '',
+                    style: TeacherTextStyles.listItemSubtitle,
                   ),
                 ],
               ),
             ],
             if (isPending) ...[
               const SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.start,
-                children: [
-                  ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: subjectColor,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
+              Align(
+                alignment: Alignment.centerRight,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: subjectColor,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
                     ),
-                    onPressed: () => _showResponseDialog(query),
-                    child: Text(
-                      'Respond Now',
-                      style: GoogleFonts.poppins(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 24, vertical: 12),
                   ),
-                ],
+                  onPressed: () => _showResponseDialog(query),
+                  child: Text(
+                    'Respond Now',
+                    style: TeacherTextStyles.primaryButton,
+                  ),
+                ),
               ),
             ],
           ],

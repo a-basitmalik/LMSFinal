@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
+import 'package:newapp/Teacher/themes/theme_colors.dart';
+import 'package:newapp/Teacher/themes/theme_extensions.dart';
+import 'package:newapp/Teacher/themes/theme_text_styles.dart';
 import 'dart:convert';
-import 'package:intl/intl.dart';
-
 class EnterMarksScreen extends StatefulWidget {
   final String assessmentId;
   final String assessmentTitle;
@@ -31,7 +31,7 @@ class _EnterMarksScreenState extends State<EnterMarksScreen> {
   bool _isSubmitting = false;
   int _totalMarks = 0;
 
-  final String baseUrl = 'http://192.168.18.185:5050/SubjectAssessment/api';
+  final String baseUrl = 'http://193.203.162.232:5050/SubjectAssessment/api';
   final String studentsEndpoint = '/assessment-students';
   final String submitMarksEndpoint = '/submit-marks';
 
@@ -66,7 +66,10 @@ class _EnterMarksScreenState extends State<EnterMarksScreen> {
     } catch (e) {
       setState(() => _isLoading = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: ${e.toString()}')),
+        SnackBar(
+          content: Text('Error: ${e.toString()}'),
+          backgroundColor: TeacherColors.dangerAccent,
+        ),
       );
     }
   }
@@ -98,7 +101,10 @@ class _EnterMarksScreenState extends State<EnterMarksScreen> {
 
       if (response.statusCode == 201) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Marks submitted successfully!')),
+          SnackBar(
+            content: Text('Marks submitted successfully!'),
+            backgroundColor: TeacherColors.successAccent,
+          ),
         );
         Navigator.pop(context, true);
       } else {
@@ -106,7 +112,10 @@ class _EnterMarksScreenState extends State<EnterMarksScreen> {
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: ${e.toString()}')),
+        SnackBar(
+          content: Text('Error: ${e.toString()}'),
+          backgroundColor: TeacherColors.dangerAccent,
+        ),
       );
     } finally {
       setState(() => _isSubmitting = false);
@@ -118,14 +127,20 @@ class _EnterMarksScreenState extends State<EnterMarksScreen> {
       final controller = _markControllers[student['rfid'].toString()];
       if (controller == null || controller.text.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Please enter marks for all students')),
+          SnackBar(
+            content: Text('Please enter marks for all students'),
+            backgroundColor: TeacherColors.warningAccent,
+          ),
         );
         return false;
       }
       final marks = double.tryParse(controller.text);
       if (marks == null || marks < 0 || marks > _totalMarks) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Invalid marks for ${student['student_name']}')),
+          SnackBar(
+            content: Text('Invalid marks for ${student['student_name']}'),
+            backgroundColor: TeacherColors.warningAccent,
+          ),
         );
         return false;
       }
@@ -135,27 +150,35 @@ class _EnterMarksScreenState extends State<EnterMarksScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.teacherColors;
+    final textStyles = context.teacherTextStyles;
+
     return Scaffold(
+      backgroundColor: TeacherColors.primaryBackground,
       appBar: AppBar(
         title: Text(
           'Enter Marks: ${widget.assessmentTitle}',
-          style: GoogleFonts.poppins(
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-          ),
+          style: TeacherTextStyles.sectionHeader.copyWith(color: TeacherColors.primaryText),
         ),
         backgroundColor: widget.subjectColor,
         elevation: 0,
         centerTitle: true,
+        iconTheme: IconThemeData(color: TeacherColors.primaryText),
       ),
       body: _isLoading
-          ? Center(child: CircularProgressIndicator())
+          ? Center(
+        child: CircularProgressIndicator(
+          color: TeacherColors.primaryAccent,
+        ),
+      )
           : Column(
         children: [
           // Header with assessment info
           Container(
             padding: EdgeInsets.all(16),
-            color: widget.subjectColor.withOpacity(0.1),
+            decoration: BoxDecoration(
+              gradient: widget.subjectColor.toGlassDecoration().gradient,
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -164,17 +187,25 @@ class _EnterMarksScreenState extends State<EnterMarksScreen> {
                   children: [
                     Text(
                       widget.isQuiz ? 'Quiz' : 'Assessment',
-                      style: GoogleFonts.poppins(fontSize: 14),
+                      style: TeacherTextStyles.cardSubtitle,
                     ),
-                    Chip(
-                      label: Text(
-                        widget.assessmentType.toUpperCase(),
-                        style: GoogleFonts.poppins(
-                          color: Colors.white,
-                          fontSize: 12,
+                    Container(
+                      padding: EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: widget.subjectColor.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: widget.subjectColor,
+                          width: 1,
                         ),
                       ),
-                      backgroundColor: widget.subjectColor,
+                      child: Text(
+                        widget.assessmentType.toUpperCase(),
+                        style: TeacherTextStyles.cardSubtitle.copyWith(
+                          color: widget.subjectColor,
+                        ),
+                      ),
                     ),
                   ],
                 ),
@@ -184,17 +215,11 @@ class _EnterMarksScreenState extends State<EnterMarksScreen> {
                   children: [
                     Text(
                       'Total Marks: $_totalMarks',
-                      style: GoogleFonts.poppins(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
+                      style: TeacherTextStyles.cardTitle,
                     ),
                     Text(
                       'Students: ${_students.length}',
-                      style: GoogleFonts.poppins(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
+                      style: TeacherTextStyles.cardTitle,
                     ),
                   ],
                 ),
@@ -209,8 +234,11 @@ class _EnterMarksScreenState extends State<EnterMarksScreen> {
               itemCount: _students.length,
               itemBuilder: (context, index) {
                 final student = _students[index];
-                return Card(
+                return Container(
                   margin: EdgeInsets.only(bottom: 12),
+                  decoration: TeacherColors.glassDecoration(
+                    borderColor: widget.subjectColor.withOpacity(0.3),
+                  ),
                   child: Padding(
                     padding: EdgeInsets.all(12),
                     child: Row(
@@ -220,16 +248,15 @@ class _EnterMarksScreenState extends State<EnterMarksScreen> {
                           width: 40,
                           height: 40,
                           decoration: BoxDecoration(
-                            color: widget.subjectColor.withOpacity(0.2),
+                            gradient: widget.subjectColor
+                                .toGlassDecoration()
+                                .gradient,
                             shape: BoxShape.circle,
                           ),
                           child: Center(
                             child: Text(
                               student['student_name'][0],
-                              style: GoogleFonts.poppins(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
-                              ),
+                              style: TeacherTextStyles.cardTitle,
                             ),
                           ),
                         ),
@@ -242,13 +269,11 @@ class _EnterMarksScreenState extends State<EnterMarksScreen> {
                             children: [
                               Text(
                                 student['student_name'],
-                                style: GoogleFonts.poppins(
-                                  fontWeight: FontWeight.bold,
-                                ),
+                                style: TeacherTextStyles.listItemTitle,
                               ),
                               Text(
                                 'ID: ${student['StudentID'] ?? student['rfid']}',
-                                style: GoogleFonts.poppins(fontSize: 12),
+                                style: TeacherTextStyles.listItemSubtitle,
                               ),
                             ],
                           ),
@@ -260,10 +285,30 @@ class _EnterMarksScreenState extends State<EnterMarksScreen> {
                           child: TextFormField(
                             controller: _markControllers[student['rfid'].toString()],
                             keyboardType: TextInputType.numberWithOptions(decimal: true),
+                            style: TeacherTextStyles.listItemTitle,
                             decoration: InputDecoration(
                               labelText: 'Marks',
-                              border: OutlineInputBorder(),
+                              labelStyle: TeacherTextStyles.listItemSubtitle,
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                                borderSide: BorderSide(
+                                  color: TeacherColors.cardBorder,
+                                ),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                                borderSide: BorderSide(
+                                  color: TeacherColors.cardBorder,
+                                ),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                                borderSide: BorderSide(
+                                  color: widget.subjectColor,
+                                ),
+                              ),
                               suffixText: '/$_totalMarks',
+                              suffixStyle: TeacherTextStyles.listItemSubtitle,
                             ),
                             validator: (value) {
                               if (value == null || value.isEmpty) {
@@ -298,15 +343,20 @@ class _EnterMarksScreenState extends State<EnterMarksScreen> {
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
+                  elevation: 0,
                 ),
                 child: _isSubmitting
-                    ? CircularProgressIndicator(color: Colors.white)
+                    ? SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(
+                    color: TeacherColors.primaryText,
+                    strokeWidth: 2,
+                  ),
+                )
                     : Text(
                   'Submit Marks',
-                  style: GoogleFonts.poppins(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                  ),
+                  style: TeacherTextStyles.primaryButton,
                 ),
               ),
             ),

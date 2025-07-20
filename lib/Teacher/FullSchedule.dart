@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:newapp/Teacher/themes/theme_colors.dart';
+import 'package:newapp/Teacher/themes/theme_extensions.dart';
+import 'package:newapp/Teacher/themes/theme_text_styles.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:intl/intl.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+
 
 class ClassSchedule {
   final String id;
@@ -51,7 +54,8 @@ class FullScheduleScreen extends StatefulWidget {
   const FullScheduleScreen({
     super.key,
     required this.schedule,
-    required this.teacherId, required Map<String, Object> subject,
+    required this.teacherId,
+    required Map<String, Object> subject,
   });
 
   final List<Map<String, dynamic>> schedule;
@@ -64,8 +68,6 @@ class _FullScheduleScreenState extends State<FullScheduleScreen> {
   final CalendarFormat _calendarFormat = CalendarFormat.week;
   DateTime _focusedDay = DateTime.now();
   DateTime _selectedDay = DateTime.now();
-  final Color _primaryColor = const Color(0xFF4361EE);
-  final Color _backgroundColor = const Color(0xFFF8F9FF);
   int _currentIndex = 1;
 
   final List<ClassSchedule> _schedule = [
@@ -91,20 +93,22 @@ class _FullScheduleScreenState extends State<FullScheduleScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.teacherColors;
+    final textStyles = context.teacherTextStyles;
+
     return Scaffold(
-      backgroundColor: _backgroundColor,
+      backgroundColor: TeacherColors.primaryBackground,
       appBar: AppBar(
         title: Text(
           _currentIndex == 0
               ? 'Calendar View'
               : DateFormat('MMMM yyyy').format(_focusedDay),
-          style: GoogleFonts.poppins(
-            fontWeight: FontWeight.bold,
+          style: TeacherTextStyles.sectionHeader.copyWith(
             fontSize: 20,
-            color: Colors.white,
+            color: TeacherColors.primaryText,
           ),
         ),
-        backgroundColor: _primaryColor,
+        backgroundColor: TeacherColors.secondaryBackground,
         elevation: 0,
         shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(bottom: Radius.circular(20)),
@@ -116,28 +120,30 @@ class _FullScheduleScreenState extends State<FullScheduleScreen> {
       ),
       body: _buildCurrentView(),
       floatingActionButton: FloatingActionButton(
-        backgroundColor: _primaryColor,
+        backgroundColor: TeacherColors.scheduleColor,
         onPressed: _showAddClassDialog,
-        child: const Icon(Icons.add, color: Colors.white),
+        child: Icon(Icons.add, color: TeacherColors.primaryText),
       ),
       bottomNavigationBar: _buildBottomNavigationBar(),
     );
   }
 
+
   BottomNavigationBar _buildBottomNavigationBar() {
+    final colors = context.teacherColors;
+
     return BottomNavigationBar(
       currentIndex: _currentIndex,
-      onTap:
-          (index) => setState(() {
-            _currentIndex = index;
-            if (index == 1) {
-              _focusedDay = DateTime.now();
-              _selectedDay = DateTime.now();
-            }
-          }),
-      backgroundColor: Colors.white,
-      selectedItemColor: _primaryColor,
-      unselectedItemColor: Colors.grey,
+      onTap: (index) => setState(() {
+        _currentIndex = index;
+        if (index == 1) {
+          _focusedDay = DateTime.now();
+          _selectedDay = DateTime.now();
+        }
+      }),
+      backgroundColor: TeacherColors.secondaryBackground,
+      selectedItemColor: TeacherColors.scheduleColor,
+      unselectedItemColor: TeacherColors.secondaryText,
       showSelectedLabels: true,
       showUnselectedLabels: true,
       type: BottomNavigationBarType.fixed,
@@ -166,6 +172,9 @@ class _FullScheduleScreenState extends State<FullScheduleScreen> {
   }
 
   Widget _buildCalendarView() {
+    final colors = context.teacherColors;
+    final textStyles = context.teacherTextStyles;
+
     return Column(
       children: [
         // Month header and navigation buttons
@@ -176,32 +185,29 @@ class _FullScheduleScreenState extends State<FullScheduleScreen> {
             children: [
               Text(
                 DateFormat('MMMM yyyy').format(_focusedDay),
-                style: GoogleFonts.poppins(
+                style: TeacherTextStyles.sectionHeader.copyWith(
                   fontSize: 18,
-                  fontWeight: FontWeight.bold,
                 ),
               ),
               Row(
                 children: [
                   IconButton(
-                    icon: Icon(Icons.chevron_left, color: _primaryColor),
-                    onPressed:
-                        () => setState(() {
-                          _focusedDay = DateTime(
-                            _focusedDay.year,
-                            _focusedDay.month - 1,
-                          );
-                        }),
+                    icon: Icon(Icons.chevron_left, color: TeacherColors.scheduleColor),
+                    onPressed: () => setState(() {
+                      _focusedDay = DateTime(
+                        _focusedDay.year,
+                        _focusedDay.month - 1,
+                      );
+                    }),
                   ),
                   IconButton(
-                    icon: Icon(Icons.chevron_right, color: _primaryColor),
-                    onPressed:
-                        () => setState(() {
-                          _focusedDay = DateTime(
-                            _focusedDay.year,
-                            _focusedDay.month + 1,
-                          );
-                        }),
+                    icon: Icon(Icons.chevron_right, color: TeacherColors.scheduleColor),
+                    onPressed: () => setState(() {
+                      _focusedDay = DateTime(
+                        _focusedDay.year,
+                        _focusedDay.month + 1,
+                      );
+                    }),
                   ),
                 ],
               ),
@@ -213,27 +219,26 @@ class _FullScheduleScreenState extends State<FullScheduleScreen> {
         Container(
           padding: const EdgeInsets.symmetric(vertical: 8),
           decoration: BoxDecoration(
-            border: Border(bottom: BorderSide(color: Colors.grey[200]!)),
+            border: Border(bottom: BorderSide(color: TeacherColors.cardBorder)),
           ),
           child: Row(
-            children:
-                ['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day) {
-                  return Expanded(
-                    child: Center(
-                      child: Text(
-                        day,
-                        style: GoogleFonts.poppins(
-                          fontWeight: FontWeight.w500,
-                          color: day == 'S' ? Colors.red : Colors.black87,
-                        ),
-                      ),
+            children: ['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day) {
+              return Expanded(
+                child: Center(
+                  child: Text(
+                    day,
+                    style: TeacherTextStyles.cardSubtitle.copyWith(
+                      fontWeight: FontWeight.w500,
+                      color: day == 'S' ? TeacherColors.dangerAccent : TeacherColors.primaryText,
                     ),
-                  );
-                }).toList(),
+                  ),
+                ),
+              );
+            }).toList(),
           ),
         ),
 
-        // Calendar grid - now in an Expanded widget
+        // Calendar grid
         Expanded(
           child: TableCalendar(
             firstDay: DateTime.now().subtract(const Duration(days: 365)),
@@ -244,16 +249,16 @@ class _FullScheduleScreenState extends State<FullScheduleScreen> {
             daysOfWeekVisible: false,
             calendarStyle: CalendarStyle(
               outsideDaysVisible: false,
-              weekendTextStyle: TextStyle(color: Colors.red[400]),
+              weekendTextStyle: TextStyle(color: TeacherColors.dangerAccent),
               todayDecoration: BoxDecoration(
-                color: _primaryColor.withOpacity(0.2),
+                color: TeacherColors.scheduleColor.withOpacity(0.2),
                 shape: BoxShape.circle,
               ),
               selectedDecoration: BoxDecoration(
-                color: _primaryColor,
+                color: TeacherColors.scheduleColor,
                 shape: BoxShape.circle,
               ),
-              defaultTextStyle: GoogleFonts.poppins(),
+              defaultTextStyle: TeacherTextStyles.listItemTitle,
             ),
             selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
             onDaySelected: (selectedDay, focusedDay) {
@@ -265,23 +270,21 @@ class _FullScheduleScreenState extends State<FullScheduleScreen> {
           ),
         ),
 
-        // Selected day section - now in a Flexible widget with SingleChildScrollView
+        // Selected day section
         Flexible(
           child: SingleChildScrollView(
             child: Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                border: Border(top: BorderSide(color: Colors.grey[200]!)),
+                border: Border(top: BorderSide(color: TeacherColors.cardBorder)),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     DateFormat('EEEE, MMMM d').format(_selectedDay),
-                    style: GoogleFonts.poppins(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                      color: _primaryColor,
+                    style: TeacherTextStyles.sectionHeader.copyWith(
+                      color: TeacherColors.scheduleColor,
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -296,6 +299,8 @@ class _FullScheduleScreenState extends State<FullScheduleScreen> {
   }
 
   Widget _buildWeeklyView() {
+    final colors = context.teacherColors;
+    final textStyles = context.teacherTextStyles;
     final weekStart = _focusedDay.subtract(Duration(days: _focusedDay.weekday));
     final weekDays = List.generate(7, (i) => weekStart.add(Duration(days: i)));
 
@@ -303,68 +308,55 @@ class _FullScheduleScreenState extends State<FullScheduleScreen> {
       children: [
         Container(
           padding: const EdgeInsets.symmetric(vertical: 8),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.05),
-                blurRadius: 8,
-                spreadRadius: 2,
-              ),
-            ],
-          ),
+          decoration: TeacherColors.glassDecoration(),
           child: Row(
-            children:
-                weekDays.map((day) {
-                  return Expanded(
-                    child: InkWell(
-                      onTap: () {
-                        setState(() {
-                          _selectedDay = day;
-                          _currentIndex = 2;
-                        });
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 8),
-                        decoration: BoxDecoration(
-                          border: Border(
-                            bottom: BorderSide(
-                              color:
-                                  isSameDay(day, _selectedDay)
-                                      ? _primaryColor
-                                      : Colors.transparent,
-                              width: 2,
-                            ),
-                          ),
-                        ),
-                        child: Column(
-                          children: [
-                            Text(
-                              DateFormat('E').format(day),
-                              style: GoogleFonts.poppins(
-                                fontWeight: FontWeight.bold,
-                                color:
-                                    isSameDay(day, DateTime.now())
-                                        ? _primaryColor
-                                        : Colors.black87,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              day.day.toString(),
-                              style: GoogleFonts.poppins(
-                                color:
-                                    isSameDay(day, DateTime.now())
-                                        ? _primaryColor
-                                        : Colors.grey[600],
-                              ),
-                            ),
-                          ],
+            children: weekDays.map((day) {
+              return Expanded(
+                child: InkWell(
+                  onTap: () {
+                    setState(() {
+                      _selectedDay = day;
+                      _currentIndex = 2;
+                    });
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    decoration: BoxDecoration(
+                      border: Border(
+                        bottom: BorderSide(
+                          color: isSameDay(day, _selectedDay)
+                              ? TeacherColors.scheduleColor
+                              : Colors.transparent,
+                          width: 2,
                         ),
                       ),
                     ),
-                  );
-                }).toList(),
+                    child: Column(
+                      children: [
+                        Text(
+                          DateFormat('E').format(day),
+                          style: TeacherTextStyles.cardSubtitle.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: isSameDay(day, DateTime.now())
+                                ? TeacherColors.scheduleColor
+                                : TeacherColors.primaryText,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          day.day.toString(),
+                          style: TeacherTextStyles.cardSubtitle.copyWith(
+                            color: isSameDay(day, DateTime.now())
+                                ? TeacherColors.scheduleColor
+                                : TeacherColors.secondaryText,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            }).toList(),
           ),
         ),
         Expanded(
@@ -382,8 +374,10 @@ class _FullScheduleScreenState extends State<FullScheduleScreen> {
   }
 
   Widget _buildDailyView() {
+    final colors = context.teacherColors;
+    final textStyles = context.teacherTextStyles;
     final daySchedule =
-        _schedule.where((item) => isSameDay(item.date, _selectedDay)).toList();
+    _schedule.where((item) => isSameDay(item.date, _selectedDay)).toList();
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
@@ -392,10 +386,9 @@ class _FullScheduleScreenState extends State<FullScheduleScreen> {
         children: [
           Text(
             DateFormat('EEEE, MMMM d').format(_selectedDay),
-            style: GoogleFonts.poppins(
-              fontWeight: FontWeight.bold,
+            style: TeacherTextStyles.sectionHeader.copyWith(
               fontSize: 20,
-              color: _primaryColor,
+              color: TeacherColors.scheduleColor,
             ),
           ),
           const SizedBox(height: 16),
@@ -409,8 +402,10 @@ class _FullScheduleScreenState extends State<FullScheduleScreen> {
   }
 
   Widget _buildDayScheduleSection(DateTime day) {
+    final colors = context.teacherColors;
+    final textStyles = context.teacherTextStyles;
     final daySchedule =
-        _schedule.where((item) => isSameDay(item.date, day)).toList();
+    _schedule.where((item) => isSameDay(item.date, day)).toList();
 
     if (daySchedule.isEmpty) {
       return Padding(
@@ -419,10 +414,7 @@ class _FullScheduleScreenState extends State<FullScheduleScreen> {
           children: [
             Text(
               DateFormat('EEEE, MMMM d').format(day),
-              style: GoogleFonts.poppins(
-                fontWeight: FontWeight.w500,
-                color: Colors.grey[600],
-              ),
+              style: TeacherTextStyles.cardSubtitle,
             ),
             const SizedBox(height: 8),
             _buildEmptyState(),
@@ -438,10 +430,7 @@ class _FullScheduleScreenState extends State<FullScheduleScreen> {
           padding: const EdgeInsets.only(bottom: 8),
           child: Text(
             DateFormat('EEEE, MMMM d').format(day),
-            style: GoogleFonts.poppins(
-              fontWeight: FontWeight.w500,
-              color: Colors.grey[600],
-            ),
+            style: TeacherTextStyles.cardSubtitle,
           ),
         ),
         ...daySchedule.map((item) => _buildScheduleItem(item)),
@@ -450,27 +439,20 @@ class _FullScheduleScreenState extends State<FullScheduleScreen> {
   }
 
   Widget _buildEmptyState() {
+    final colors = context.teacherColors;
+    final textStyles = context.teacherTextStyles;
+
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 8,
-            spreadRadius: 2,
-          ),
-        ],
-      ),
+      decoration: TeacherColors.glassDecoration(),
       child: Center(
         child: Column(
           children: [
-            Icon(Icons.event_available, size: 60, color: Colors.grey[400]),
+            Icon(Icons.event_available, size: 60, color: TeacherColors.secondaryText),
             const SizedBox(height: 16),
             Text(
               'No classes scheduled',
-              style: GoogleFonts.poppins(fontSize: 16, color: Colors.grey[600]),
+              style: TeacherTextStyles.cardSubtitle.copyWith(fontSize: 16),
             ),
           ],
         ),
@@ -479,19 +461,12 @@ class _FullScheduleScreenState extends State<FullScheduleScreen> {
   }
 
   Widget _buildScheduleItem(ClassSchedule item) {
+    final colors = context.teacherColors;
+    final textStyles = context.teacherTextStyles;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 8,
-            spreadRadius: 2,
-          ),
-        ],
-      ),
+      decoration: TeacherColors.glassDecoration(),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -502,11 +477,7 @@ class _FullScheduleScreenState extends State<FullScheduleScreen> {
               children: [
                 Text(
                   item.subject,
-                  style: GoogleFonts.poppins(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 18,
-                    color: Colors.black87,
-                  ),
+                  style: TeacherTextStyles.assignmentTitle,
                 ),
                 Container(
                   padding: const EdgeInsets.symmetric(
@@ -514,15 +485,13 @@ class _FullScheduleScreenState extends State<FullScheduleScreen> {
                     vertical: 4,
                   ),
                   decoration: BoxDecoration(
-                    color: _primaryColor.withOpacity(0.1),
+                    color: TeacherColors.scheduleColor.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
                     item.classType,
-                    style: GoogleFonts.poppins(
-                      fontSize: 12,
-                      color: _primaryColor,
-                      fontWeight: FontWeight.w500,
+                    style: TeacherTextStyles.secondaryButton.copyWith(
+                      color: TeacherColors.scheduleColor,
                     ),
                   ),
                 ),
@@ -531,42 +500,33 @@ class _FullScheduleScreenState extends State<FullScheduleScreen> {
             const SizedBox(height: 8),
             Row(
               children: [
-                Icon(Icons.access_time, size: 16, color: Colors.grey[600]),
+                Icon(Icons.access_time, size: 16, color: TeacherColors.secondaryText),
                 const SizedBox(width: 8),
                 Text(
                   item.time,
-                  style: GoogleFonts.poppins(
-                    fontSize: 14,
-                    color: Colors.grey[600],
-                  ),
+                  style: TeacherTextStyles.listItemSubtitle,
                 ),
               ],
             ),
             const SizedBox(height: 8),
             Row(
               children: [
-                Icon(Icons.location_on, size: 16, color: Colors.grey[600]),
+                Icon(Icons.location_on, size: 16, color: TeacherColors.secondaryText),
                 const SizedBox(width: 8),
                 Text(
                   item.room,
-                  style: GoogleFonts.poppins(
-                    fontSize: 14,
-                    color: Colors.grey[600],
-                  ),
+                  style: TeacherTextStyles.listItemSubtitle,
                 ),
               ],
             ),
             const SizedBox(height: 8),
             Row(
               children: [
-                Icon(Icons.person, size: 16, color: Colors.grey[600]),
+                Icon(Icons.person, size: 16, color: TeacherColors.secondaryText),
                 const SizedBox(width: 8),
                 Text(
                   item.teacher,
-                  style: GoogleFonts.poppins(
-                    fontSize: 14,
-                    color: Colors.grey[600],
-                  ),
+                  style: TeacherTextStyles.listItemSubtitle,
                 ),
               ],
             ),
@@ -577,6 +537,9 @@ class _FullScheduleScreenState extends State<FullScheduleScreen> {
   }
 
   Future<void> _showAddClassDialog() async {
+    final colors = context.teacherColors;
+    final textStyles = context.teacherTextStyles;
+
     final formKey = GlobalKey<FormState>();
     String subject = '';
     String time = '';
@@ -590,7 +553,7 @@ class _FullScheduleScreenState extends State<FullScheduleScreen> {
         return StatefulBuilder(
           builder: (context, setState) {
             return AlertDialog(
-              title: Text('Add New Class', style: GoogleFonts.poppins()),
+              title: Text('Add New Class', style: TeacherTextStyles.sectionHeader),
               content: SingleChildScrollView(
                 child: Form(
                   key: formKey,
@@ -598,53 +561,57 @@ class _FullScheduleScreenState extends State<FullScheduleScreen> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       TextFormField(
-                        decoration: const InputDecoration(
+                        decoration: InputDecoration(
                           labelText: 'Subject',
                           border: OutlineInputBorder(),
+                          labelStyle: TeacherTextStyles.cardSubtitle,
                         ),
-                        validator:
-                            (value) =>
-                                value?.isEmpty ?? true ? 'Required' : null,
+                        style: TeacherTextStyles.listItemTitle,
+                        validator: (value) =>
+                        value?.isEmpty ?? true ? 'Required' : null,
                         onSaved: (value) => subject = value ?? '',
                       ),
                       const SizedBox(height: 16),
                       TextFormField(
-                        decoration: const InputDecoration(
+                        decoration: InputDecoration(
                           labelText: 'Time (e.g., 09:00 AM - 10:30 AM)',
                           border: OutlineInputBorder(),
+                          labelStyle: TeacherTextStyles.cardSubtitle,
                         ),
-                        validator:
-                            (value) =>
-                                value?.isEmpty ?? true ? 'Required' : null,
+                        style: TeacherTextStyles.listItemTitle,
+                        validator: (value) =>
+                        value?.isEmpty ?? true ? 'Required' : null,
                         onSaved: (value) => time = value ?? '',
                       ),
                       const SizedBox(height: 16),
                       TextFormField(
-                        decoration: const InputDecoration(
+                        decoration: InputDecoration(
                           labelText: 'Room',
                           border: OutlineInputBorder(),
+                          labelStyle: TeacherTextStyles.cardSubtitle,
                         ),
-                        validator:
-                            (value) =>
-                                value?.isEmpty ?? true ? 'Required' : null,
+                        style: TeacherTextStyles.listItemTitle,
+                        validator: (value) =>
+                        value?.isEmpty ?? true ? 'Required' : null,
                         onSaved: (value) => room = value ?? '',
                       ),
                       const SizedBox(height: 16),
                       DropdownButtonFormField<String>(
                         value: classType,
-                        decoration: const InputDecoration(
+                        decoration: InputDecoration(
                           labelText: 'Class Type',
                           border: OutlineInputBorder(),
+                          labelStyle: TeacherTextStyles.cardSubtitle,
                         ),
-                        items:
-                            ['Lecture', 'Lab', 'Tutorial', 'Seminar']
-                                .map(
-                                  (type) => DropdownMenuItem(
-                                    value: type,
-                                    child: Text(type),
-                                  ),
-                                )
-                                .toList(),
+                        style: TeacherTextStyles.listItemTitle,
+                        items: ['Lecture', 'Lab', 'Tutorial', 'Seminar']
+                            .map(
+                              (type) => DropdownMenuItem(
+                            value: type,
+                            child: Text(type, style: TeacherTextStyles.listItemTitle),
+                          ),
+                        )
+                            .toList(),
                         onChanged: (value) {
                           if (value != null) {
                             setState(() => classType = value);
@@ -667,15 +634,19 @@ class _FullScheduleScreenState extends State<FullScheduleScreen> {
                           }
                         },
                         child: InputDecorator(
-                          decoration: const InputDecoration(
+                          decoration: InputDecoration(
                             labelText: 'Date',
                             border: OutlineInputBorder(),
+                            labelStyle: TeacherTextStyles.cardSubtitle,
                           ),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Text(DateFormat.yMd().format(selectedDate)),
-                              const Icon(Icons.calendar_today),
+                              Text(
+                                DateFormat.yMd().format(selectedDate),
+                                style: TeacherTextStyles.listItemTitle,
+                              ),
+                              Icon(Icons.calendar_today, color: TeacherColors.primaryText),
                             ],
                           ),
                         ),
@@ -687,11 +658,11 @@ class _FullScheduleScreenState extends State<FullScheduleScreen> {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(context),
-                  child: const Text('Cancel'),
+                  child: Text('Cancel', style: TeacherTextStyles.secondaryButton),
                 ),
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: _primaryColor,
+                    backgroundColor: TeacherColors.scheduleColor,
                   ),
                   onPressed: () {
                     if (formKey.currentState?.validate() ?? false) {
@@ -710,15 +681,19 @@ class _FullScheduleScreenState extends State<FullScheduleScreen> {
                       });
                       Navigator.pop(context);
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Class added successfully'),
+                        SnackBar(
+                          content: Text(
+                            'Class added successfully',
+                            style: TeacherTextStyles.cardSubtitle,
+                          ),
+                          backgroundColor: TeacherColors.successAccent,
                         ),
                       );
                     }
                   },
-                  child: const Text(
+                  child: Text(
                     'Add Class',
-                    style: TextStyle(color: Colors.white),
+                    style: TeacherTextStyles.primaryButton,
                   ),
                 ),
               ],
@@ -744,21 +719,20 @@ class TodayScheduleScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final primaryColor = const Color(0xFF4361EE);
-    final backgroundColor = const Color(0xFFF8F9FF);
+    final colors = context.teacherColors;
+    final textStyles = context.teacherTextStyles;
 
     return Scaffold(
-      backgroundColor: backgroundColor,
+      backgroundColor: TeacherColors.primaryBackground,
       appBar: AppBar(
         title: Text(
           isTodayOnly ? "Today's Schedule" : _formatDate(date!),
-          style: GoogleFonts.poppins(
-            fontWeight: FontWeight.bold,
+          style: TeacherTextStyles.sectionHeader.copyWith(
             fontSize: 20,
-            color: Colors.white,
+            color: TeacherColors.primaryText,
           ),
         ),
-        backgroundColor: primaryColor,
+        backgroundColor: TeacherColors.secondaryBackground,
         elevation: 0,
         shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(bottom: Radius.circular(20)),
@@ -773,18 +747,22 @@ class TodayScheduleScreen extends StatelessWidget {
   }
 
   Widget _buildScheduleList() {
+    final colors = TeacherColors;
+    final textStyles = TeacherTextStyles;
+
     if (schedule.isEmpty) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.event_available, size: 60, color: Colors.grey[400]),
+            Icon(Icons.event_available, size: 60, color: TeacherColors.secondaryText),
             const SizedBox(height: 16),
             Text(
               isTodayOnly
                   ? 'No classes scheduled for today'
                   : 'No classes scheduled for this day',
-              style: GoogleFonts.poppins(fontSize: 16, color: Colors.grey[600]),
+              style: TeacherTextStyles.cardSubtitle.copyWith(fontSize: 16),
+
             ),
           ],
         ),
@@ -798,17 +776,7 @@ class TodayScheduleScreen extends StatelessWidget {
       itemBuilder: (context, index) {
         final item = schedule[index];
         return Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.05),
-                blurRadius: 8,
-                spreadRadius: 2,
-              ),
-            ],
-          ),
+          decoration: TeacherColors.glassDecoration(),
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
@@ -816,37 +784,27 @@ class TodayScheduleScreen extends StatelessWidget {
               children: [
                 Text(
                   item['subject'],
-                  style: GoogleFonts.poppins(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 18,
-                    color: Colors.black87,
-                  ),
+                  style: TeacherTextStyles.assignmentTitle,
                 ),
                 const SizedBox(height: 12),
                 Row(
                   children: [
-                    Icon(Icons.access_time, size: 16, color: Colors.grey[600]),
+                    Icon(Icons.access_time, size: 16, color: TeacherColors.secondaryText),
                     const SizedBox(width: 8),
                     Text(
                       item['time'],
-                      style: GoogleFonts.poppins(
-                        fontSize: 14,
-                        color: Colors.grey[600],
-                      ),
+                      style: TeacherTextStyles.listItemSubtitle,
                     ),
                   ],
                 ),
                 const SizedBox(height: 8),
                 Row(
                   children: [
-                    Icon(Icons.class_, size: 16, color: Colors.grey[600]),
+                    Icon(Icons.class_, size: 16, color: TeacherColors.secondaryText),
                     const SizedBox(width: 8),
                     Text(
                       '${item['class']} - ${item['room']}',
-                      style: GoogleFonts.poppins(
-                        fontSize: 14,
-                        color: Colors.grey[600],
-                      ),
+                      style: TeacherTextStyles.listItemSubtitle,
                     ),
                   ],
                 ),

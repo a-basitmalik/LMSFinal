@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
-
+import 'package:newapp/Teacher/themes/theme_colors.dart';
+import 'package:newapp/Teacher/themes/theme_extensions.dart';
+import 'package:newapp/Teacher/themes/theme_text_styles.dart';
 class AnnouncementScreen extends StatelessWidget {
   final List<Map<String, dynamic>> announcements;
 
@@ -8,18 +9,20 @@ class AnnouncementScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.teacherColors;
+    final textStyles = context.teacherTextStyles;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FF),
+      backgroundColor: TeacherColors.primaryBackground,
       appBar: AppBar(
         title: Text(
           'All Announcements',
-          style: GoogleFonts.poppins(
-            fontWeight: FontWeight.bold,
+          style: TeacherTextStyles.sectionHeader.copyWith(
             fontSize: 20,
-            color: Colors.white,
+            color: TeacherColors.primaryText,
           ),
         ),
-        backgroundColor: const Color(0xFF4361EE),
+        backgroundColor: TeacherColors.secondaryBackground,
         elevation: 0,
         centerTitle: true,
         shape: const RoundedRectangleBorder(
@@ -33,16 +36,9 @@ class AnnouncementScreen extends StatelessWidget {
         itemBuilder: (context, index) {
           final announcement = announcements[index];
           return Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 8,
-                  spreadRadius: 2,
-                ),
-              ],
+            decoration: TeacherColors.glassDecoration(
+              borderRadius: 12,
+              borderColor: TeacherColors.cardBorder,
             ),
             child: Padding(
               padding: const EdgeInsets.all(16),
@@ -55,10 +51,8 @@ class AnnouncementScreen extends StatelessWidget {
                       Expanded(
                         child: Text(
                           announcement['title'],
-                          style: GoogleFonts.poppins(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 18,
-                            color: Colors.black87,
+                          style: TeacherTextStyles.assignmentTitle.copyWith(
+                            color: TeacherColors.primaryText,
                           ),
                         ),
                       ),
@@ -69,15 +63,14 @@ class AnnouncementScreen extends StatelessWidget {
                             vertical: 2,
                           ),
                           decoration: BoxDecoration(
-                            color: Colors.red,
+                            color: TeacherColors.dangerAccent,
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: Text(
                             'NEW',
-                            style: GoogleFonts.poppins(
-                              color: Colors.white,
+                            style: TeacherTextStyles.secondaryButton.copyWith(
+                              color: TeacherColors.primaryText,
                               fontSize: 12,
-                              fontWeight: FontWeight.bold,
                             ),
                           ),
                         ),
@@ -93,15 +86,14 @@ class AnnouncementScreen extends StatelessWidget {
                         height: 6,
                         margin: const EdgeInsets.only(right: 8),
                         decoration: const BoxDecoration(
-                          color: Colors.grey,
+                          color: TeacherColors.secondaryText,
                           shape: BoxShape.circle,
                         ),
                       ),
                       Text(
                         announcement['time'],
-                        style: GoogleFonts.poppins(
-                          fontSize: 14,
-                          color: Colors.grey[600],
+                        style: TeacherTextStyles.cardSubtitle.copyWith(
+                          color: TeacherColors.secondaryText,
                         ),
                       ),
                     ],
@@ -111,9 +103,9 @@ class AnnouncementScreen extends StatelessWidget {
                   // Content
                   Text(
                     announcement['content'],
-                    style: GoogleFonts.poppins(
+                    style: TeacherTextStyles.listItemSubtitle.copyWith(
                       fontSize: 15,
-                      color: Colors.black87,
+                      color: TeacherColors.primaryText.withOpacity(0.9),
                       height: 1.5,
                     ),
                   ),
@@ -125,4 +117,5 @@ class AnnouncementScreen extends StatelessWidget {
       ),
     );
   }
+
 }

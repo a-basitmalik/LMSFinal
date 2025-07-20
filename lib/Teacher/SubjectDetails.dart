@@ -1,16 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
-import 'package:newapp/Teacher/SubjectChat.dart';
+import 'package:newapp/Teacher/themes/theme_colors.dart';
+import 'package:newapp/Teacher/themes/theme_extensions.dart';
+import 'package:newapp/Teacher/themes/theme_text_styles.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'dart:convert';
+import 'dart:ui';
+import 'package:intl/intl.dart';
+
+
+// Import other screens
 import 'SubjectAssignments.dart';
 import 'SubjectQueries.dart';
 import 'SubjectResults.dart';
 import 'SubjectAttendance.dart';
 import 'SubjectAnnouncementsScreen.dart';
-import 'dart:ui';
-import 'package:intl/intl.dart';
+import 'SubjectChat.dart';
 
 class SubjectDashboardScreen extends StatefulWidget {
   final Map<String, dynamic> subject;
@@ -139,20 +145,14 @@ class _SubjectDashboardScreenState extends State<SubjectDashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final subjectColor = widget.subject['color'] ?? Theme.of(context).primaryColor;
-
     return Scaffold(
       appBar: _currentIndex == 0
           ? AppBar(
         title: Text(
           widget.subject['name'],
-          style: GoogleFonts.poppins(
-            fontWeight: FontWeight.bold,
-            fontSize: 22,
-            color: Colors.white,
-          ),
+          style: TeacherTextStyles.className,
         ),
-        backgroundColor: subjectColor,
+        backgroundColor: TeacherColors.primaryBackground,
         centerTitle: true,
         elevation: 0,
         shape: const RoundedRectangleBorder(
@@ -185,6 +185,7 @@ class _SubjectDashboardScreenState extends State<SubjectDashboardScreen> {
     );
   }
 
+
   Widget _buildOverviewScreen() {
     if (isLoading) {
       return Center(child: CircularProgressIndicator());
@@ -195,11 +196,11 @@ class _SubjectDashboardScreenState extends State<SubjectDashboardScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(errorMessage, style: TextStyle(color: Colors.red)),
+            Text(errorMessage, style: TextStyle(color: TeacherColors.dangerAccent)),
             SizedBox(height: 16),
             ElevatedButton(
               onPressed: _fetchSubjectData,
-              child: Text('Retry'),
+              child: Text('Retry', style: TeacherTextStyles.primaryButton),
             ),
           ],
         ),
@@ -266,7 +267,7 @@ class _SubjectDashboardScreenState extends State<SubjectDashboardScreen> {
           padding: EdgeInsets.all(16),
           child: Text(
             'No planner for today',
-            style: GoogleFonts.poppins(color: Colors.grey),
+            style: TeacherTextStyles.cardSubtitle,
           ),
         ),
       );
@@ -281,12 +282,12 @@ class _SubjectDashboardScreenState extends State<SubjectDashboardScreen> {
             children: [
               ListTile(
                 leading: CircleAvatar(
-                  backgroundColor: Colors.purple[50],
-                  child: Icon(Icons.calendar_today, color: Colors.purple),
+                  backgroundColor: TeacherColors.classColor.withOpacity(0.2),
+                  child: Icon(Icons.calendar_today, color: TeacherColors.classColor),
                 ),
                 title: Text(
                   planner['title'] ?? 'No title',
-                  style: GoogleFonts.poppins(fontWeight: FontWeight.w500),
+                  style: TeacherTextStyles.cardTitle,
                 ),
                 subtitle: Text(
                   planner['description'] != null &&
@@ -295,7 +296,7 @@ class _SubjectDashboardScreenState extends State<SubjectDashboardScreen> {
                       ? '${planner['description'].substring(0, 50)}...'
                       : planner['description']
                       : 'No description',
-                  style: GoogleFonts.poppins(),
+                  style: TeacherTextStyles.cardSubtitle,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -324,10 +325,7 @@ class _SubjectDashboardScreenState extends State<SubjectDashboardScreen> {
             children: [
               Text(
                 'All Planners',
-                style: GoogleFonts.poppins(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TeacherTextStyles.sectionHeader,
               ),
               SizedBox(height: 16),
               Expanded(
@@ -339,12 +337,12 @@ class _SubjectDashboardScreenState extends State<SubjectDashboardScreen> {
                       margin: EdgeInsets.only(bottom: 8),
                       child: ListTile(
                         leading: CircleAvatar(
-                          backgroundColor: Colors.purple[50],
-                          child: Icon(Icons.calendar_today, color: Colors.purple),
+                          backgroundColor: TeacherColors.classColor.withOpacity(0.2),
+                          child: Icon(Icons.calendar_today, color: TeacherColors.classColor),
                         ),
                         title: Text(
                           planner['title'] ?? 'No title',
-                          style: GoogleFonts.poppins(fontWeight: FontWeight.w500),
+                          style: TeacherTextStyles.cardTitle,
                         ),
                         subtitle: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -352,7 +350,7 @@ class _SubjectDashboardScreenState extends State<SubjectDashboardScreen> {
                             Text(
                               DateFormat('MMM dd, yyyy').format(
                                   DateTime.parse(planner['planned_date'])),
-                              style: GoogleFonts.poppins(fontSize: 12),
+                              style: TeacherTextStyles.cardSubtitle,
                             ),
                             SizedBox(height: 4),
                             Text(
@@ -362,7 +360,7 @@ class _SubjectDashboardScreenState extends State<SubjectDashboardScreen> {
                                   ? '${planner['description'].substring(0, 50)}...'
                                   : planner['description']
                                   : 'No description',
-                              style: GoogleFonts.poppins(),
+                              style: TeacherTextStyles.cardSubtitle,
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -390,7 +388,6 @@ class _SubjectDashboardScreenState extends State<SubjectDashboardScreen> {
       MaterialPageRoute(
         builder: (context) => PlannerDetailsScreen(
           planner: planner,
-          subjectColor: widget.subject['color'] ?? Theme.of(context).primaryColor,
         ),
       ),
     );
@@ -404,45 +401,43 @@ class _SubjectDashboardScreenState extends State<SubjectDashboardScreen> {
   }
 
   Widget _buildInfographicMenu() {
-
     final List<Map<String, dynamic>> menuItems = [
       {
         'title': 'Overview',
         'icon': Icons.lightbulb,
         'index': 0,
-        'color': Colors.red,
+        'color': TeacherColors.dangerAccent,
       },
       {
         'title': 'Assignments',
         'icon': Icons.assignment,
         'index': 1,
-        'color': Colors.orange,
+        'color': TeacherColors.assignmentColor,
       },
       {
         'title': 'Queries',
         'icon': Icons.question_answer,
         'index': 2,
-        'color': Colors.blue,
+        'color': TeacherColors.infoAccent,
       },
       {
         'title': 'Results',
         'icon': Icons.assessment,
         'index': 3,
-        'color': Colors.green,
+        'color': TeacherColors.successAccent,
       },
       {
         'title': 'Attendance',
         'icon': Icons.calendar_today,
         'index': 4,
-        'color': Colors.purple,
+        'color': TeacherColors.attendanceColor,
       },
       {
         'title': 'Chat',
         'icon': Icons.chat_bubble,
         'index': 5,
-        'color': Colors.teal,
+        'color': TeacherColors.primaryAccent,
       },
-
     ];
 
     return Positioned(
@@ -471,11 +466,7 @@ class _SubjectDashboardScreenState extends State<SubjectDashboardScreen> {
                     SizedBox(width: 10),
                     Text(
                       item['title'],
-                      style: GoogleFonts.poppins(
-                        color: Colors.black87,
-                        fontWeight: FontWeight.w500,
-                        fontSize: 14,
-                      ),
+                      style: TeacherTextStyles.listItemTitle,
                     ),
                   ],
                 ),
@@ -488,11 +479,9 @@ class _SubjectDashboardScreenState extends State<SubjectDashboardScreen> {
   }
 
   Widget _buildMainFAB() {
-    final subjectColor = widget.subject['color'] ?? Theme.of(context).primaryColor;
-
     return FloatingActionButton(
       shape: const CircleBorder(),
-      backgroundColor: subjectColor,
+      backgroundColor: TeacherColors.primaryAccent,
       elevation: 8,
       child: AnimatedSwitcher(
         duration: const Duration(milliseconds: 300),
@@ -514,8 +503,6 @@ class _SubjectDashboardScreenState extends State<SubjectDashboardScreen> {
   }
 
   Widget _buildQuickStatsPanel() {
-    final subjectColor = widget.subject['color'] ?? Theme.of(context).primaryColor;
-
     // Safely parse attendance rate
     double attendanceRate = 0.0;
     if (subjectStats['attendance_rate'] != null) {
@@ -529,14 +516,7 @@ class _SubjectDashboardScreenState extends State<SubjectDashboardScreen> {
     return Container(
       padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            subjectColor.withOpacity(0.8),
-            subjectColor.withOpacity(0.6),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        gradient: TeacherColors.accentGradient(TeacherColors.primaryAccent),
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -588,18 +568,11 @@ class _SubjectDashboardScreenState extends State<SubjectDashboardScreen> {
         SizedBox(height: 8),
         Text(
           value,
-          style: GoogleFonts.poppins(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-            fontSize: 16,
-          ),
+          style: TeacherTextStyles.statValue.copyWith(color: Colors.white),
         ),
         Text(
           label,
-          style: GoogleFonts.poppins(
-            color: Colors.white.withOpacity(0.9),
-            fontSize: 12,
-          ),
+          style: TeacherTextStyles.statLabel.copyWith(color: Colors.white.withOpacity(0.9)),
         ),
       ],
     );
@@ -611,7 +584,7 @@ class _SubjectDashboardScreenState extends State<SubjectDashboardScreen> {
         padding: EdgeInsets.all(16),
         child: Text(
           'No recent announcements',
-          style: GoogleFonts.poppins(color: Colors.grey),
+          style: TeacherTextStyles.cardSubtitle,
         ),
       );
     }
@@ -622,20 +595,20 @@ class _SubjectDashboardScreenState extends State<SubjectDashboardScreen> {
           children: [
             ListTile(
               leading: CircleAvatar(
-                backgroundColor: Colors.blue[50],
-                child: Icon(Icons.announcement, color: Colors.blue),
+                backgroundColor: TeacherColors.announcementColor.withOpacity(0.2),
+                child: Icon(Icons.announcement, color: TeacherColors.announcementColor),
               ),
               title: Text(
                 announcement['title'] ?? 'No title',
-                style: GoogleFonts.poppins(fontWeight: FontWeight.w500),
+                style: TeacherTextStyles.cardTitle,
               ),
               subtitle: Text(
                 announcement['content'] ?? 'No content',
-                style: GoogleFonts.poppins(),
+                style: TeacherTextStyles.cardSubtitle,
               ),
               trailing: Text(
                 _formatTime(announcement['created_at']),
-                style: GoogleFonts.poppins(color: Colors.grey, fontSize: 12),
+                style: TeacherTextStyles.cardSubtitle,
               ),
             ),
             if (announcement != announcements.last) Divider(height: 1),
@@ -651,12 +624,11 @@ class _SubjectDashboardScreenState extends State<SubjectDashboardScreen> {
         padding: EdgeInsets.all(16),
         child: Text(
           'No upcoming assignments',
-          style: GoogleFonts.poppins(color: Colors.grey),
+          style: TeacherTextStyles.cardSubtitle,
         ),
       );
     }
 
-    final subjectColor = widget.subject['color'] ?? Theme.of(context).primaryColor;
     final studentCount = subjectStats['student_count'] is String
         ? int.tryParse(subjectStats['student_count']) ?? 1
         : (subjectStats['student_count'] ?? 1);
@@ -671,29 +643,29 @@ class _SubjectDashboardScreenState extends State<SubjectDashboardScreen> {
           children: [
             ListTile(
               leading: CircleAvatar(
-                backgroundColor: Colors.orange[50],
-                child: Icon(Icons.assignment, color: Colors.orange),
+                backgroundColor: TeacherColors.assignmentColor.withOpacity(0.2),
+                child: Icon(Icons.assignment, color: TeacherColors.assignmentColor),
               ),
               title: Text(
                 assignment['title'] ?? 'No title',
-                style: GoogleFonts.poppins(fontWeight: FontWeight.w500),
+                style: TeacherTextStyles.cardTitle,
               ),
               subtitle: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     'Due: ${_formatDate(assignment['due_date'])}',
-                    style: GoogleFonts.poppins(),
+                    style: TeacherTextStyles.cardSubtitle,
                   ),
                   SizedBox(height: 4),
                   LinearProgressIndicator(
                     value: submittedCount / studentCount,
-                    backgroundColor: subjectColor.withOpacity(0.1),
-                    valueColor: AlwaysStoppedAnimation<Color>(subjectColor),
+                    backgroundColor: TeacherColors.assignmentColor.withOpacity(0.1),
+                    valueColor: AlwaysStoppedAnimation<Color>(TeacherColors.assignmentColor),
                   ),
                   Text(
                     '$submittedCount/$studentCount submitted',
-                    style: GoogleFonts.poppins(fontSize: 12),
+                    style: TeacherTextStyles.cardSubtitle,
                   ),
                 ],
               ),
@@ -711,7 +683,7 @@ class _SubjectDashboardScreenState extends State<SubjectDashboardScreen> {
         padding: EdgeInsets.all(16),
         child: Text(
           'No pending queries',
-          style: GoogleFonts.poppins(color: Colors.grey),
+          style: TeacherTextStyles.cardSubtitle,
         ),
       );
     }
@@ -723,37 +695,35 @@ class _SubjectDashboardScreenState extends State<SubjectDashboardScreen> {
             ListTile(
               leading: CircleAvatar(
                 backgroundColor: query['status'] == 'answered'
-                    ? Colors.green[50]
-                    : Colors.red[50],
+                    ? TeacherColors.successAccent.withOpacity(0.2)
+                    : TeacherColors.dangerAccent.withOpacity(0.2),
                 child: Icon(
                   Icons.question_answer,
                   color: query['status'] == 'answered'
-                      ? Colors.green
-                      : Colors.red,
+                      ? TeacherColors.successAccent
+                      : TeacherColors.dangerAccent,
                 ),
               ),
               title: Text(
                 query['student_name'] ?? 'Student',
-                style: GoogleFonts.poppins(fontWeight: FontWeight.w500),
+                style: TeacherTextStyles.cardTitle,
               ),
               subtitle: Text(
                 (query['question']?.length ?? 0) > 30
                     ? '${query['question'].substring(0, 30)}...'
                     : query['question'] ?? 'No question',
-                style: GoogleFonts.poppins(),
+                style: TeacherTextStyles.cardSubtitle,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
               trailing: Chip(
                 label: Text(
                   query['status'] == 'answered' ? 'Answered' : 'Pending',
-                  style: GoogleFonts.poppins(
-                      fontSize: 12,
-                      color: Colors.white),
+                  style: TeacherTextStyles.cardSubtitle.copyWith(color: Colors.white),
                 ),
                 backgroundColor: query['status'] == 'answered'
-                    ? Colors.green
-                    : Colors.red,
+                    ? TeacherColors.successAccent
+                    : TeacherColors.dangerAccent,
               ),
             ),
             if (query != queries.last) Divider(height: 1),
@@ -769,12 +739,11 @@ class _SubjectDashboardScreenState extends State<SubjectDashboardScreen> {
         padding: EdgeInsets.all(16),
         child: Text(
           'No attendance data available',
-          style: GoogleFonts.poppins(color: Colors.grey),
+          style: TeacherTextStyles.cardSubtitle,
         ),
       );
     }
 
-    final subjectColor = widget.subject['color'] ?? Theme.of(context).primaryColor;
     double attendanceRate = 0.0;
     if (subjectStats['attendance_rate'] != null) {
       if (subjectStats['attendance_rate'] is String) {
@@ -793,14 +762,12 @@ class _SubjectDashboardScreenState extends State<SubjectDashboardScreen> {
             children: [
               Text(
                 'This Week',
-                style: GoogleFonts.poppins(fontWeight: FontWeight.w500),
+                style: TeacherTextStyles.cardTitle,
               ),
               Text(
                 '${attendanceRate.toStringAsFixed(0)}%',
-                style: GoogleFonts.poppins(
-                  fontWeight: FontWeight.bold,
-                  color: subjectColor,
-                  fontSize: 18,
+                style: TeacherTextStyles.statValue.copyWith(
+                  color: TeacherColors.attendanceColor,
                 ),
               ),
             ],
@@ -808,8 +775,8 @@ class _SubjectDashboardScreenState extends State<SubjectDashboardScreen> {
           SizedBox(height: 8),
           LinearProgressIndicator(
             value: attendanceRate / 100,
-            backgroundColor: subjectColor.withOpacity(0.1),
-            valueColor: AlwaysStoppedAnimation<Color>(subjectColor),
+            backgroundColor: TeacherColors.attendanceColor.withOpacity(0.1),
+            valueColor: AlwaysStoppedAnimation<Color>(TeacherColors.attendanceColor),
           ),
           SizedBox(height: 16),
           Row(
@@ -826,7 +793,7 @@ class _SubjectDashboardScreenState extends State<SubjectDashboardScreen> {
                 _getDayName(day['day']),
                 '${dayRate.toStringAsFixed(0)}%',
                 dayRate >= 90 ? Icons.check : Icons.warning,
-                dayRate >= 90 ? Colors.green : Colors.orange,
+                dayRate >= 90 ? TeacherColors.successAccent : TeacherColors.warningAccent,
               );
             }).toList(),
           ),
@@ -886,17 +853,14 @@ class _SubjectDashboardScreenState extends State<SubjectDashboardScreen> {
             children: [
               Text(
                 title,
-                style: GoogleFonts.poppins(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 18,
-                ),
+                style: TeacherTextStyles.sectionHeader,
               ),
               TextButton(
                 onPressed: onViewAll,
                 child: Text(
                   'View All',
-                  style: GoogleFonts.poppins(
-                    color: widget.subject['color'] ?? Theme.of(context).primaryColor,
+                  style: TeacherTextStyles.secondaryButton.copyWith(
+                    color: TeacherColors.primaryAccent,
                   ),
                 ),
               ),
@@ -923,10 +887,10 @@ class _SubjectDashboardScreenState extends State<SubjectDashboardScreen> {
       ) {
     return Column(
       children: [
-        Text(day, style: GoogleFonts.poppins(fontSize: 12)),
+        Text(day, style: TeacherTextStyles.cardSubtitle),
         SizedBox(height: 4),
         Icon(icon, color: color, size: 16),
-        Text(percent, style: GoogleFonts.poppins(fontSize: 12)),
+        Text(percent, style: TeacherTextStyles.cardSubtitle),
       ],
     );
   }
@@ -936,43 +900,43 @@ class _SubjectDashboardScreenState extends State<SubjectDashboardScreen> {
       children: [
         ListTile(
           leading: CircleAvatar(
-            backgroundColor: Colors.blue[50],
-            child: Icon(Icons.person, color: Colors.blue),
+            backgroundColor: TeacherColors.studentColor.withOpacity(0.2),
+            child: Icon(Icons.person, color: TeacherColors.studentColor),
           ),
           title: Text(
             'Prof. Smith',
-            style: GoogleFonts.poppins(fontWeight: FontWeight.w500),
+            style: TeacherTextStyles.cardTitle,
           ),
           subtitle: Text(
             'Don\'t forget about the assignment due tomorrow',
-            style: GoogleFonts.poppins(),
+            style: TeacherTextStyles.cardSubtitle,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
           trailing: Text(
             '10m ago',
-            style: GoogleFonts.poppins(color: Colors.grey, fontSize: 12),
+            style: TeacherTextStyles.cardSubtitle,
           ),
         ),
         Divider(height: 1),
         ListTile(
           leading: CircleAvatar(
-            backgroundColor: Colors.green[50],
-            child: Icon(Icons.person, color: Colors.green),
+            backgroundColor: TeacherColors.successAccent.withOpacity(0.2),
+            child: Icon(Icons.person, color: TeacherColors.successAccent),
           ),
           title: Text(
             'You',
-            style: GoogleFonts.poppins(fontWeight: FontWeight.w500),
+            style: TeacherTextStyles.cardTitle,
           ),
           subtitle: Text(
             'I submitted the assignment last night',
-            style: GoogleFonts.poppins(),
+            style: TeacherTextStyles.cardSubtitle,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
           trailing: Text(
             '5m ago',
-            style: GoogleFonts.poppins(color: Colors.grey, fontSize: 12),
+            style: TeacherTextStyles.cardSubtitle,
           ),
         ),
       ],
@@ -980,16 +944,12 @@ class _SubjectDashboardScreenState extends State<SubjectDashboardScreen> {
   }
 }
 
-
-
 class PlannerDetailsScreen extends StatelessWidget {
   final Map<String, dynamic> planner;
-  final Color subjectColor;
 
   const PlannerDetailsScreen({
     Key? key,
     required this.planner,
-    required this.subjectColor,
   }) : super(key: key);
 
   @override
@@ -999,7 +959,7 @@ class PlannerDetailsScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text('Planner Details'),
-        backgroundColor: subjectColor,
+        backgroundColor: TeacherColors.primaryBackground,
       ),
       body: SingleChildScrollView(
         padding: EdgeInsets.all(16),
@@ -1008,47 +968,35 @@ class PlannerDetailsScreen extends StatelessWidget {
           children: [
             Text(
               planner['title'] ?? 'No title',
-              style: GoogleFonts.poppins(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TeacherTextStyles.sectionHeader,
             ),
             SizedBox(height: 8),
             Row(
               children: [
-                Icon(Icons.calendar_today, size: 16, color: Colors.grey),
+                Icon(Icons.calendar_today, size: 16, color: TeacherColors.secondaryText),
                 SizedBox(width: 8),
                 Text(
                   DateFormat('MMM dd, yyyy').format(
                       DateTime.parse(planner['planned_date'])),
-                  style: GoogleFonts.poppins(
-                    fontSize: 16,
-                    color: Colors.grey,
-                  ),
+                  style: TeacherTextStyles.cardSubtitle,
                 ),
               ],
             ),
             SizedBox(height: 24),
             Text(
               'Description',
-              style: GoogleFonts.poppins(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TeacherTextStyles.sectionHeader,
             ),
             SizedBox(height: 8),
             Text(
               planner['description'] ?? 'No description',
-              style: GoogleFonts.poppins(fontSize: 16),
+              style: TeacherTextStyles.cardSubtitle,
             ),
             SizedBox(height: 24),
             if (attachments.isNotEmpty) ...[
               Text(
                 'Attachments',
-                style: GoogleFonts.poppins(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TeacherTextStyles.sectionHeader,
               ),
               SizedBox(height: 8),
               Column(
@@ -1058,11 +1006,11 @@ class PlannerDetailsScreen extends StatelessWidget {
                     child: ListTile(
                       leading: Icon(
                         _getFileIcon(attachment['file_name']),
-                        color: subjectColor,
+                        color: TeacherColors.primaryAccent,
                       ),
                       title: Text(
                         attachment['file_name'],
-                        style: GoogleFonts.poppins(),
+                        style: TeacherTextStyles.cardSubtitle,
                         overflow: TextOverflow.ellipsis,
                       ),
                       trailing: IconButton(

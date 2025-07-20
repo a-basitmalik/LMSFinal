@@ -1,13 +1,14 @@
 import 'dart:convert';
-
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'package:newapp/Teacher/AnnouncementsScreen.dart';
 import 'package:newapp/Teacher/SubjectDetails.dart';
 import 'package:newapp/Teacher/Subjects.dart';
 import 'package:newapp/Teacher/FullSchedule.dart';
 import 'package:newapp/Teacher/TeacherProfile.dart';
+import 'package:newapp/Teacher/themes/theme_colors.dart';
+import 'package:newapp/Teacher/themes/theme_text_styles.dart';
+
 
 class TeacherMain extends StatelessWidget {
   final String userId;
@@ -20,16 +21,30 @@ class TeacherMain extends StatelessWidget {
       title: 'Teacher Dashboard',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        primarySwatch: Colors.blue,
-        colorScheme: ColorScheme.light(
-          primary: Color(0xFF4361EE),
-          secondary: Color(0xFF7209B7),
-          tertiary: Color(0xFF3A0CA3),
-          surface: Colors.white,
-          background: Color(0xFFF8F9FF),
+        primaryColor: TeacherColors.primaryAccent,
+        colorScheme: ColorScheme.dark(
+          primary: TeacherColors.primaryAccent,
+          secondary: TeacherColors.secondaryAccent,
+          surface: TeacherColors.primaryBackground,
+          background: TeacherColors.primaryBackground,
         ),
-        textTheme: GoogleFonts.poppinsTextTheme(
-          Theme.of(context).textTheme,
+        scaffoldBackgroundColor: TeacherColors.primaryBackground,
+        cardTheme: CardThemeData(
+          color: TeacherColors.cardBackground,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+            side: BorderSide(color: TeacherColors.cardBorder, width: 1),
+          ),
+        ),
+
+        textTheme: TextTheme(
+          headlineSmall: TeacherTextStyles.portalTitle,
+          titleLarge: TeacherTextStyles.className,
+          titleMedium: TeacherTextStyles.sectionHeader,
+          bodyLarge: TeacherTextStyles.listItemTitle,
+          bodyMedium: TeacherTextStyles.listItemSubtitle,
+          labelLarge: TeacherTextStyles.primaryButton,
+          bodySmall: TeacherTextStyles.statLabel,
         ),
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
@@ -37,7 +52,6 @@ class TeacherMain extends StatelessWidget {
     );
   }
 }
-
 class TeacherHomeScreen extends StatefulWidget {
   final String userId;
 
@@ -163,25 +177,18 @@ class _TeacherHomeScreenState extends State<TeacherHomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.surface,
+      backgroundColor: TeacherColors.primaryBackground,
       appBar: AppBar(
         title: Text(
           'Teacher Dashboard',
-          style: GoogleFonts.poppins(
-            fontWeight: FontWeight.bold,
-            fontSize: 22,
-            color: Colors.white,
-          ),
+          style: TeacherTextStyles.className.copyWith(fontSize: 20),
         ),
         elevation: 0,
-        backgroundColor: Theme.of(context).colorScheme.primary,
+        backgroundColor: TeacherColors.primaryBackground,
         centerTitle: true,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(bottom: Radius.circular(20)),
-        ),
         actions: [
           IconButton(
-            icon: Icon(Icons.notifications_active, color: Colors.white),
+            icon: Icon(Icons.notifications_active, color: TeacherColors.primaryText),
             onPressed: () {},
           ),
         ],
@@ -245,30 +252,27 @@ class _TeacherHomeScreenState extends State<TeacherHomeScreen> {
   Widget _buildWelcomeHeader(BuildContext context) {
     return Container(
       padding: EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            Theme.of(context).colorScheme.primary,
-            Theme.of(context).colorScheme.tertiary,
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 15,
-            spreadRadius: 2,
-          ),
-        ],
+      decoration: TeacherColors.glassDecoration(
+        borderRadius: 16,
+        borderColor: TeacherColors.cardBorder,
       ),
       child: Row(
         children: [
-          CircleAvatar(
-            radius: 32,
-            backgroundColor: Colors.white.withOpacity(0.2),
-            child: Icon(Icons.person, size: 32, color: Colors.white),
+          Container(
+            width: 64,
+            height: 64,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: LinearGradient(
+                colors: [
+                  TeacherColors.primaryAccent.withOpacity(0.3),
+                  TeacherColors.secondaryAccent.withOpacity(0.1),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+            ),
+            child: Icon(Icons.person, size: 32, color: TeacherColors.primaryText),
           ),
           SizedBox(width: 16),
           Expanded(
@@ -277,28 +281,19 @@ class _TeacherHomeScreenState extends State<TeacherHomeScreen> {
               children: [
                 Text(
                   'Good Morning,',
-                  style: GoogleFonts.poppins(
-                    fontSize: 16,
-                    color: Colors.white.withOpacity(0.9),
-                    fontWeight: FontWeight.w500,
+                  style: TeacherTextStyles.portalTitle.copyWith(
+                    color: TeacherColors.primaryText.withOpacity(0.8),
                   ),
                 ),
                 SizedBox(height: 4),
                 Text(
                   teacherProfile['name'] ?? 'NA',
-                  style: GoogleFonts.poppins(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
+                  style: TeacherTextStyles.className,
                 ),
                 SizedBox(height: 4),
                 Text(
                   teacherProfile['department'] ?? 'NA',
-                  style: GoogleFonts.poppins(
-                    fontSize: 14,
-                    color: Colors.white.withOpacity(0.9),
-                  ),
+                  style: TeacherTextStyles.cardSubtitle,
                 ),
               ],
             ),
@@ -311,36 +306,29 @@ class _TeacherHomeScreenState extends State<TeacherHomeScreen> {
   Widget _buildQuickStatsRow() {
     return Row(
       children: [
-        Expanded(
-          child: _buildStatCard(
-            title: 'Classes',
-            value: classCount.toString(),
-            icon: Icons.class_,
-            color: Color(0xFF4361EE),
-          ),
-        ),
+        Expanded(child: _buildStatCard(
+          title: 'Classes',
+          value: classCount.toString(),
+          icon: Icons.class_,
+          color: TeacherColors.classColor,
+        )),
         SizedBox(width: 16),
-        Expanded(
-          child: _buildStatCard(
-            title: 'Students',
-            value: studentCount.toString(),
-            icon: Icons.people_alt,
-            color: Color(0xFF7209B7),
-          ),
-        ),
+        Expanded(child: _buildStatCard(
+          title: 'Students',
+          value: studentCount.toString(),
+          icon: Icons.people_alt,
+          color: TeacherColors.studentColor,
+        )),
         SizedBox(width: 16),
-        Expanded(
-          child: _buildStatCard(
-            title: 'Tasks',
-            value: taskCount.toString(),
-            icon: Icons.assignment,
-            color: Color(0xFF4CC9F0),
-          ),
-        ),
+        Expanded(child: _buildStatCard(
+          title: 'Tasks',
+          value: taskCount.toString(),
+          icon: Icons.assignment,
+          color: TeacherColors.assignmentColor,
+        )),
       ],
     );
   }
-
 
   Widget _buildStatCard({
     required String title,
@@ -350,16 +338,9 @@ class _TeacherHomeScreenState extends State<TeacherHomeScreen> {
   }) {
     return Container(
       padding: EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            spreadRadius: 2,
-          ),
-        ],
+      decoration: TeacherColors.glassDecoration(
+        borderRadius: 12,
+        borderColor: color.withOpacity(0.3),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -376,16 +357,12 @@ class _TeacherHomeScreenState extends State<TeacherHomeScreen> {
           SizedBox(height: 12),
           Text(
             value,
-            style: GoogleFonts.poppins(
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-              color: Colors.black87,
-            ),
+            style: TeacherTextStyles.statValue.copyWith(color: color),
           ),
           SizedBox(height: 4),
           Text(
             title,
-            style: GoogleFonts.poppins(fontSize: 14, color: Colors.grey[600]),
+            style: TeacherTextStyles.statLabel,
           ),
         ],
       ),
@@ -403,20 +380,15 @@ class _TeacherHomeScreenState extends State<TeacherHomeScreen> {
       children: [
         Text(
           title,
-          style: GoogleFonts.poppins(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: Theme.of(context).colorScheme.primary,
-          ),
+          style: TeacherTextStyles.sectionTitle(TeacherColors.primaryAccent),
         ),
         if (actionText.isNotEmpty)
           TextButton(
             onPressed: onPressed,
             child: Text(
               actionText,
-              style: GoogleFonts.poppins(
-                color: Theme.of(context).colorScheme.secondary,
-                fontWeight: FontWeight.bold,
+              style: TeacherTextStyles.secondaryButton.copyWith(
+                color: TeacherColors.secondaryAccent,
               ),
             ),
           ),
@@ -427,24 +399,11 @@ class _TeacherHomeScreenState extends State<TeacherHomeScreen> {
   Widget _buildComingSoonPanel(BuildContext context) {
     return Container(
       padding: EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 20,
-            spreadRadius: 2,
-          ),
-        ],
-      ),
+      decoration: TeacherColors.glassDecoration(),
       child: Center(
         child: Text(
           'New features coming soon!',
-          style: GoogleFonts.poppins(
-            fontSize: 16,
-            color: Colors.grey[600],
-          ),
+          style: TeacherTextStyles.cardSubtitle,
         ),
       ),
     );
@@ -452,17 +411,7 @@ class _TeacherHomeScreenState extends State<TeacherHomeScreen> {
 
   Widget _buildScheduleList(BuildContext context) {
     return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 20,
-            spreadRadius: 2,
-          ),
-        ],
-      ),
+      decoration: TeacherColors.glassDecoration(),
       child: Column(
         children: todaysSchedule.map((schedule) {
           final subjectColor = _getColorForSubject(schedule['subject_id'] ?? 0);
@@ -484,14 +433,11 @@ class _TeacherHomeScreenState extends State<TeacherHomeScreen> {
                 ),
                 title: Text(
                   schedule['subject_name'] ?? 'NA',
-                  style: GoogleFonts.poppins(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
-                  ),
+                  style: TeacherTextStyles.listItemTitle,
                 ),
                 subtitle: Text(
                   schedule['year'] != null ? 'Grade ${schedule['year']}' : 'NA',
-                  style: GoogleFonts.poppins(color: Colors.grey[600]),
+                  style: TeacherTextStyles.listItemSubtitle,
                 ),
                 trailing: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -499,23 +445,22 @@ class _TeacherHomeScreenState extends State<TeacherHomeScreen> {
                   children: [
                     Text(
                       schedule['time'] ?? 'NA',
-                      style: GoogleFonts.poppins(
-                        fontWeight: FontWeight.bold,
+                      style: TeacherTextStyles.cardSubtitle.copyWith(
                         color: subjectColor,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
                     Text(
                       schedule['room'] ?? 'NA',
-                      style: GoogleFonts.poppins(
-                        fontSize: 12,
-                        color: Colors.grey,
+                      style: TeacherTextStyles.cardSubtitle.copyWith(
+                        fontSize: 10,
                       ),
                     ),
                   ],
                 ),
               ),
               if (schedule != todaysSchedule.last)
-                Divider(height: 1, indent: 16),
+                Divider(height: 1, color: TeacherColors.cardBorder, indent: 16),
             ],
           );
         }).toList(),
@@ -526,23 +471,11 @@ class _TeacherHomeScreenState extends State<TeacherHomeScreen> {
   Widget _buildNoSchedulePlaceholder() {
     return Container(
       padding: EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 20,
-            spreadRadius: 2,
-          ),
-        ],
-      ),
+      decoration: TeacherColors.glassDecoration(),
       child: Center(
         child: Text(
           'No classes scheduled for today',
-          style: GoogleFonts.poppins(
-            color: Colors.grey[600],
-          ),
+          style: TeacherTextStyles.cardSubtitle,
         ),
       ),
     );
@@ -591,7 +524,10 @@ class _TeacherHomeScreenState extends State<TeacherHomeScreen> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => SubjectDashboardScreen(subject: subject,teacherId: widget.userId,),
+                    builder: (context) => SubjectDashboardScreen(
+                      subject: subject,
+                      teacherId: widget.userId,
+                    ),
                   ),
                 );
               },
@@ -620,9 +556,7 @@ class _TeacherHomeScreenState extends State<TeacherHomeScreen> {
                       children: [
                         Text(
                           subject['subject_name'] ?? 'NA',
-                          style: GoogleFonts.poppins(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 14,
+                          style: TeacherTextStyles.cardTitle.copyWith(
                             color: Colors.white,
                           ),
                           maxLines: 1,
@@ -631,9 +565,8 @@ class _TeacherHomeScreenState extends State<TeacherHomeScreen> {
                         SizedBox(height: 2),
                         Text(
                           subject['year'] != null ? 'Grade ${subject['year']}' : 'NA',
-                          style: GoogleFonts.poppins(
+                          style: TeacherTextStyles.cardSubtitle.copyWith(
                             color: Colors.white.withOpacity(0.9),
-                            fontSize: 10,
                           ),
                         ),
                       ],
@@ -651,23 +584,11 @@ class _TeacherHomeScreenState extends State<TeacherHomeScreen> {
   Widget _buildNoSubjectsPlaceholder() {
     return Container(
       padding: EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 20,
-            spreadRadius: 2,
-          ),
-        ],
-      ),
+      decoration: TeacherColors.glassDecoration(),
       child: Center(
         child: Text(
           'No subjects assigned',
-          style: GoogleFonts.poppins(
-            color: Colors.grey[600],
-          ),
+          style: TeacherTextStyles.cardSubtitle,
         ),
       ),
     );
@@ -689,10 +610,12 @@ class _TeacherHomeScreenState extends State<TeacherHomeScreen> {
         child: BottomNavigationBar(
           currentIndex: _currentIndex,
           type: BottomNavigationBarType.fixed,
-          selectedItemColor: Theme.of(context).colorScheme.primary,
-          unselectedItemColor: Colors.grey[600],
-          selectedLabelStyle: GoogleFonts.poppins(fontWeight: FontWeight.bold),
-          backgroundColor: Colors.white,
+          selectedItemColor: TeacherColors.primaryAccent,
+          unselectedItemColor: TeacherColors.secondaryText,
+          selectedLabelStyle: TeacherTextStyles.secondaryButton.copyWith(
+            fontWeight: FontWeight.bold,
+          ),
+          backgroundColor: TeacherColors.secondaryBackground,
           elevation: 10,
           onTap: (index) {
             setState(() {
@@ -709,7 +632,9 @@ class _TeacherHomeScreenState extends State<TeacherHomeScreen> {
               case 1: // Subjects tab
                 Navigator.push(
                   context,
-                  MaterialPageRoute( builder: (context) => SubjectsScreen(teacherId: widget.userId)),
+                  MaterialPageRoute(
+                    builder: (context) => SubjectsScreen(teacherId: widget.userId),
+                  ),
                 );
                 break;
 
@@ -739,7 +664,7 @@ class _TeacherHomeScreenState extends State<TeacherHomeScreen> {
               icon: Container(
                 padding: EdgeInsets.all(6),
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                  color: TeacherColors.primaryAccent.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(Icons.home_outlined),
@@ -748,7 +673,7 @@ class _TeacherHomeScreenState extends State<TeacherHomeScreen> {
               activeIcon: Container(
                 padding: EdgeInsets.all(6),
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.primary.withOpacity(0.2),
+                  color: TeacherColors.primaryAccent.withOpacity(0.2),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(Icons.home),
@@ -777,12 +702,12 @@ class _TeacherHomeScreenState extends State<TeacherHomeScreen> {
 
   Color _getColorForSubject(int subjectId) {
     final colors = [
-      Color(0xFF4361EE),
-      Color(0xFF7209B7),
-      Color(0xFF4CC9F0),
-      Color(0xFF3A0CA3),
-      Color(0xFF4895EF),
-      Color(0xFF560BAD),
+      TeacherColors.classColor,
+      TeacherColors.studentColor,
+      TeacherColors.assignmentColor,
+      TeacherColors.gradeColor,
+      TeacherColors.scheduleColor,
+      TeacherColors.announcementColor,
     ];
     return colors[subjectId % colors.length];
   }

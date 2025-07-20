@@ -1,11 +1,12 @@
 import 'dart:io';
-
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:intl/intl.dart';
+import 'package:newapp/Teacher/themes/theme_colors.dart';
+import 'package:newapp/Teacher/themes/theme_text_styles.dart';
 import 'EnterMarks.dart';
+
 
 class MarkedAssessmentsScreen extends StatefulWidget {
   final String assessmentId;
@@ -60,7 +61,10 @@ class _MarkedAssessmentsScreenState extends State<MarkedAssessmentsScreen> {
     } catch (e) {
       setState(() => _isLoading = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: ${e.toString()}')),
+        SnackBar(
+          content: Text('Error: ${e.toString()}', style: TeacherTextStyles.listItemTitle),
+          backgroundColor: TeacherColors.dangerAccent,
+        ),
       );
     }
   }
@@ -97,37 +101,58 @@ class _MarkedAssessmentsScreenState extends State<MarkedAssessmentsScreen> {
     return 'F';
   }
 
+  Color _getGradeColor(String grade) {
+    switch (grade) {
+      case 'A+':
+        return TeacherColors.successAccent;
+      case 'A':
+        return TeacherColors.successAccent.withOpacity(0.8);
+      case 'B':
+        return TeacherColors.warningAccent.withOpacity(0.6);
+      case 'C':
+        return TeacherColors.warningAccent;
+      case 'D':
+        return TeacherColors.dangerAccent.withOpacity(0.8);
+      default:
+        return TeacherColors.dangerAccent;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: TeacherColors.primaryBackground,
       appBar: AppBar(
         title: Text(
           widget.isQuiz ? 'Quiz Results' : 'Assessment Results',
-          style: GoogleFonts.poppins(
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-          ),
+          style: TeacherTextStyles.className,
         ),
         backgroundColor: widget.subjectColor,
         elevation: 0,
         centerTitle: true,
         actions: [
           IconButton(
-            icon: Icon(Icons.edit),
+            icon: Icon(Icons.edit, color: TeacherColors.primaryText),
             onPressed: _navigateToEditMarks,
             tooltip: 'Edit Marks',
           ),
         ],
       ),
       body: _isLoading
-          ? Center(child: CircularProgressIndicator())
+          ? Center(
+        child: CircularProgressIndicator(
+          color: TeacherColors.primaryAccent,
+        ),
+      )
           : RefreshIndicator(
         onRefresh: _refreshData,
+        color: TeacherColors.primaryAccent,
+        backgroundColor: TeacherColors.primaryBackground,
         child: _markedStudents.isEmpty
             ? Center(
           child: Text(
             'No students marked yet',
-            style: GoogleFonts.poppins(fontSize: 16),
+            style: TeacherTextStyles.listItemTitle,
           ),
         )
             : SingleChildScrollView(
@@ -137,17 +162,29 @@ class _MarkedAssessmentsScreenState extends State<MarkedAssessmentsScreen> {
               // Assessment details header
               Container(
                 padding: EdgeInsets.all(16),
-                color: widget.subjectColor.withOpacity(0.1),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      widget.subjectColor.withOpacity(0.2),
+                      widget.subjectColor.withOpacity(0.1),
+                    ],
+                  ),
+                  border: Border(
+                    bottom: BorderSide(
+                      color: TeacherColors.cardBorder,
+                      width: 1,
+                    ),
+                  ),
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       _assessmentDetails['title'] ??
                           (widget.isQuiz ? 'Quiz ${_assessmentDetails['quiz_number']}' : 'Assessment'),
-                      style: GoogleFonts.poppins(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 18,
-                      ),
+                      style: TeacherTextStyles.assignmentTitle,
                     ),
                     SizedBox(height: 8),
                     Row(
@@ -155,11 +192,11 @@ class _MarkedAssessmentsScreenState extends State<MarkedAssessmentsScreen> {
                       children: [
                         Text(
                           'Type: ${_assessmentDetails['assessment_type'] ?? 'Other'}',
-                          style: GoogleFonts.poppins(),
+                          style: TeacherTextStyles.listItemSubtitle,
                         ),
                         Text(
                           'Total Marks: ${_assessmentDetails['total_marks'] ?? 'N/A'}',
-                          style: GoogleFonts.poppins(),
+                          style: TeacherTextStyles.listItemSubtitle,
                         ),
                       ],
                     ),
@@ -167,9 +204,8 @@ class _MarkedAssessmentsScreenState extends State<MarkedAssessmentsScreen> {
                     Text(
                       'Date: ${DateFormat('MMM d, y').format(
                           HttpDate.parse(_assessmentDetails['created_at'])
-                      )
-                      }',
-                      style: GoogleFonts.poppins(),
+                      )}',
+                      style: TeacherTextStyles.listItemSubtitle,
                     ),
                   ],
                 ),
@@ -186,21 +222,26 @@ class _MarkedAssessmentsScreenState extends State<MarkedAssessmentsScreen> {
                   final marks = student['marks_achieved']?.toDouble() ?? 0.0;
                   final grade = _calculateGrade(marks, totalMarks);
 
-                  return Card(
+                  return Container(
                     margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    decoration: TeacherColors.glassDecoration(),
                     child: ListTile(
                       leading: CircleAvatar(
-                        child: Text(student['student_name'][0]),
+                        backgroundColor: widget.subjectColor.withOpacity(0.2),
+                        child: Text(
+                          student['student_name'][0],
+                          style: TeacherTextStyles.listItemTitle.copyWith(
+                            color: TeacherColors.primaryText,
+                          ),
+                        ),
                       ),
                       title: Text(
                         student['student_name'],
-                        style: GoogleFonts.poppins(
-                          fontWeight: FontWeight.bold,
-                        ),
+                        style: TeacherTextStyles.listItemTitle,
                       ),
                       subtitle: Text(
                         'ID: ${student['StudentID'] ?? student['rfid']}',
-                        style: GoogleFonts.poppins(fontSize: 12),
+                        style: TeacherTextStyles.cardSubtitle,
                       ),
                       trailing: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -208,8 +249,8 @@ class _MarkedAssessmentsScreenState extends State<MarkedAssessmentsScreen> {
                         children: [
                           Text(
                             '${marks.toStringAsFixed(1)}/${totalMarks.toStringAsFixed(0)}',
-                            style: GoogleFonts.poppins(
-                              fontWeight: FontWeight.bold,
+                            style: TeacherTextStyles.statValue.copyWith(
+                              color: TeacherColors.primaryAccent,
                             ),
                           ),
                           Container(
@@ -224,8 +265,7 @@ class _MarkedAssessmentsScreenState extends State<MarkedAssessmentsScreen> {
                             ),
                             child: Text(
                               grade,
-                              style: GoogleFonts.poppins(
-                                fontSize: 12,
+                              style: TeacherTextStyles.cardSubtitle.copyWith(
                                 fontWeight: FontWeight.bold,
                                 color: _getGradeColor(grade),
                               ),
@@ -242,21 +282,5 @@ class _MarkedAssessmentsScreenState extends State<MarkedAssessmentsScreen> {
         ),
       ),
     );
-  }
-
-  Color _getGradeColor(String grade) {
-    switch (grade) {
-      case 'A+':
-      case 'A':
-        return Colors.green;
-      case 'B':
-        return Colors.lightGreen;
-      case 'C':
-        return Colors.orange;
-      case 'D':
-        return Colors.orangeAccent;
-      default:
-        return Colors.red;
-    }
   }
 }
