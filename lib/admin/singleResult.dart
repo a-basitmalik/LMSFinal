@@ -1,9 +1,14 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:newapp/admin/themes/theme_colors.dart';
 import 'package:newapp/admin/themes/theme_extensions.dart';
 import 'package:newapp/admin/themes/theme_text_styles.dart';
 import 'dart:convert';
+import 'package:open_file/open_file.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 
 class SingleResultScreen extends StatefulWidget {
   final String studentId;
@@ -33,9 +38,7 @@ class _SingleResultScreenState extends State<SingleResultScreen> {
 
   Future<void> _fetchAssessmentData() async {
     setState(() => _isLoading = true);
-    final url = _isMonthlyAssessment
-        ? 'http://193.203.162.232:5050/result/get_assessment_monthly?student_id=${widget.studentId}'
-        : 'http://193.203.162.232:5050/result/get_assessment_else?student_id=${widget.studentId}&type=${widget.assessmentType}';
+    final url = 'http://193.203.162.232:5050/result/get_assessments?student_id=${widget.studentId}&type=${widget.assessmentType}';
 
     try {
       final response = await http.get(Uri.parse(url));
@@ -56,41 +59,70 @@ class _SingleResultScreenState extends State<SingleResultScreen> {
 
   List<ExamResult> _parseAssessmentData(Map<String, dynamic> data) {
     final List<ExamResult> results = [];
-    final assessments = data['assessments'] as Map<String, dynamic>;
+    final assessments = data['assessments'] as List;
 
-    int examNumber = 1;
-    assessments.forEach((key, value) {
+    for (var assessmentGroup in assessments) {
+      final sequence = assessmentGroup['sequence'] as int;
+      final assessmentsList = assessmentGroup['assessments'] as List;
+
+      // Group assessments by subject name
+      final Map<String, List<Map<String, dynamic>>> subjectsMap = {};
+
+      for (var assessment in assessmentsList) {
+        final subjectName = assessment['subject_name'] as String;
+        if (!subjectsMap.containsKey(subjectName)) {
+          subjectsMap[subjectName] = [];
+        }
+        subjectsMap[subjectName]!.add(assessment);
+      }
+
       final List<SubjectAssessment> subjects = [];
-      final assessmentsArray = value as List;
 
-      for (var item in assessmentsArray) {
-        final subjectName = item['subject_name']?.toString() ?? 'Unknown';
-        final quiz1 = _isMonthlyAssessment ? (item['quiz_marks'] ?? 0.0).toDouble() : 0.0;
-        final quiz2 = 0.0; // Placeholder for other quizzes
-        final quiz3 = 0.0; // Placeholder for other quizzes
-        final assessmentMarks = (item['assessment_marks'] ?? 0.0).toDouble();
-        final assessmentTotal = (item['assessment_total'] ?? 0.0).toDouble();
+      subjectsMap.forEach((subjectName, assessments) {
+        // Collect all quiz marks for this subject
+        final quizMarks = assessments
+            .map((a) => (a['quiz_marks'] ?? 0.0).toDouble())
+            .where((mark) => mark > 0)
+            .toList();
+
+        // Get assessment marks and total (should be same for all entries of same subject)
+        final assessmentMarks = assessments.first['assessment_marks']?.toDouble() ?? 0.0;
+        final assessmentTotal = assessments.first['total_marks']?.toDouble() ?? 0.0;
 
         subjects.add(SubjectAssessment(
           subjectName: subjectName,
-          quiz1: quiz1,
-          quiz2: quiz2,
-          quiz3: quiz3,
+          quiz1: quizMarks.length > 0 ? quizMarks[0] : 0.0,
+          quiz2: quizMarks.length > 1 ? quizMarks[1] : 0.0,
+          quiz3: quizMarks.length > 2 ? quizMarks[2] : 0.0,
           assessmentMarks: assessmentMarks,
           assessmentTotal: assessmentTotal,
         ));
-      }
+      });
+
+      final examName = _isMonthlyAssessment
+          ? 'Monthly ${sequence - 99}'
+          : '${widget.assessmentType} ${sequence}';
 
       results.add(ExamResult(
-        examName: 'Exam $examNumber',
+        examName: examName,
         subjects: subjects,
+        sequence: sequence,
       ));
-      examNumber++;
+    }
+
+    // Sort results by sequence number
+    results.sort((a, b) {
+      if (_isMonthlyAssessment) {
+        final aNum = int.parse(a.examName.replaceAll(RegExp(r'[^0-9]'), ''));
+        final bNum = int.parse(b.examName.replaceAll(RegExp(r'[^0-9]'), ''));
+        return aNum.compareTo(bNum);
+      } else {
+        return a.examName.compareTo(b.examName);
+      }
     });
 
     return results;
   }
-
   void _showErrorSnackbar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -110,7 +142,7 @@ class _SingleResultScreenState extends State<SingleResultScreen> {
     final textStyles = context.adminTextStyles;
 
     return Scaffold(
-      backgroundColor:AdminColors.primaryBackground,
+      backgroundColor: AdminColors.primaryBackground,
       body: CustomScrollView(
         slivers: [
           SliverAppBar(
@@ -176,7 +208,7 @@ class _SingleResultScreenState extends State<SingleResultScreen> {
                   SizedBox(height: 16),
                   Text(
                     'No assessment data found',
-                    style:AdminTextStyles.cardSubtitle.copyWith(
+                    style: AdminTextStyles.cardSubtitle.copyWith(
                       color: AdminColors.disabledText,
                     ),
                   ),
@@ -199,7 +231,7 @@ class _SingleResultScreenState extends State<SingleResultScreen> {
                 final examResult = _examResults[index];
                 return Column(
                   children: [
-                    _buildExamHeader(examResult.examName, colors, textStyles),
+                    _buildExamHeader(examResult.examName, colors, textStyles, examResult.sequence),
                     _buildResultsTable(examResult, colors, textStyles),
                     SizedBox(height: 16),
                   ],
@@ -213,22 +245,78 @@ class _SingleResultScreenState extends State<SingleResultScreen> {
     );
   }
 
-  Widget _buildExamHeader(String examName, AdminColors colors, AdminTextStyles textStyles) {
+
+
+  Widget _buildExamHeader(String examName, AdminColors colors, AdminTextStyles textStyles, int sequence) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
       child: Container(
         decoration: AdminColors.resultsColor.toGlassDecoration(),
         child: Padding(
           padding: const EdgeInsets.all(16.0),
-          child: Center(
-            child: Text(
-              examName,
-              style: AdminTextStyles.sectionTitle(AdminColors.primaryText),
-            ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                examName,
+                style: AdminTextStyles.sectionTitle(AdminColors.primaryText),
+              ),
+              IconButton(
+                icon: Icon(Icons.download, color: AdminColors.primaryAccent),
+                onPressed: () => _downloadReport(sequence),
+              ),
+            ],
           ),
         ),
       ),
     );
+  }
+  Future<void> _downloadReport(int sequence) async {
+    try {
+      setState(() => _isLoading = true);
+
+      final url = _isMonthlyAssessment
+          ? 'http://193.203.162.232:5050/result/generate_monthly_report?student_id=${widget.studentId}&sequence=$sequence'
+          : 'http://193.203.162.232:5050/result/generate_sendup_report?student_id=${widget.studentId}&sequence=$sequence';
+
+      final response = await http.get(Uri.parse(url));
+
+      if (response.statusCode == 200) {
+        // Get download directory
+        final directory = await getDownloadsDirectory() ?? await getApplicationDocumentsDirectory();
+        final fileName = _isMonthlyAssessment
+            ? 'Monthly_Report_${widget.studentId}_$sequence.docx'
+            : 'SendUp_Report_${widget.studentId}_$sequence.docx';
+        final filePath = '${directory.path}/$fileName';
+
+        // Save the file
+        final file = File(filePath);
+        await file.writeAsBytes(response.bodyBytes);
+
+        // Open the file
+        await OpenFile.open(filePath);
+
+        Fluttertoast.showToast(
+          msg: 'Report saved to $filePath',
+          toastLength: Toast.LENGTH_LONG,
+          gravity: ToastGravity.BOTTOM,
+          backgroundColor: AdminColors.successAccent,
+          textColor: Colors.white,
+        );
+      } else {
+        throw Exception('Failed to download report: ${response.statusCode}');
+      }
+    } catch (e) {
+      Fluttertoast.showToast(
+        msg: 'Error: ${e.toString()}',
+        toastLength: Toast.LENGTH_LONG,
+        gravity: ToastGravity.BOTTOM,
+        backgroundColor: AdminColors.dangerAccent,
+        textColor: Colors.white,
+      );
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   Widget _buildResultsTable(ExamResult examResult, AdminColors colors, AdminTextStyles textStyles) {
@@ -376,10 +464,12 @@ class _SingleResultScreenState extends State<SingleResultScreen> {
 
 class ExamResult {
   final String examName;
+  final int sequence;  // Add this line
   final List<SubjectAssessment> subjects;
 
   ExamResult({
     required this.examName,
+    required this.sequence,  // Add this line
     required this.subjects,
   });
 }
