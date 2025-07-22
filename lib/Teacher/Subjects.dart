@@ -4,7 +4,7 @@ import 'package:newapp/Teacher/themes/theme_colors.dart';
 import 'package:newapp/Teacher/themes/theme_text_styles.dart';
 import 'dart:convert';
 import 'SubjectDetails.dart';
-
+import 'dart:math';
 
 class SubjectsScreen extends StatefulWidget {
   final String teacherId;
@@ -15,18 +15,30 @@ class SubjectsScreen extends StatefulWidget {
   _SubjectsScreenState createState() => _SubjectsScreenState();
 }
 
-class _SubjectsScreenState extends State<SubjectsScreen> {
+class _SubjectsScreenState extends State<SubjectsScreen> with SingleTickerProviderStateMixin {
   List<Map<String, dynamic>> subjects = [];
   bool isLoading = false;
   String errorMessage = '';
+  late AnimationController _controller;
+  late Animation<double> _animation;
 
-  // API Endpoints
   final String baseUrl = 'http://193.203.162.232:5050/Teacher/api';
 
   @override
   void initState() {
     super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 15),
+    )..repeat();
+    _animation = Tween<double>(begin: 0, end: 1).animate(_controller);
     _fetchSubjects();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
   }
 
   Future<void> _fetchSubjects() async {
@@ -81,41 +93,33 @@ class _SubjectsScreenState extends State<SubjectsScreen> {
       TeacherColors.attendanceColor,
       TeacherColors.assignmentColor,
       TeacherColors.gradeColor,
+      TeacherColors.primaryAccent,
+      TeacherColors.secondaryAccent,
     ];
     return colors[subjectId % colors.length];
   }
 
   IconData _getIconForSubject(String subjectName) {
-    if (subjectName.toLowerCase().contains('math')) {
-      return Icons.calculate;
-    } else if (subjectName.toLowerCase().contains('physics')) {
-      return Icons.science;
-    } else if (subjectName.toLowerCase().contains('computer')) {
-      return Icons.computer;
-    } else if (subjectName.toLowerCase().contains('chemistry')) {
-      return Icons.science_outlined;
-    } else if (subjectName.toLowerCase().contains('biology')) {
-      return Icons.eco;
-    } else {
-      return Icons.school;
-    }
+    final name = subjectName.toLowerCase();
+    if (name.contains('math')) return Icons.calculate;
+    if (name.contains('physics')) return Icons.science;
+    if (name.contains('computer')) return Icons.computer;
+    if (name.contains('chemistry')) return Icons.science_outlined;
+    if (name.contains('biology')) return Icons.eco;
+    if (name.contains('english')) return Icons.menu_book;
+    if (name.contains('art')) return Icons.palette;
+    return Icons.school;
   }
 
   List<String> _parseClasses(dynamic classesData) {
-    if (classesData is String) {
-      return [classesData];
-    } else if (classesData is List) {
-      return List<String>.from(classesData);
-    }
+    if (classesData is String) return [classesData];
+    if (classesData is List) return List<String>.from(classesData);
     return ['NA'];
   }
 
   String _parseSchedule(dynamic scheduleData) {
-    if (scheduleData is String) {
-      return scheduleData;
-    } else if (scheduleData is List && scheduleData.isNotEmpty) {
-      return scheduleData.join(', ');
-    }
+    if (scheduleData is String) return scheduleData;
+    if (scheduleData is List && scheduleData.isNotEmpty) return scheduleData.join(', ');
     return 'Schedule not available';
   }
 
@@ -135,33 +139,76 @@ class _SubjectsScreenState extends State<SubjectsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: TeacherColors.primaryBackground,
-      appBar: AppBar(
-        title: Text(
-          'My Subjects',
-          style: TeacherTextStyles.className,
-        ),
-        elevation: 0,
-        backgroundColor: TeacherColors.primaryBackground,
-        centerTitle: true,
-        actions: [
+      body: Stack(
+        children: [
+          CustomPaint(
+            painter: _ParticlePainter(animation: _animation),
+            size: Size.infinite,
+          ),
+          SafeArea(
+            child: Column(
+              children: [
+                _buildAppBar(),
+                Expanded(
+                  child: isLoading
+                      ? Center(
+                    child: CircularProgressIndicator(
+                      color: TeacherColors.primaryAccent,
+                      strokeWidth: 2,
+                    ),
+                  )
+                      : errorMessage.isNotEmpty
+                      ? _buildErrorState()
+                      : subjects.isEmpty
+                      ? _buildEmptyState()
+                      : _buildContent(),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAppBar() {
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Row(
+        children: [
+          IconButton(
+            icon: Icon(Icons.arrow_back, color: TeacherColors.primaryText),
+            onPressed: () => Navigator.pop(context),
+          ),
+          Expanded(
+            child: Text(
+              'My Subjects',
+              style: TeacherTextStyles.headerTitle.copyWith(fontSize: 24),
+              textAlign: TextAlign.center,
+            ),
+          ),
           IconButton(
             icon: Icon(Icons.refresh, color: TeacherColors.primaryText),
             onPressed: _fetchSubjects,
           ),
         ],
       ),
-      body: isLoading
-          ? Center(child: CircularProgressIndicator(color: TeacherColors.primaryAccent))
-          : errorMessage.isNotEmpty
-          ? Center(
-        child: Column(
+    );
+  }
+
+  Widget _buildErrorState() {
+    return Center(
+      child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(
-              errorMessage,
-              style: TeacherTextStyles.listItemSubtitle.copyWith(color: TeacherColors.dangerAccent),
-            ),
-            SizedBox(height: 16),
+          Icon(Icons.error_outline, size: 48, color: TeacherColors.dangerAccent),
+      const SizedBox(height: 16),
+      Text(
+        errorMessage,
+        style: TeacherTextStyles.listItemSubtitle.copyWith(color: TeacherColors.dangerAccent),
+        textAlign: TextAlign.center,
+      ),
+      const SizedBox(height: 24),
             ElevatedButton(
               onPressed: _fetchSubjects,
               style: ElevatedButton.styleFrom(
@@ -169,6 +216,8 @@ class _SubjectsScreenState extends State<SubjectsScreen> {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                elevation: 4,
               ),
               child: Text(
                 'Retry',
@@ -176,84 +225,94 @@ class _SubjectsScreenState extends State<SubjectsScreen> {
               ),
             ),
           ],
-        ),
-      )
-          : subjects.isEmpty
-          ? Center(
-        child: Text(
-          'No subjects assigned',
-          style: TeacherTextStyles.cardSubtitle,
-        ),
-      )
-          : SingleChildScrollView(
-        padding: EdgeInsets.all(16),
-        child: Column(
-          children: [
-            // Summary Card
-            _buildSummaryCard(context),
-            SizedBox(height: 24),
-            // Subjects List
-            _buildSubjectsList(),
-          ],
-        ),
       ),
     );
   }
 
-  Widget _buildSummaryCard(BuildContext context) {
-    final totalSubjects = subjects.length;
-    final int totalStudents = subjects.fold<int>(
-      0,
-          (sum, subject) => sum + (subject['students'] as int),
-    );
-    final int totalClasses = subjects.fold<int>(
-      0,
-          (sum, subject) => sum + (subject['classes'] as List).length,
-    );
-
-    return Container(
-      padding: EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            TeacherColors.primaryAccent.withOpacity(0.8),
-            TeacherColors.secondaryAccent.withOpacity(0.8),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 15,
-            spreadRadius: 2,
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.school_outlined, size: 64, color: TeacherColors.secondaryText.withOpacity(0.5)),
+          const SizedBox(height: 16),
+          Text(
+            'No subjects assigned',
+            style: TeacherTextStyles.cardSubtitle.copyWith(fontSize: 18),
           ),
         ],
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
+    );
+  }
+
+  Widget _buildContent() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Column(
         children: [
-          _buildSummaryItem(Icons.school, '$totalSubjects', 'Subjects'),
-          _buildSummaryItem(Icons.people, '$totalStudents', 'Students'),
-          _buildSummaryItem(Icons.class_, '$totalClasses', 'Classes'),
+          const SizedBox(height: 8),
+          _buildSummaryCard(),
+          const SizedBox(height: 24),
+          _buildSubjectsGrid(),
+          const SizedBox(height: 24),
         ],
       ),
     );
   }
 
-  Widget _buildSummaryItem(IconData icon, String value, String label) {
+  Widget _buildSummaryCard() {
+    final totalSubjects = subjects.length;
+    final totalStudents = subjects.fold<int>(0, (sum, subject) => sum + (subject['students'] as int));
+    final totalClasses = subjects.fold<int>(0, (sum, subject) => sum + (subject['classes'] as List).length);
+
+    return GlassCard(
+      borderRadius: 20,
+      borderColor: TeacherColors.primaryAccent.withOpacity(0.3),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          children: [
+            Text(
+              'Teaching Summary',
+              style: TeacherTextStyles.sectionHeader.copyWith(fontSize: 18),
+            ),
+            const SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _buildSummaryStat('Subjects', totalSubjects.toString(), Icons.school),
+                _buildSummaryStat('Students', totalStudents.toString(), Icons.people),
+                _buildSummaryStat('Classes', totalClasses.toString(), Icons.class_),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSummaryStat(String label, String value, IconData icon) {
     return Column(
       children: [
         Container(
-          padding: EdgeInsets.all(12),
+          width: 56,
+          height: 56,
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.2),
+            gradient: LinearGradient(
+              colors: [
+                TeacherColors.primaryAccent.withOpacity(0.7),
+                TeacherColors.secondaryAccent.withOpacity(0.7),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
             shape: BoxShape.circle,
           ),
-          child: Icon(icon, color: Colors.white, size: 24),
+          child: Center(
+            child: Icon(icon, color: Colors.white, size: 24),
+          ),
         ),
-        SizedBox(height: 8),
+        const SizedBox(height: 8),
         Text(
           value,
           style: TeacherTextStyles.statValue.copyWith(color: Colors.white),
@@ -266,111 +325,97 @@ class _SubjectsScreenState extends State<SubjectsScreen> {
     );
   }
 
-  Widget _buildSubjectsList() {
-    return ListView.separated(
+  Widget _buildSubjectsGrid() {
+    return GridView.builder(
       shrinkWrap: true,
-      physics: NeverScrollableScrollPhysics(),
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        crossAxisSpacing: 16,
+        mainAxisSpacing: 16,
+        childAspectRatio: 0.85,
+      ),
       itemCount: subjects.length,
-      separatorBuilder: (context, index) => SizedBox(height: 16),
       itemBuilder: (context, index) {
-        final subject = subjects[index];
-        return _buildSubjectCard(subject);
+        return _buildSubjectCard(subjects[index]);
       },
     );
   }
 
   Widget _buildSubjectCard(Map<String, dynamic> subject) {
-    return Container(
-      decoration: TeacherColors.glassDecoration(),
+    return GlassCard(
+      borderRadius: 16,
+      borderColor: subject['color'].withOpacity(0.3),
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
         onTap: () => _navigateToSubjectDetail(subject),
         child: Padding(
-          padding: EdgeInsets.all(16),
+          padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 children: [
                   Container(
-                    width: 48,
-                    height: 48,
+                    width: 40,
+                    height: 40,
                     decoration: BoxDecoration(
-                      color: subject['color'].withOpacity(0.1),
+                      color: subject['color'].withOpacity(0.2),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Icon(subject['icon'], color: subject['color']),
                   ),
-                  SizedBox(width: 16),
+                  const SizedBox(width: 12),
                   Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          subject['name'],
-                          style: TeacherTextStyles.cardTitle,
-                        ),
-                        Text(
-                          subject['code'],
-                          style: TeacherTextStyles.cardSubtitle,
-                        ),
-                      ],
-                    ),
-                  ),
-                  Container(
-                    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: subject['color'].withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
                     child: Text(
-                      '${subject['students']} students',
+                      subject['code'],
                       style: TeacherTextStyles.cardSubtitle.copyWith(
                         color: subject['color'],
                         fontWeight: FontWeight.bold,
                       ),
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ],
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: 12),
+              Text(
+                subject['name'],
+                style: TeacherTextStyles.cardTitle.copyWith(fontSize: 18),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 16),
               Row(
                 children: [
-                  Icon(Icons.schedule, size: 16, color: TeacherColors.secondaryText),
-                  SizedBox(width: 8),
+                  Icon(Icons.people, size: 16, color: subject['color']),
+                  const SizedBox(width: 8),
                   Text(
-                    subject['schedule'],
-                    style: TeacherTextStyles.listItemSubtitle,
+                    '${subject['students']} students',
+                    style: TeacherTextStyles.cardSubtitle.copyWith(color: subject['color']),
                   ),
                 ],
               ),
-              SizedBox(height: 8),
+              const SizedBox(height: 8),
               Row(
                 children: [
-                  Icon(Icons.class_, size: 16, color: TeacherColors.secondaryText),
-                  SizedBox(width: 8),
-                  Text(
-                    subject['classes'].join(', '),
-                    style: TeacherTextStyles.listItemSubtitle,
+                  Icon(Icons.schedule, size: 16, color: subject['color']),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      subject['schedule'],
+                      style: TeacherTextStyles.cardSubtitle.copyWith(color: subject['color']),
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
                 ],
               ),
-              SizedBox(height: 8),
-              Row(
-                children: [
-                  Icon(Icons.school, size: 16, color: TeacherColors.secondaryText),
-                  SizedBox(width: 8),
-                  Text(
-                    'Grade ${subject['year']}',
-                    style: TeacherTextStyles.listItemSubtitle,
-                  ),
-                ],
-              ),
-              SizedBox(height: 8),
+              const Spacer(),
               LinearProgressIndicator(
-                value: 0.7, // Replace with actual progress from API
+                value: 0.7, // Replace with actual progress
                 backgroundColor: subject['color'].withOpacity(0.1),
                 valueColor: AlwaysStoppedAnimation<Color>(subject['color']),
+                borderRadius: BorderRadius.circular(10),
               ),
             ],
           ),
@@ -378,4 +423,67 @@ class _SubjectsScreenState extends State<SubjectsScreen> {
       ),
     );
   }
+}
+
+class GlassCard extends StatelessWidget {
+  final Widget? child;
+  final Color? borderColor;
+  final double borderRadius;
+  final double? width;
+  final double? height;
+
+  const GlassCard({
+    Key? key,
+    this.child,
+    this.borderColor,
+    this.borderRadius = 16,
+    this.width,
+    this.height,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: width,
+      height: height,
+      decoration: TeacherColors.glassDecoration(
+        borderColor: borderColor,
+        borderRadius: borderRadius,
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(borderRadius),
+        child: child,
+      ),
+    );
+  }
+}
+
+class _ParticlePainter extends CustomPainter {
+  final Animation<double> animation;
+  final Random random = Random(42);
+
+  _ParticlePainter({required this.animation});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()..style = PaintingStyle.fill;
+    const particleCount = 50;
+
+    for (int i = 0; i < particleCount; i++) {
+      final x = random.nextDouble() * size.width;
+      final y = random.nextDouble() * size.height;
+      final radius = 1 + random.nextDouble() * 3;
+      final hue = 180 + random.nextDouble() * 60;
+      final opacity = 0.1 + random.nextDouble() * 0.2;
+
+      canvas.drawCircle(
+        Offset(x, y),
+        radius * (0.8 + 0.4 * animation.value),
+        paint..color = HSVColor.fromAHSV(opacity * animation.value, hue, 0.8, 1).toColor(),
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }

@@ -1,9 +1,12 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:http/http.dart' as http;
 import 'package:newapp/Teacher/themes/theme_colors.dart';
 import 'package:newapp/Teacher/themes/theme_text_styles.dart';
 import 'dart:convert';
+import 'package:flutter/animation.dart';
 
 
 class SubjectQueriesScreen extends StatefulWidget {
@@ -15,16 +18,36 @@ class SubjectQueriesScreen extends StatefulWidget {
   _SubjectQueriesScreenState createState() => _SubjectQueriesScreenState();
 }
 
-class _SubjectQueriesScreenState extends State<SubjectQueriesScreen> {
+class _SubjectQueriesScreenState extends State<SubjectQueriesScreen> with SingleTickerProviderStateMixin {
   List<Map<String, dynamic>> queries = [];
   bool isLoading = true;
   bool isError = false;
   final TextEditingController _responseController = TextEditingController();
+  late AnimationController _animationController;
+  late Animation<double> _fadeAnimation;
 
   @override
   void initState() {
     super.initState();
     _fetchQueries();
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 500),
+      vsync: this, // <-- This will also require a mixin
+    );
+
+    _fadeAnimation = CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeInOut,
+    );
+
+    _animationController.forward();
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    _responseController.dispose();
+    super.dispose();
   }
 
   Future<void> _fetchQueries() async {
@@ -213,7 +236,15 @@ class _SubjectQueriesScreenState extends State<SubjectQueriesScreen> {
       appBar: AppBar(
         title: Text(
           '${widget.subject['name']} Queries',
-          style: TeacherTextStyles.className,
+          style: TeacherTextStyles.className.copyWith(
+            shadows: [
+              Shadow(
+                color: Colors.black.withOpacity(0.2),
+                blurRadius: 4,
+                offset: const Offset(0, 2),
+              )
+            ],
+          ),
         ),
         backgroundColor: subjectColor,
         centerTitle: true,
@@ -221,200 +252,451 @@ class _SubjectQueriesScreenState extends State<SubjectQueriesScreen> {
         shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(bottom: Radius.circular(20)),
         ),
+        flexibleSpace: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                subjectColor.withOpacity(0.9),
+                subjectColor.withOpacity(0.7),
+              ],
+            ),
+            borderRadius: const BorderRadius.vertical(bottom: Radius.circular(20)),
+            boxShadow: [
+              BoxShadow(
+                color: subjectColor.withOpacity(0.3),
+                blurRadius: 10,
+                spreadRadius: 2,
+                offset: const Offset(0, 5),
+              ),
+            ],
+          ),
+        ),
       ),
-      body: _buildBody(subjectColor),
+      body: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 300),
+        child: _buildBody(subjectColor),
+      ),
     );
   }
-
 
   Widget _buildBody(Color subjectColor) {
     if (isLoading) {
       return Center(
-        child: CircularProgressIndicator(color: TeacherColors.primaryAccent),
+        child: FadeTransition(
+          opacity: _fadeAnimation,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              SizedBox(
+                width: 60,
+                height: 60,
+                child: CircularProgressIndicator(
+                  strokeWidth: 4,
+                  valueColor: AlwaysStoppedAnimation<Color>(subjectColor),
+                  backgroundColor: subjectColor.withOpacity(0.2),
+                ),
+              ),
+              const SizedBox(height: 20),
+              Text(
+                'Loading Queries...',
+                style: TeacherTextStyles.cardTitle.copyWith(
+                  color: TeacherColors.primaryText.withOpacity(0.7),
+                ),
+              ),
+            ],
+          ),
+        ),
       );
     }
 
     if (isError) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.error_outline, size: 48, color: TeacherColors.dangerAccent),
-            const SizedBox(height: 16),
-            Text(
-              'Failed to load queries',
-              style: TeacherTextStyles.sectionHeader,
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: TeacherColors.primaryAccent,
+      return FadeTransition(
+        opacity: _fadeAnimation,
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.error_outline,
+                size: 48,
+                color: TeacherColors.dangerAccent.withOpacity(0.8),
               ),
-              onPressed: _fetchQueries,
-              child: Text('Retry', style: TeacherTextStyles.primaryButton),
-            ),
-          ],
+              const SizedBox(height: 16),
+              Text(
+                'Failed to load queries',
+                style: TeacherTextStyles.sectionHeader,
+              ),
+              const SizedBox(height: 24),
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 300),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                  gradient: LinearGradient(
+                    colors: [
+                      TeacherColors.primaryAccent.withOpacity(0.7),
+                      TeacherColors.primaryAccent.withOpacity(0.5),
+                    ],
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: TeacherColors.primaryAccent.withOpacity(0.3),
+                      blurRadius: 10,
+                      spreadRadius: 1,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(12),
+                    onTap: _fetchQueries,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 12,
+                      ),
+                      child: Text(
+                        'Retry',
+                        style: TeacherTextStyles.primaryButton.copyWith(
+                          shadows: [
+                            Shadow(
+                              color: Colors.black.withOpacity(0.2),
+                              blurRadius: 4,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       );
     }
 
     if (queries.isEmpty) {
-      return Center(
-        child: Text(
-          'No queries yet',
-          style: TeacherTextStyles.cardSubtitle,
+      return FadeTransition(
+        opacity: _fadeAnimation,
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.forum_outlined,
+                size: 48,
+                color: TeacherColors.primaryText.withOpacity(0.5),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'No queries yet',
+                style: TeacherTextStyles.cardSubtitle.copyWith(
+                  color: TeacherColors.primaryText.withOpacity(0.7),
+                ),
+              ),
+            ],
+          ),
         ),
       );
     }
 
-    return RefreshIndicator(
-      backgroundColor: TeacherColors.primaryBackground,
-      color: TeacherColors.primaryAccent,
-      onRefresh: _fetchQueries,
-      child: ListView.builder(
-        padding: const EdgeInsets.all(16),
-        itemCount: queries.length,
-        itemBuilder: (context, index) => _buildQueryCard(
-          queries[index],
-          subjectColor,
+    return FadeTransition(
+      opacity: _fadeAnimation,
+      child: RefreshIndicator(
+        backgroundColor: TeacherColors.primaryBackground,
+        color: subjectColor,
+        displacement: 40,
+        edgeOffset: 20,
+        onRefresh: _fetchQueries,
+        child: ListView.builder(
+          padding: const EdgeInsets.all(16),
+          physics: const AlwaysScrollableScrollPhysics(),
+          itemCount: queries.length,
+          itemBuilder: (context, index) => AnimatedQueryCard(
+            query: queries[index],
+            subjectColor: subjectColor,
+            onRespond: _showResponseDialog,
+            animation: _fadeAnimation,
+            index: index,
+          ),
         ),
       ),
     );
   }
+}
 
-  Widget _buildQueryCard(
-      Map<String, dynamic> query,
-      Color subjectColor,
-      ) {
+class AnimatedQueryCard extends StatelessWidget {
+  final Map<String, dynamic> query;
+  final Color subjectColor;
+  final Function(Map<String, dynamic>) onRespond;
+  final Animation<double> animation;
+  final int index;
+
+  const AnimatedQueryCard({
+    super.key,
+    required this.query,
+    required this.subjectColor,
+    required this.onRespond,
+    required this.animation,
+    required this.index,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     final isPending = query['status'] == 'pending';
     final date = DateFormat('MMM d, h:mm a').format(
       DateTime.parse(query['created_at']).toLocal(),
     );
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      decoration: TeacherColors.glassDecoration(
-        borderColor: subjectColor.withOpacity(0.3),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Align(
-              alignment: Alignment.centerRight,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: isPending
-                      ? TeacherColors.warningAccent.withOpacity(0.2)
-                      : TeacherColors.successAccent.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: isPending
-                        ? TeacherColors.warningAccent
-                        : TeacherColors.successAccent,
-                    width: 1,
-                  ),
-                ),
-                child: Text(
-                  isPending ? 'PENDING' : 'RESOLVED',
-                  style: TeacherTextStyles.cardSubtitle.copyWith(
-                    color: isPending
-                        ? TeacherColors.warningAccent
-                        : TeacherColors.successAccent,
-                  ),
-                ),
-              ),
+    return FadeTransition(
+      opacity: animation,
+      child: SlideTransition(
+        position: Tween<Offset>(
+          begin: const Offset(0, 0.5),
+          end: Offset.zero,
+        ).animate(CurvedAnimation(
+          parent: animation,
+          curve: Interval(
+            0.1 * index,
+            1.0,
+            curve: Curves.easeOutQuart,
+          ),
+        )),
+        child: Container(
+          margin: const EdgeInsets.only(bottom: 16),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            color: TeacherColors.secondaryBackground.withOpacity(0.6),
+            border: Border.all(
+              color: subjectColor.withOpacity(0.2),
+              width: 1,
             ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: subjectColor.withOpacity(0.1),
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: subjectColor.withOpacity(0.3),
-                    ),
-                  ),
-                  child: Center(
-                    child: Text(
-                      query['student_avatar'] ?? '👤',
-                      style: const TextStyle(fontSize: 20),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Column(
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(16),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      query['student_name'] ?? 'Anonymous',
-                      style: TeacherTextStyles.listItemTitle,
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 300),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: isPending
+                                ? [
+                              TeacherColors.warningAccent.withOpacity(0.3),
+                              TeacherColors.warningAccent.withOpacity(0.1),
+                            ]
+                                : [
+                              TeacherColors.successAccent.withOpacity(0.3),
+                              TeacherColors.successAccent.withOpacity(0.1),
+                            ],
+                          ),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: isPending
+                                ? TeacherColors.warningAccent.withOpacity(0.5)
+                                : TeacherColors.successAccent.withOpacity(0.5),
+                            width: 1,
+                          ),
+                        ),
+                        child: Text(
+                          isPending ? 'PENDING' : 'RESOLVED',
+                          style: TeacherTextStyles.cardSubtitle.copyWith(
+                            color: isPending
+                                ? TeacherColors.warningAccent
+                                : TeacherColors.successAccent,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
                     ),
-                    Text(
-                      date,
-                      style: TeacherTextStyles.cardSubtitle,
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                subjectColor.withOpacity(0.3),
+                                subjectColor.withOpacity(0.1),
+                              ],
+                            ),
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: subjectColor.withOpacity(0.5),
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: subjectColor.withOpacity(0.2),
+                                blurRadius: 8,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: Center(
+                            child: Text(
+                              query['student_avatar'] ?? '👤',
+                              style: const TextStyle(fontSize: 20),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              query['student_name'] ?? 'Anonymous',
+                              style: TeacherTextStyles.listItemTitle.copyWith(
+                                shadows: [
+                                  Shadow(
+                                    color: Colors.black.withOpacity(0.1),
+                                    blurRadius: 2,
+                                    offset: const Offset(0, 1),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Text(
+                              date,
+                              style: TeacherTextStyles.cardSubtitle.copyWith(
+                                color: TeacherColors.primaryText.withOpacity(0.6),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
+                    const SizedBox(height: 16),
+                    Text(
+                      query['question'],
+                      style: TeacherTextStyles.listItemSubtitle.copyWith(
+                        height: 1.4,
+                      ),
+                    ),
+                    if (query['answer'] != null) ...[
+                      const SizedBox(height: 16),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Your Response',
+                            style: TeacherTextStyles.cardTitle.copyWith(
+                              color: subjectColor.withOpacity(0.9),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: TeacherColors.primaryBackground.withOpacity(0.4),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color: subjectColor.withOpacity(0.2),
+                              ),
+                            ),
+                            child: Text(
+                              query['answer'] ?? '',
+                              style: TeacherTextStyles.listItemSubtitle.copyWith(
+                                color: TeacherColors.primaryText.withOpacity(0.8),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                    if (isPending) ...[
+                      const SizedBox(height: 16),
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 300),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(12),
+                            gradient: LinearGradient(
+                              colors: [
+                                subjectColor.withOpacity(0.8),
+                                subjectColor.withOpacity(0.6),
+                              ],
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: subjectColor.withOpacity(0.3),
+                                blurRadius: 10,
+                                spreadRadius: 1,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(12),
+                              onTap: () => onRespond(query),
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 20,
+                                  vertical: 10,
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.reply,
+                                      size: 18,
+                                      color: Colors.white,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      'Respond Now',
+                                      style: TeacherTextStyles.primaryButton.copyWith(
+                                        shadows: [
+                                          Shadow(
+                                            color: Colors.black.withOpacity(0.2),
+                                            blurRadius: 4,
+                                            offset: const Offset(0, 2),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ],
                 ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Text(
-              query['question'],
-              style: TeacherTextStyles.listItemSubtitle,
-            ),
-            if (query['answer'] != null) ...[
-              const SizedBox(height: 16),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Your Response',
-                    style: TeacherTextStyles.cardTitle,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    query['answer'] ?? '',
-                    style: TeacherTextStyles.listItemSubtitle,
-                  ),
-                ],
               ),
-            ],
-            if (isPending) ...[
-              const SizedBox(height: 16),
-              Align(
-                alignment: Alignment.centerRight,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: subjectColor,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 24, vertical: 12),
-                  ),
-                  onPressed: () => _showResponseDialog(query),
-                  child: Text(
-                    'Respond Now',
-                    style: TeacherTextStyles.primaryButton,
-                  ),
-                ),
-              ),
-            ],
-          ],
+            ),
+          ),
         ),
       ),
     );
-  }
-
-  @override
-  void dispose() {
-    _responseController.dispose();
-    super.dispose();
   }
 }
