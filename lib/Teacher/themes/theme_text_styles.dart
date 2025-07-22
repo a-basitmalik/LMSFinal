@@ -17,6 +17,13 @@ class TeacherTextStyles {
     letterSpacing: 1.0,
   );
 
+  static const TextStyle campusName = TextStyle(
+    color: TeacherColors.primaryText,
+    fontSize: 18,
+    fontWeight: FontWeight.w600,
+    letterSpacing: 0.5,
+  );
+
   // Section header styles
   static TextStyle sectionHeader = const TextStyle(
     color: TeacherColors.primaryText,
@@ -103,5 +110,12 @@ class TeacherTextStyles {
     color: TeacherColors.warningAccent,
     fontSize: 12,
     fontWeight: FontWeight.w500,
+  );
+
+  static const TextStyle headerTitle = TextStyle(
+    color: TeacherColors.primaryText,
+    fontSize: 22,
+    fontWeight: FontWeight.bold,
+    letterSpacing: 1.0,
   );
 }

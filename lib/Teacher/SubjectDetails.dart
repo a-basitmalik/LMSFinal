@@ -8,8 +8,6 @@ import 'package:url_launcher/url_launcher.dart';
 import 'dart:convert';
 import 'dart:ui';
 import 'package:intl/intl.dart';
-
-
 // Import other screens
 import 'SubjectAssignments.dart';
 import 'SubjectQueries.dart';
@@ -146,106 +144,290 @@ class _SubjectDashboardScreenState extends State<SubjectDashboardScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: TeacherColors.primaryBackground,
       appBar: _currentIndex == 0
           ? AppBar(
-        title: Text(
-          widget.subject['name'],
-          style: TeacherTextStyles.className,
-        ),
-        backgroundColor: TeacherColors.primaryBackground,
-        centerTitle: true,
-        elevation: 0,
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(
-            bottom: Radius.circular(20),
+        title: AnimatedSwitcher(
+          duration: const Duration(milliseconds: 300),
+          transitionBuilder: (Widget child, Animation<double> animation) {
+            return FadeTransition(
+              opacity: animation,
+              child: ScaleTransition(
+                scale: animation,
+                child: child,
+              ),
+            );
+          },
+          child: Text(
+            widget.subject['name'],
+            key: ValueKey(widget.subject['name']),
+            style: TeacherTextStyles.className.copyWith(
+                shadows: [
+            Shadow(
+            color: TeacherColors.primaryAccent.withOpacity(0.15),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+            )
+            ],
           ),
         ),
-      )
-          : null,
-      body: Stack(
-        children: [
-          // Main screen content
-          _screens.isNotEmpty
-              ? _screens[_currentIndex]
-              : const Center(child: CircularProgressIndicator()),
-
-          // Blur and overlay menu if open
-          if (_isMenuOpen) ...[
-            BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 6.0, sigmaY: 6.0),
-              child: Container(
-                color: Colors.black.withOpacity(0.1),
-              ),
-            ),
-            _buildInfographicMenu(),
-          ],
-        ],
       ),
-      floatingActionButton: _buildMainFAB(),
+      backgroundColor: Colors.transparent,
+      flexibleSpace: Container(
+        decoration: TeacherColors.glassDecoration(
+          borderColor: TeacherColors.cardBorder.withOpacity(0.3),
+          borderRadius: 0, // Match appbar shape
+        ).copyWith(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              TeacherColors.primaryBackground.withOpacity(0.85),
+              TeacherColors.secondaryBackground.withOpacity(0.9),
+            ],
+            stops: const [0.5, 1.0],
+          ),
+        ),
+      ),
+      centerTitle: true,
+      elevation: 0,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(
+          bottom: Radius.circular(20),
+        ),
+      ),
+      iconTheme: IconThemeData(
+        color: TeacherColors.primaryText,
+      ),
+    )
+        : null,
+    body: Stack(
+    children: [
+    // Main screen content with enhanced transition
+    AnimatedSwitcher(
+    duration: const Duration(milliseconds: 450),
+    switchInCurve: Curves.easeInOutQuart,
+    switchOutCurve: Curves.easeInOutQuart,
+    transitionBuilder: (Widget child, Animation<double> animation) {
+    return FadeTransition(
+    opacity: animation,
+    child: SlideTransition(
+    position: Tween<Offset>(
+    begin: const Offset(0.2, 0),
+    end: Offset.zero,
+    ).animate(animation),
+    child: child,
+    ),
+    );
+    },
+    child: _screens.isNotEmpty
+    ? _screens[_currentIndex]
+        : Center(
+    child: SizedBox(
+    width: 40,
+    height: 40,
+    child: CircularProgressIndicator(
+    strokeWidth: 2.5,
+    valueColor: AlwaysStoppedAnimation(
+    TeacherColors.primaryAccent,
+    ),
+    ),
+    ),
+    ),
+    ),
+
+    // Enhanced glass morphic overlay for menu
+    if (_isMenuOpen) ...[
+    AnimatedOpacity(
+    opacity: _isMenuOpen ? 1.0 : 0.0,
+    duration: const Duration(milliseconds: 350),
+    child: BackdropFilter(
+    filter: ImageFilter.blur(
+    sigmaX: 10.0,
+    sigmaY: 10.0,
+    tileMode: TileMode.decal,
+    ),
+    child: Container(
+    decoration: BoxDecoration(
+    gradient: RadialGradient(
+    center: Alignment.topRight,
+    radius: 1.5,
+    colors: [
+    TeacherColors.primaryBackground.withOpacity(0.4),
+    TeacherColors.primaryBackground.withOpacity(0.8),
+    ],
+    stops: const [0.1, 0.9],
+    ),
+    ),
+    ),
+    ),
+    ),
+    AnimatedPositioned(
+    duration: const Duration(milliseconds: 400),
+    curve: Curves.fastEaseInToSlowEaseOut,
+    bottom: _isMenuOpen ? 0 : -20,
+    child: ScaleTransition(
+    scale: _isMenuOpen
+    ? AlwaysStoppedAnimation(1.0)
+        : Tween<double>(begin: 0.9, end: 1.0).animate(
+    CurvedAnimation(
+    parent: ModalRoute.of(context)!.animation!,
+    curve: Curves.elasticOut,
+    ),
+    ),
+    child: _buildInfographicMenu(),
+    ),
+    ),
+    ],
+    ],
+    ),
+    floatingActionButton: _buildMainFAB(),
     );
   }
 
 
   Widget _buildOverviewScreen() {
     if (isLoading) {
-      return Center(child: CircularProgressIndicator());
-    }
-
-    if (errorMessage.isNotEmpty) {
       return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(errorMessage, style: TextStyle(color: TeacherColors.dangerAccent)),
-            SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: _fetchSubjectData,
-              child: Text('Retry', style: TeacherTextStyles.primaryButton),
-            ),
-          ],
+        child: SizedBox(
+          width: 56,
+          height: 56,
+          child: CircularProgressIndicator(
+            strokeWidth: 3,
+            valueColor: AlwaysStoppedAnimation(TeacherColors.primaryAccent),
+            backgroundColor: TeacherColors.primaryAccent.withOpacity(0.2),
+          ),
         ),
       );
     }
 
-    return SingleChildScrollView(
-      padding: EdgeInsets.all(16),
-      child: Column(
-        children: [
-          _buildQuickStatsPanel(),
-          SizedBox(height: 24),
-          _buildTodaysPlannerSection(),
-          SizedBox(height: 24),
-          _buildSectionPreview(
-            title: 'Recent Announcements',
-            onViewAll: () => Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => SubjectAnnouncementScreen(subject: widget.subject),
+    if (errorMessage.isNotEmpty) {
+      return Center(
+        child: AnimatedSwitcher(
+          duration: const Duration(milliseconds: 300),
+          child: Column(
+            key: ValueKey(errorMessage),
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: TeacherColors.glassDecoration(
+                  borderRadius: 12,
+                  borderColor: TeacherColors.dangerAccent.withOpacity(0.3),
+                ),
+                child: Text(
+                  errorMessage,
+                  style: TextStyle(
+                    color: TeacherColors.dangerAccent,
+                    fontSize: 16,
+                  ),
+                ),
               ),
+              const SizedBox(height: 24),
+              ElevatedButton(
+                onPressed: _fetchSubjectData,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: TeacherColors.dangerAccent.withOpacity(0.9),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 12,
+                  ),
+                  elevation: 2,
+                ),
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 200),
+                  child: Text(
+                    'Retry',
+                    key: const ValueKey('retry'),
+                    style: TeacherTextStyles.primaryButton.copyWith(
+                      shadows: [
+                        Shadow(
+                          color: TeacherColors.dangerAccent.withOpacity(0.3),
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 500),
+      child: SingleChildScrollView(
+        key: const ValueKey('overview-content'),
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: [
+            _buildGlassCard(child: _buildQuickStatsPanel()),
+            const SizedBox(height: 24),
+            _buildGlassCard(child: _buildTodaysPlannerSection()),
+            const SizedBox(height: 24),
+            _buildSectionPreview(
+              title: 'Recent Announcements',
+              icon: Icons.announcement,
+              onViewAll: () => Navigator.push(
+                context,
+                PageRouteBuilder(
+                  pageBuilder: (context, animation, secondaryAnimation) =>
+                      SubjectAnnouncementScreen(subject: widget.subject),
+                  transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                    return FadeTransition(
+                      opacity: animation,
+                      child: child,
+                    );
+                  },
+                ),
+              ),
+              child: _buildAnnouncementsPreview(),
             ),
-            child: _buildAnnouncementsPreview(),
-          ),
-          _buildSectionPreview(
-            title: 'Upcoming Assignments',
-            onViewAll: () => _navigateToScreen(1),
-            child: _buildAssignmentsPreview(),
-          ),
-          _buildSectionPreview(
-            title: 'Pending Queries',
-            onViewAll: () => _navigateToScreen(2),
-            child: _buildQueriesPreview(),
-          ),
-          _buildSectionPreview(
-            title: 'Attendance Summary',
-            onViewAll: () => _navigateToScreen(4),
-            child: _buildAttendancePreview(),
-          ),
-          _buildSectionPreview(
-            title: 'Recent Messages',
-            onViewAll: () => _navigateToScreen(5),
-            child: _buildChatPreview(),
-          ),
-        ],
+            _buildSectionPreview(
+              title: 'Upcoming Assignments',
+              icon: Icons.assignment,
+              onViewAll: () => _navigateToScreen(1),
+              child: _buildAssignmentsPreview(),
+            ),
+            _buildSectionPreview(
+              title: 'Pending Queries',
+              icon: Icons.question_answer,
+              onViewAll: () => _navigateToScreen(2),
+              child: _buildQueriesPreview(),
+            ),
+            _buildSectionPreview(
+              title: 'Attendance Summary',
+              icon: Icons.people,
+              onViewAll: () => _navigateToScreen(4),
+              child: _buildAttendancePreview(),
+            ),
+            _buildSectionPreview(
+              title: 'Recent Messages',
+              icon: Icons.chat,
+              onViewAll: () => _navigateToScreen(5),
+              child: _buildChatPreview(),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGlassCard({required Widget child}) {
+    return Container(
+      decoration: TeacherColors.glassDecoration(
+        borderRadius: 16,
+        borderColor: TeacherColors.cardBorder.withOpacity(0.4),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: child,
       ),
     );
   }
@@ -262,11 +444,12 @@ class _SubjectDashboardScreenState extends State<SubjectDashboardScreen> {
     if (todayPlanners.isEmpty) {
       return _buildSectionPreview(
         title: "Today's Planner",
+        icon: Icons.calendar_today,
         onViewAll: () => _showAllPlanners(),
         child: Padding(
-          padding: EdgeInsets.all(16),
+          padding: const EdgeInsets.all(16),
           child: Text(
-            'No planner for today',
+            '                                                No plans for today                                            ',
             style: TeacherTextStyles.cardSubtitle,
           ),
         ),
@@ -275,38 +458,126 @@ class _SubjectDashboardScreenState extends State<SubjectDashboardScreen> {
 
     return _buildSectionPreview(
       title: "Today's Planner",
+      icon: Icons.calendar_today,
       onViewAll: () => _showAllPlanners(),
       child: Column(
         children: todayPlanners.take(2).map((planner) {
-          return Column(
-            children: [
-              ListTile(
-                leading: CircleAvatar(
-                  backgroundColor: TeacherColors.classColor.withOpacity(0.2),
-                  child: Icon(Icons.calendar_today, color: TeacherColors.classColor),
+          return AnimatedPadding(
+            duration: const Duration(milliseconds: 200),
+            padding: const EdgeInsets.only(bottom: 12),
+            child: InkWell(
+              onTap: () => _showPlannerDetails(planner),
+              borderRadius: BorderRadius.circular(16),
+              child: Container(
+                decoration: TeacherColors.glassDecoration(
+                  borderRadius: 16,
+                  borderColor: TeacherColors.classColor.withOpacity(0.3),
+                ).copyWith(
+                  boxShadow: [
+                    BoxShadow(
+                      color: TeacherColors.classColor.withOpacity(0.1),
+                      blurRadius: 10,
+                      spreadRadius: 1,
+                    ),
+                  ],
                 ),
-                title: Text(
-                  planner['title'] ?? 'No title',
-                  style: TeacherTextStyles.cardTitle,
-                ),
-                subtitle: Text(
-                  planner['description'] != null &&
-                      planner['description'].isNotEmpty
-                      ? planner['description'].length > 50
-                      ? '${planner['description'].substring(0, 50)}...'
-                      : planner['description']
-                      : 'No description',
-                  style: TeacherTextStyles.cardSubtitle,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                trailing: IconButton(
-                  icon: Icon(Icons.arrow_forward),
-                  onPressed: () => _showPlannerDetails(planner),
+                child: Stack(
+                  children: [
+                    // Glowing background effect
+                    Positioned.fill(
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 1500),
+                        curve: Curves.easeInOutSine,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(16),
+                          gradient: RadialGradient(
+                            center: Alignment.topLeft,
+                            radius: 1.5,
+                            colors: [
+                              TeacherColors.classColor.withOpacity(0.05),
+                              TeacherColors.classColor.withOpacity(0.01),
+                              Colors.transparent,
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: Row(
+                        children: [
+                          // Animated glowing icon
+                          AnimatedContainer(
+                            duration: const Duration(milliseconds: 500),
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: TeacherColors.classColor.withOpacity(0.3),
+                                  blurRadius: 8,
+                                  spreadRadius: 0,
+                                ),
+                              ],
+                            ),
+                            child: CircleAvatar(
+                              backgroundColor: TeacherColors.classColor.withOpacity(0.15),
+                              child: Icon(
+                                Icons.event_available,
+                                color: TeacherColors.classColor,
+                                size: 22,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  planner['title'] ?? 'No title',
+                                  style: TeacherTextStyles.cardTitle.copyWith(
+                                    shadows: [
+                                      Shadow(
+                                        color: TeacherColors.primaryText.withOpacity(0.1),
+                                        blurRadius: 2,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  planner['description'] != null &&
+                                      planner['description'].isNotEmpty
+                                      ? planner['description'].length > 50
+                                      ? '${planner['description'].substring(0, 50)}...'
+                                      : planner['description']
+                                      : 'No description',
+                                  style: TeacherTextStyles.cardSubtitle.copyWith(
+                                    color: TeacherColors.secondaryText.withOpacity(0.8),
+                                  ),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
+                            ),
+                          ),
+                          // Animated forward arrow
+                          AnimatedSwitcher(
+                            duration: const Duration(milliseconds: 300),
+                            child: Icon(
+                              Icons.arrow_forward_ios,
+                              key: ValueKey(planner['id']),
+                              size: 16,
+                              color: TeacherColors.classColor.withOpacity(0.7),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              if (planner != todayPlanners.last) Divider(height: 1),
-            ],
+            ),
           );
         }).toList(),
       ),
@@ -404,37 +675,37 @@ class _SubjectDashboardScreenState extends State<SubjectDashboardScreen> {
     final List<Map<String, dynamic>> menuItems = [
       {
         'title': 'Overview',
-        'icon': Icons.lightbulb,
+        'icon': Icons.lightbulb_outline,
         'index': 0,
         'color': TeacherColors.dangerAccent,
       },
       {
         'title': 'Assignments',
-        'icon': Icons.assignment,
+        'icon': Icons.assignment_outlined,
         'index': 1,
         'color': TeacherColors.assignmentColor,
       },
       {
         'title': 'Queries',
-        'icon': Icons.question_answer,
+        'icon': Icons.question_answer_outlined,
         'index': 2,
         'color': TeacherColors.infoAccent,
       },
       {
         'title': 'Results',
-        'icon': Icons.assessment,
+        'icon': Icons.assessment_outlined,
         'index': 3,
         'color': TeacherColors.successAccent,
       },
       {
         'title': 'Attendance',
-        'icon': Icons.calendar_today,
+        'icon': Icons.calendar_today_outlined,
         'index': 4,
         'color': TeacherColors.attendanceColor,
       },
       {
         'title': 'Chat',
-        'icon': Icons.chat_bubble,
+        'icon': Icons.chat_bubble_outline,
         'index': 5,
         'color': TeacherColors.primaryAccent,
       },
@@ -445,30 +716,93 @@ class _SubjectDashboardScreenState extends State<SubjectDashboardScreen> {
       right: 20,
       child: AnimatedOpacity(
         opacity: _isMenuOpen ? 1.0 : 0.0,
-        duration: Duration(milliseconds: 300),
+        duration: const Duration(milliseconds: 300),
         child: Column(
-          children: menuItems.map((item) {
-            return GestureDetector(
-              onTap: () => _navigateToScreen(item['index']),
-              child: Container(
-                margin: EdgeInsets.symmetric(vertical: 8),
-                child: Row(
-                  children: [
-                    CircleAvatar(
-                      backgroundColor: item['color'],
-                      radius: 26,
-                      child: Icon(
-                        item['icon'],
-                        color: Colors.white,
-                        size: 24,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: menuItems.asMap().entries.map((entry) {
+            final index = entry.key;
+            final item = entry.value;
+
+            return AnimatedContainer(
+              duration: Duration(milliseconds: 200 + (index * 100)),
+              curve: Curves.easeOutBack,
+              transform: Matrix4.identity()..scale(_isMenuOpen ? 1.0 : 0.5),
+              margin: const EdgeInsets.symmetric(vertical: 8),
+              child: GestureDetector(
+                onTap: () {
+                  setState(() => _isMenuOpen = false);
+                  _navigateToScreen(item['index']);
+                },
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: TeacherColors.glassDecoration(
+                    borderRadius: 24,
+                    borderColor: item['color'].withOpacity(0.4),
+                  ).copyWith(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        item['color'].withOpacity(0.12),
+                        item['color'].withOpacity(0.06),
+                      ],
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: item['color'].withOpacity(0.3),
+                        blurRadius: 10,
+                        spreadRadius: 1,
                       ),
-                    ),
-                    SizedBox(width: 10),
-                    Text(
-                      item['title'],
-                      style: TeacherTextStyles.listItemTitle,
-                    ),
-                  ],
+                    ],
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Pulsing glowing icon
+                      AnimatedContainer(
+                        duration: const Duration(milliseconds: 1000),
+                        curve: Curves.easeInOut,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: item['color'].withOpacity(0.4),
+                              blurRadius: 10,
+                              spreadRadius: 1,
+                            ),
+                          ],
+                        ),
+                        child: CircleAvatar(
+                          backgroundColor: item['color'].withOpacity(0.2),
+                          radius: 24,
+                          child: Icon(
+                            item['icon'],
+                            color: Colors.white.withOpacity(0.9),
+                            size: 22,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 200),
+                        child: _isMenuOpen
+                            ? Text(
+                          item['title'],
+                          key: ValueKey(item['title']),
+                          style: TeacherTextStyles.listItemTitle.copyWith(
+                            shadows: [
+                              Shadow(
+                                color: item['color'].withOpacity(0.3),
+                                blurRadius: 4,
+                              ),
+                            ],
+                          ),
+                        )
+                            : const SizedBox(width: 0),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             );
@@ -479,31 +813,53 @@ class _SubjectDashboardScreenState extends State<SubjectDashboardScreen> {
   }
 
   Widget _buildMainFAB() {
-    return FloatingActionButton(
-      shape: const CircleBorder(),
-      backgroundColor: TeacherColors.primaryAccent,
-      elevation: 8,
-      child: AnimatedSwitcher(
-        duration: const Duration(milliseconds: 300),
-        transitionBuilder: (child, animation) {
-          return ScaleTransition(scale: animation, child: child);
-        },
-        child: Icon(
-          _isMenuOpen ? Icons.close : Icons.apps_rounded,
-          key: ValueKey(_isMenuOpen ? 'close' : 'menu'),
-          size: 28,
-        ),
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        boxShadow: [
+          BoxShadow(
+            color: TeacherColors.primaryAccent.withOpacity(_isMenuOpen ? 0.6 : 0.4),
+            blurRadius: _isMenuOpen ? 20 : 10,
+            spreadRadius: _isMenuOpen ? 2 : 1,
+          ),
+        ],
       ),
-      onPressed: () {
-        setState(() {
-          _isMenuOpen = !_isMenuOpen;
-        });
-      },
+      child: FloatingActionButton(
+        shape: const CircleBorder(),
+        backgroundColor: TeacherColors.primaryAccent.withOpacity(0.9),
+        elevation: 0,
+        child: AnimatedSwitcher(
+          duration: const Duration(milliseconds: 400),
+          switchInCurve: Curves.easeOutBack,
+          switchOutCurve: Curves.easeInBack,
+          transitionBuilder: (Widget child, Animation<double> animation) {
+            return ScaleTransition(
+              scale: animation,
+              child: RotationTransition(
+                turns: Tween(begin: 0.5, end: 1.0).animate(animation),
+                child: child,
+              ),
+            );
+          },
+          child: Icon(
+            _isMenuOpen ? Icons.close : Icons.apps_rounded,
+            key: ValueKey(_isMenuOpen ? 'close' : 'menu'),
+            size: 28,
+            color: Colors.white,
+          ),
+        ),
+        onPressed: () {
+          setState(() {
+            _isMenuOpen = !_isMenuOpen;
+          });
+        },
+      ),
     );
   }
 
   Widget _buildQuickStatsPanel() {
-    // Safely parse attendance rate
+    // Safely parse attendance rate (unchanged functionality)
     double attendanceRate = 0.0;
     if (subjectStats['attendance_rate'] != null) {
       if (subjectStats['attendance_rate'] is String) {
@@ -513,17 +869,28 @@ class _SubjectDashboardScreenState extends State<SubjectDashboardScreen> {
       }
     }
 
-    return Container(
-      padding: EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        gradient: TeacherColors.accentGradient(TeacherColors.primaryAccent),
-        borderRadius: BorderRadius.circular(16),
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 500),
+      curve: Curves.easeOutQuart,
+      padding: const EdgeInsets.all(16),
+      decoration: TeacherColors.glassDecoration(
+        borderRadius: 16,
+        borderColor: TeacherColors.primaryAccent.withOpacity(0.4),
+      ).copyWith(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            TeacherColors.primaryAccent.withOpacity(0.3),
+            TeacherColors.secondaryAccent.withOpacity(0.2),
+          ],
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 10,
-            spreadRadius: 2,
-          ),
+              color: TeacherColors.primaryAccent.withOpacity(0.2),
+              blurRadius: 20,
+              spreadRadius: 2,
+              offset: const Offset(0, 4)),
         ],
       ),
       child: Column(
@@ -534,58 +901,136 @@ class _SubjectDashboardScreenState extends State<SubjectDashboardScreen> {
               _buildStatItem(
                 subjectStats['student_count']?.toString() ?? '0',
                 'Students',
-                Icons.people,
+                Icons.people_outline,
+                TeacherColors.studentColor,
               ),
               _buildStatItem(
                 subjectStats['assignment_count']?.toString() ?? '0',
                 'Assignments',
-                Icons.assignment,
+                Icons.assignment_outlined,
+                TeacherColors.assignmentColor,
               ),
               _buildStatItem(
                 '${attendanceRate.toStringAsFixed(0)}%',
                 'Attendance',
-                Icons.calendar_today,
+                Icons.calendar_today_outlined,
+                TeacherColors.attendanceColor,
               ),
             ],
           ),
-          SizedBox(height: 12),
+          const SizedBox(height: 12),
         ],
       ),
     );
   }
 
-  Widget _buildStatItem(String value, String label, IconData icon) {
-    return Column(
-      children: [
-        Container(
-          padding: EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.2),
-            shape: BoxShape.circle,
+  Widget _buildStatItem(String value, String label, IconData icon, Color color) {
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 300),
+      child: Column(
+        key: ValueKey('$value-$label'),
+        children: [
+          // Pulsing icon container
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 1000),
+            curve: Curves.easeInOut,
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: RadialGradient(
+                center: Alignment.center,
+                radius: 0.8,
+                colors: [
+                  color.withOpacity(0.4),
+                  color.withOpacity(0.1),
+                ],
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: color.withOpacity(0.3),
+                  blurRadius: 10,
+                  spreadRadius: 1,
+                ),
+              ],
+            ),
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                // Glow effect
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 1500),
+                  curve: Curves.easeInOut,
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: color.withOpacity(0.1),
+                  ),
+                ),
+                Icon(
+                  icon,
+                  color: Colors.white.withOpacity(0.9),
+                  size: 22,
+                ),
+              ],
+            ),
           ),
-          child: Icon(icon, color: Colors.white, size: 20),
-        ),
-        SizedBox(height: 8),
-        Text(
-          value,
-          style: TeacherTextStyles.statValue.copyWith(color: Colors.white),
-        ),
-        Text(
-          label,
-          style: TeacherTextStyles.statLabel.copyWith(color: Colors.white.withOpacity(0.9)),
-        ),
-      ],
+          const SizedBox(height: 12),
+          // Value with subtle animation
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 200),
+            transitionBuilder: (Widget child, Animation<double> animation) {
+              return SlideTransition(
+                position: Tween<Offset>(
+                  begin: const Offset(0, 0.2),
+                  end: Offset.zero,
+                ).animate(animation),
+                child: FadeTransition(
+                  opacity: animation,
+                  child: child,
+                ),
+              );
+            },
+            child: Text(
+              value,
+              key: ValueKey(value),
+              style: TeacherTextStyles.statValue.copyWith(
+                color: Colors.white,
+                shadows: [
+                  Shadow(
+                    color: color.withOpacity(0.3),
+                    blurRadius: 4,
+                    offset: const Offset(0, 1),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 4),
+          // Label with fade animation
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 300),
+            child: Text(
+              label,
+              key: ValueKey(label),
+              style: TeacherTextStyles.statLabel.copyWith(
+                color: Colors.white.withOpacity(0.85),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
   Widget _buildAnnouncementsPreview() {
     if (announcements.isEmpty) {
       return Padding(
+            child: Text(
+              '                                              No announcement for today                                          ',
+              style: TeacherTextStyles.cardSubtitle,
+            ),
         padding: EdgeInsets.all(16),
-        child: Text(
-          'No recent announcements',
-          style: TeacherTextStyles.cardSubtitle,
-        ),
       );
     }
 
@@ -737,10 +1182,6 @@ class _SubjectDashboardScreenState extends State<SubjectDashboardScreen> {
     if (attendance.isEmpty) {
       return Padding(
         padding: EdgeInsets.all(16),
-        child: Text(
-          'No attendance data available',
-          style: TeacherTextStyles.cardSubtitle,
-        ),
       );
     }
 
@@ -842,43 +1283,135 @@ class _SubjectDashboardScreenState extends State<SubjectDashboardScreen> {
     required String title,
     required VoidCallback onViewAll,
     required Widget child,
+    IconData? icon, // Added icon parameter
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Padding(
-          padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        // Header with animated icon and glass effect
+        Container(
+          decoration: TeacherColors.glassDecoration(
+            borderRadius: 8,
+            borderColor: TeacherColors.cardBorder.withOpacity(0.3),
+          ),
+          margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                title,
-                style: TeacherTextStyles.sectionHeader,
+              Row(
+                children: [
+                  if (icon != null)
+                    Padding(
+                      padding: const EdgeInsets.only(right: 12),
+                      child: AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 300),
+                        child: Icon(
+                          icon,
+                          key: ValueKey(icon),
+                          color: TeacherColors.primaryAccent,
+                          size: 24,
+                        ),
+                      ),
+                    ),
+                  Text(
+                    title,
+                    style: TeacherTextStyles.sectionHeader.copyWith(
+                      shadows: [
+                        Shadow(
+                          color: TeacherColors.primaryAccent.withOpacity(0.1),
+                          blurRadius: 4,
+                          offset: const Offset(0, 1),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
-              TextButton(
-                onPressed: onViewAll,
-                child: Text(
-                  'View All',
-                  style: TeacherTextStyles.secondaryButton.copyWith(
-                    color: TeacherColors.primaryAccent,
+              // View All button with hover effect
+              MouseRegion(
+                cursor: SystemMouseCursors.click,
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(8),
+                    gradient: TeacherColors.accentGradient(
+                      TeacherColors.primaryAccent,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: TeacherColors.primaryAccent.withOpacity(0.3),
+                        blurRadius: 6,
+                        spreadRadius: 0,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  child: TextButton(
+                    onPressed: onViewAll,
+                    style: TextButton.styleFrom(
+                      padding: EdgeInsets.zero,
+                      minimumSize: Size.zero,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                    child: AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 200),
+                      child: Text(
+                        'View All →', // Added arrow for futurism
+                        key: const ValueKey('view-all'),
+                        style: TeacherTextStyles.secondaryButton.copyWith(
+                          color: TeacherColors.primaryText,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
                   ),
                 ),
               ),
             ],
           ),
         ),
-        Card(
-          elevation: 2,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+        const SizedBox(height: 8),
+        // Glass card with inner content
+        AnimatedContainer(
+          duration: const Duration(milliseconds: 400),
+          curve: Curves.easeOutQuart,
+          decoration: TeacherColors.glassDecoration(
+            borderRadius: 16,
+            borderColor: TeacherColors.primaryAccent.withOpacity(0.2),
+          ).copyWith(
+            boxShadow: [
+              BoxShadow(
+                color: TeacherColors.primaryAccent.withOpacity(0.1),
+                blurRadius: 12,
+                spreadRadius: 1,
+                offset: const Offset(0, 4),
+              ),
+            ],
           ),
-          child: Padding(padding: EdgeInsets.all(8), child: child),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(16),
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    TeacherColors.glassEffectLight.withOpacity(0.4),
+                    TeacherColors.glassEffectDark.withOpacity(0.2),
+                  ],
+                ),
+              ),
+              padding: const EdgeInsets.all(12),
+              child: child,
+            ),
+          ),
         ),
-        SizedBox(height: 16),
+        const SizedBox(height: 24),
       ],
     );
   }
-
   Widget _buildMiniAttendanceStat(
       String day,
       String percent,
