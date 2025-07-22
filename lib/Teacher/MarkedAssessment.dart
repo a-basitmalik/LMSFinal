@@ -7,6 +7,7 @@ import 'package:newapp/Teacher/themes/theme_colors.dart';
 import 'package:newapp/Teacher/themes/theme_text_styles.dart';
 import 'EnterMarks.dart';
 
+
 class MarkedAssessmentsScreen extends StatefulWidget {
   final String assessmentId;
   final bool isQuiz;
@@ -63,10 +64,6 @@ class _MarkedAssessmentsScreenState extends State<MarkedAssessmentsScreen> {
         SnackBar(
           content: Text('Error: ${e.toString()}', style: TeacherTextStyles.listItemTitle),
           backgroundColor: TeacherColors.dangerAccent,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
         ),
       );
     }
@@ -128,38 +125,14 @@ class _MarkedAssessmentsScreenState extends State<MarkedAssessmentsScreen> {
       appBar: AppBar(
         title: Text(
           widget.isQuiz ? 'Quiz Results' : 'Assessment Results',
-          style: TeacherTextStyles.className.copyWith(
-            fontSize: 24,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 1.2,
-          ),
+          style: TeacherTextStyles.className,
         ),
         backgroundColor: widget.subjectColor,
         elevation: 0,
         centerTitle: true,
-        flexibleSpace: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                widget.subjectColor.withOpacity(0.9),
-                widget.subjectColor.withOpacity(0.7),
-              ],
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: widget.subjectColor.withOpacity(0.3),
-                blurRadius: 20,
-                spreadRadius: 2,
-                offset: Offset(0, 5),
-              ),
-            ],
-          ),
-        ),
         actions: [
           IconButton(
-            icon: Icon(Icons.edit_note_rounded, size: 28),
+            icon: Icon(Icons.edit, color: TeacherColors.primaryText),
             onPressed: _navigateToEditMarks,
             tooltip: 'Edit Marks',
           ),
@@ -167,275 +140,108 @@ class _MarkedAssessmentsScreenState extends State<MarkedAssessmentsScreen> {
       ),
       body: _isLoading
           ? Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            CircularProgressIndicator(
-              color: widget.subjectColor,
-              strokeWidth: 3,
-            ),
-            SizedBox(height: 20),
-            Text(
-              'Loading Results...',
-              style: TeacherTextStyles.listItemTitle.copyWith(
-                color: TeacherColors.primaryText.withOpacity(0.7),
-              ),
-            ),
-          ],
+        child: CircularProgressIndicator(
+          color: TeacherColors.primaryAccent,
         ),
       )
           : RefreshIndicator(
         onRefresh: _refreshData,
-        color: widget.subjectColor,
+        color: TeacherColors.primaryAccent,
         backgroundColor: TeacherColors.primaryBackground,
-        displacement: 40,
-        strokeWidth: 3,
-        child: CustomScrollView(
-          slivers: [
-            // Assessment details header
-            SliverToBoxAdapter(
-              child: Container(
-                margin: EdgeInsets.all(16),
+        child: _markedStudents.isEmpty
+            ? Center(
+          child: Text(
+            'No students marked yet',
+            style: TeacherTextStyles.listItemTitle,
+          ),
+        )
+            : SingleChildScrollView(
+          physics: AlwaysScrollableScrollPhysics(),
+          child: Column(
+            children: [
+              // Assessment details header
+              Container(
+                padding: EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                     colors: [
-                      widget.subjectColor.withOpacity(0.15),
-                      widget.subjectColor.withOpacity(0.05),
+                      widget.subjectColor.withOpacity(0.2),
+                      widget.subjectColor.withOpacity(0.1),
                     ],
                   ),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: widget.subjectColor.withOpacity(0.2),
-                    width: 1,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
-                        blurRadius: 15,
-                        spreadRadius: 1,
-                        offset: Offset(0, 5))
-                  ],
-                ),
-                child: Padding(
-                  padding: EdgeInsets.all(20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Flexible(
-                            child: Text(
-                              _assessmentDetails['title'] ??
-                                  (widget.isQuiz
-                                      ? 'Quiz ${_assessmentDetails['quiz_number']}'
-                                      : 'Assessment'),
-                              style: TeacherTextStyles.assignmentTitle.copyWith(
-                                fontSize: 22,
-                                color: widget.subjectColor,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                          Container(
-                            padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                            decoration: BoxDecoration(
-                              color: widget.subjectColor.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: widget.subjectColor.withOpacity(0.3),
-                              ),
-                            ),
-                            child: Text(
-                              '${_assessmentDetails['total_marks'] ?? 'N/A'} pts',
-                              style: TeacherTextStyles.listItemTitle.copyWith(
-                                color: widget.subjectColor,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      SizedBox(height: 12),
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.school_rounded,
-                            size: 18,
-                            color: widget.subjectColor.withOpacity(0.7),
-                          ),
-                          SizedBox(width: 8),
-                          Text(
-                            'Type: ${_assessmentDetails['assessment_type'] ?? 'Other'}',
-                            style: TeacherTextStyles.listItemSubtitle.copyWith(
-                              color: TeacherColors.primaryText.withOpacity(0.8),
-                            ),
-                          ),
-                        ],
-                      ),
-                      SizedBox(height: 8),
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.calendar_today_rounded,
-                            size: 16,
-                            color: widget.subjectColor.withOpacity(0.7),
-                          ),
-                          SizedBox(width: 8),
-                          Text(
-                            'Date: ${DateFormat('MMM d, y').format(
-                                HttpDate.parse(_assessmentDetails['created_at']))}',
-                            style: TeacherTextStyles.listItemSubtitle.copyWith(
-                              color: TeacherColors.primaryText.withOpacity(0.8),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-
-            // Students list header
-            SliverPadding(
-              padding: EdgeInsets.symmetric(horizontal: 16),
-              sliver: SliverToBoxAdapter(
-                child: Padding(
-                  padding: EdgeInsets.only(top: 8, bottom: 12),
-                  child: Row(
-                    children: [
-                      Text(
-                        'Students (${_markedStudents.length})',
-                        style: TeacherTextStyles.listItemTitle.copyWith(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      Spacer(),
-                      Text(
-                        'Marks',
-                        style: TeacherTextStyles.listItemTitle.copyWith(
-                          fontSize: 16,
-                          color: TeacherColors.primaryText.withOpacity(0.7),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-
-            // Students list with marks
-            _markedStudents.isEmpty
-                ? SliverFillRemaining(
-              child: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.assignment_outlined,
-                      size: 60,
-                      color: TeacherColors.primaryText.withOpacity(0.3),
+                  border: Border(
+                    bottom: BorderSide(
+                      color: TeacherColors.cardBorder,
+                      width: 1,
                     ),
-                    SizedBox(height: 16),
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
                     Text(
-                      'No students marked yet',
-                      style: TeacherTextStyles.listItemTitle.copyWith(
-                        color: TeacherColors.primaryText.withOpacity(0.5),
-                      ),
+                      _assessmentDetails['title'] ??
+                          (widget.isQuiz ? 'Quiz ${_assessmentDetails['quiz_number']}' : 'Assessment'),
+                      style: TeacherTextStyles.assignmentTitle,
                     ),
                     SizedBox(height: 8),
-                    TextButton(
-                      onPressed: _navigateToEditMarks,
-                      child: Text(
-                        'Enter Marks Now',
-                        style: TeacherTextStyles.listItemTitle.copyWith(
-                          color: widget.subjectColor,
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Type: ${_assessmentDetails['assessment_type'] ?? 'Other'}',
+                          style: TeacherTextStyles.listItemSubtitle,
                         ),
-                      ),
+                        Text(
+                          'Total Marks: ${_assessmentDetails['total_marks'] ?? 'N/A'}',
+                          style: TeacherTextStyles.listItemSubtitle,
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 8),
+                    Text(
+                      'Date: ${DateFormat('MMM d, y').format(
+                          HttpDate.parse(_assessmentDetails['created_at'])
+                      )}',
+                      style: TeacherTextStyles.listItemSubtitle,
                     ),
                   ],
                 ),
               ),
-            )
-                : SliverList(
-              delegate: SliverChildBuilderDelegate(
-                    (context, index) {
+
+              // Students list with marks
+              ListView.builder(
+                shrinkWrap: true,
+                physics: NeverScrollableScrollPhysics(),
+                itemCount: _markedStudents.length,
+                itemBuilder: (context, index) {
                   final student = _markedStudents[index];
-                  final totalMarks =
-                      _assessmentDetails['total_marks']?.toDouble() ?? 100.0;
+                  final totalMarks = _assessmentDetails['total_marks']?.toDouble() ?? 100.0;
                   final marks = student['marks_achieved']?.toDouble() ?? 0.0;
                   final grade = _calculateGrade(marks, totalMarks);
 
                   return Container(
                     margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(18),
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [
-                          TeacherColors.cardBackground.withOpacity(0.7),
-                          TeacherColors.cardBackground.withOpacity(0.4),
-                        ],
-                      ),
-                      border: Border.all(
-                        color: TeacherColors.cardBorder.withOpacity(0.2),
-                        width: 1,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
-                          blurRadius: 10,
-                          spreadRadius: 1,
-                          offset: Offset(0, 3),
-                        ),
-                      ],
-                    ),
+                    decoration: TeacherColors.glassDecoration(),
                     child: ListTile(
-                      contentPadding: EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 8),
-                      leading: Container(
-                        width: 44,
-                        height: 44,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          gradient: LinearGradient(
-                            colors: [
-                              widget.subjectColor.withOpacity(0.3),
-                              widget.subjectColor.withOpacity(0.1),
-                            ],
-                          ),
-                          border: Border.all(
-                            color: widget.subjectColor.withOpacity(0.4),
-                            width: 1.5,
-                          ),
-                        ),
-                        child: Center(
-                          child: Text(
-                            student['student_name'][0].toUpperCase(),
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: widget.subjectColor,
-                            ),
+                      leading: CircleAvatar(
+                        backgroundColor: widget.subjectColor.withOpacity(0.2),
+                        child: Text(
+                          student['student_name'][0],
+                          style: TeacherTextStyles.listItemTitle.copyWith(
+                            color: TeacherColors.primaryText,
                           ),
                         ),
                       ),
                       title: Text(
                         student['student_name'],
-                        style: TeacherTextStyles.listItemTitle.copyWith(
-                          fontWeight: FontWeight.w600,
-                        ),
+                        style: TeacherTextStyles.listItemTitle,
                       ),
                       subtitle: Text(
                         'ID: ${student['StudentID'] ?? student['rfid']}',
-                        style: TeacherTextStyles.cardSubtitle.copyWith(
-                          fontSize: 12,
-                        ),
+                        style: TeacherTextStyles.cardSubtitle,
                       ),
                       trailing: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -444,20 +250,17 @@ class _MarkedAssessmentsScreenState extends State<MarkedAssessmentsScreen> {
                           Text(
                             '${marks.toStringAsFixed(1)}/${totalMarks.toStringAsFixed(0)}',
                             style: TeacherTextStyles.statValue.copyWith(
-                              color: widget.subjectColor,
-                              fontSize: 16,
+                              color: TeacherColors.primaryAccent,
                             ),
                           ),
-                          SizedBox(height: 4),
                           Container(
-                            padding: EdgeInsets.symmetric(
-                                horizontal: 10, vertical: 4),
+                            padding: EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                             decoration: BoxDecoration(
                               color: _getGradeColor(grade).withOpacity(0.1),
                               borderRadius: BorderRadius.circular(12),
                               border: Border.all(
                                 color: _getGradeColor(grade),
-                                width: 1.5,
+                                width: 1,
                               ),
                             ),
                             child: Text(
@@ -465,7 +268,6 @@ class _MarkedAssessmentsScreenState extends State<MarkedAssessmentsScreen> {
                               style: TeacherTextStyles.cardSubtitle.copyWith(
                                 fontWeight: FontWeight.bold,
                                 color: _getGradeColor(grade),
-                                fontSize: 14,
                               ),
                             ),
                           ),
@@ -474,10 +276,9 @@ class _MarkedAssessmentsScreenState extends State<MarkedAssessmentsScreen> {
                     ),
                   );
                 },
-                childCount: _markedStudents.length,
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

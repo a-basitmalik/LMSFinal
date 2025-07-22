@@ -5,7 +5,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:newapp/admin/admin_main.dart';
 import 'package:newapp/Student/student_main.dart';
-import 'package:newapp/Teacher/teacher_dashboard_ui.dart';
+import 'package:newapp/Teacher/teacher_main.dart';
 
 import 'admin/AdminDashboard.dart';
 

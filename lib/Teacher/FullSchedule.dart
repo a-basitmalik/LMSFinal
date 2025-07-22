@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
+
 class ClassSchedule {
   final String id;
   final String subject;
@@ -50,31 +51,24 @@ class ClassSchedule {
 }
 
 class FullScheduleScreen extends StatefulWidget {
-  final List<Map<String, dynamic>> schedule;
-  final String teacherId;
-  final Map<String, Object> subject;
-  final String initialView;
-  final int tabIndex; // New parameter for initial tab index
-
   const FullScheduleScreen({
     super.key,
     required this.schedule,
     required this.teacherId,
-    required this.subject,
-    required this.initialView,
-    this.tabIndex = 1, // Default to week view (index 1)
+    required Map<String, Object> subject,
   });
 
+  final List<Map<String, dynamic>> schedule;
+  final String teacherId;
   @override
   _FullScheduleScreenState createState() => _FullScheduleScreenState();
 }
 
-class _FullScheduleScreenState extends State<FullScheduleScreen>
-    with SingleTickerProviderStateMixin {
+class _FullScheduleScreenState extends State<FullScheduleScreen> {
   final CalendarFormat _calendarFormat = CalendarFormat.week;
   DateTime _focusedDay = DateTime.now();
   DateTime _selectedDay = DateTime.now();
-  late TabController _tabController; // Changed to TabController
+  int _currentIndex = 1;
 
   final List<ClassSchedule> _schedule = [
     ClassSchedule(
@@ -98,32 +92,6 @@ class _FullScheduleScreenState extends State<FullScheduleScreen>
   ];
 
   @override
-  void initState() {
-    super.initState();
-    _tabController = TabController(
-      length: 3,
-      vsync: this,
-      initialIndex: widget.tabIndex, // Initialize with passed index
-    );
-
-    // Sync tab changes with selected day
-    _tabController.addListener(() {
-      if (_tabController.index == 1) {
-        setState(() {
-          _focusedDay = DateTime.now();
-          _selectedDay = DateTime.now();
-        });
-      }
-    });
-  }
-
-  @override
-  void dispose() {
-    _tabController.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     final colors = context.teacherColors;
     final textStyles = context.teacherTextStyles;
@@ -132,7 +100,7 @@ class _FullScheduleScreenState extends State<FullScheduleScreen>
       backgroundColor: TeacherColors.primaryBackground,
       appBar: AppBar(
         title: Text(
-          _tabController.index == 0
+          _currentIndex == 0
               ? 'Calendar View'
               : DateFormat('MMMM yyyy').format(_focusedDay),
           style: TeacherTextStyles.sectionHeader.copyWith(
@@ -149,32 +117,58 @@ class _FullScheduleScreenState extends State<FullScheduleScreen>
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
         ),
-        bottom: TabBar(
-          controller: _tabController,
-          indicatorColor: TeacherColors.scheduleColor,
-          labelColor: TeacherColors.scheduleColor,
-          unselectedLabelColor: TeacherColors.secondaryText,
-          tabs: const [
-            Tab(icon: Icon(Icons.calendar_today), text: 'Calendar'),
-            Tab(icon: Icon(Icons.view_week), text: 'Week'),
-            Tab(icon: Icon(Icons.today), text: 'Day'),
-          ],
-        ),
       ),
-      body: TabBarView(
-        controller: _tabController,
-        children: [
-          _buildCalendarView(),
-          _buildWeeklyView(),
-          _buildDailyView(),
-        ],
-      ),
+      body: _buildCurrentView(),
       floatingActionButton: FloatingActionButton(
         backgroundColor: TeacherColors.scheduleColor,
         onPressed: _showAddClassDialog,
         child: Icon(Icons.add, color: TeacherColors.primaryText),
       ),
+      bottomNavigationBar: _buildBottomNavigationBar(),
     );
+  }
+
+
+  BottomNavigationBar _buildBottomNavigationBar() {
+    final colors = context.teacherColors;
+
+    return BottomNavigationBar(
+      currentIndex: _currentIndex,
+      onTap: (index) => setState(() {
+        _currentIndex = index;
+        if (index == 1) {
+          _focusedDay = DateTime.now();
+          _selectedDay = DateTime.now();
+        }
+      }),
+      backgroundColor: TeacherColors.secondaryBackground,
+      selectedItemColor: TeacherColors.scheduleColor,
+      unselectedItemColor: TeacherColors.secondaryText,
+      showSelectedLabels: true,
+      showUnselectedLabels: true,
+      type: BottomNavigationBarType.fixed,
+      items: const [
+        BottomNavigationBarItem(
+          icon: Icon(Icons.calendar_today),
+          label: 'Calendar',
+        ),
+        BottomNavigationBarItem(icon: Icon(Icons.view_week), label: 'Week'),
+        BottomNavigationBarItem(icon: Icon(Icons.today), label: 'Day'),
+      ],
+    );
+  }
+
+  Widget _buildCurrentView() {
+    switch (_currentIndex) {
+      case 0:
+        return _buildCalendarView();
+      case 1:
+        return _buildWeeklyView();
+      case 2:
+        return _buildDailyView();
+      default:
+        return _buildWeeklyView();
+    }
   }
 
   Widget _buildCalendarView() {
@@ -271,7 +265,6 @@ class _FullScheduleScreenState extends State<FullScheduleScreen>
               setState(() {
                 _selectedDay = selectedDay;
                 _focusedDay = focusedDay;
-                _tabController.animateTo(2); // Switch to day view when a day is selected
               });
             },
           ),
@@ -323,7 +316,7 @@ class _FullScheduleScreenState extends State<FullScheduleScreen>
                   onTap: () {
                     setState(() {
                       _selectedDay = day;
-                      _tabController.animateTo(2); // Switch to day view
+                      _currentIndex = 2;
                     });
                   },
                   child: Container(
