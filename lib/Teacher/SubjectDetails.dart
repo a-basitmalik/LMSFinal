@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:newapp/Teacher/CreateAssessment.dart';
 import 'package:newapp/Teacher/themes/theme_colors.dart';
 import 'package:newapp/Teacher/themes/theme_extensions.dart';
 import 'package:newapp/Teacher/themes/theme_text_styles.dart';
@@ -11,6 +12,7 @@ import 'dart:convert';
 // Import other screens
 import '../admin/AddPlannerScreen.dart';
 import '../admin/themes/theme_text_styles.dart';
+import 'AnnouncementsScreen.dart';
 import 'SubjectAssignments.dart';
 import 'SubjectQueries.dart';
 import 'SubjectResults.dart';
@@ -119,6 +121,9 @@ class _SubjectDashboardScreenState extends State<SubjectDashboardScreen> {
       SubjectResultsScreen(subject: widget.subject),
       SubjectAttendanceScreen(subject: widget.subject),
       SubjectChatScreen(subject: widget.subject, teacherId: widget.teacherId),
+      SubjectAnnouncementScreen(subject: widget.subject),
+
+
     ];
 
     return Scaffold(
@@ -311,6 +316,38 @@ class _SubjectDashboardScreenState extends State<SubjectDashboardScreen> {
                 color: TeacherColors.primaryAccent,
               );
             }).toList(),
+          ),
+        ),
+        const SizedBox(height: 24),
+
+        const SizedBox(height: 24),
+        _buildSectionHeader(
+          icon: Icons.announcement,
+          title: 'Annoucement',
+          color: subjectColor,
+          onTap: () => _navigateToScreen(6),
+        ),
+        const SizedBox(height: 16),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Column(
+            children: [
+              _buildResourceItem(
+                icon: Icons.note,
+                title: 'View Annoucements',
+                subtitle: 'See recent Announcements',
+                color: TeacherColors.successAccent,
+                onTap: () => _navigateToScreen(6),
+              ),
+              const SizedBox(height: 12),
+              _buildResourceItem(
+                icon: Icons.announcement,
+                title: 'New Annoucement',
+                subtitle: 'Add announcement',
+                color: TeacherColors.primaryAccent,
+                onTap: () => _navigateToScreen(6),
+              ),
+            ],
           ),
         ),
         const SizedBox(height: 24),
@@ -768,6 +805,7 @@ class _SubjectDashboardScreenState extends State<SubjectDashboardScreen> {
     required String title,
     required String subtitle,
     required Color color,
+    VoidCallback? onTap,
   }) {
     return GlassCard(
       borderRadius: 16,

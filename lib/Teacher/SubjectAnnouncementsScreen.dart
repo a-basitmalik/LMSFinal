@@ -38,6 +38,7 @@ class _AnnouncementScreenState extends State<SubjectAnnouncementScreen> {
       errorMessage = '';
     });
 
+
     try {
       final response = await http.get(
         Uri.parse('$baseUrl/subject/${widget.subject['subject_id']}/announcements'),
