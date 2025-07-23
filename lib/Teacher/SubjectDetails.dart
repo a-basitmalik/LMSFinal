@@ -113,29 +113,53 @@ class _SubjectDashboardScreenState extends State<SubjectDashboardScreen> {
     final subjectColor = widget.subject['color'] as Color? ?? TeacherColors.primaryAccent;
     final icon = widget.subject['icon'] as IconData? ?? Icons.school;
 
-    // Initialize screens
+    // Initialize screens with top padding
     final screens = [
-      _buildOverviewScreen(),
-      SubjectAssignmentsScreen(subject: widget.subject),
-      SubjectQueriesScreen(subject: widget.subject),
-      SubjectResultsScreen(subject: widget.subject),
-      SubjectAttendanceScreen(subject: widget.subject),
-      SubjectChatScreen(subject: widget.subject, teacherId: widget.teacherId),
-      SubjectAnnouncementScreen(subject: widget.subject),
-
-
+      Padding(
+        padding: const EdgeInsets.only(top: 40),
+        child: _buildOverviewScreen(),
+      ),
+      Padding(
+        padding: const EdgeInsets.only(top: 40),
+        child: SubjectAssignmentsScreen(subject: widget.subject),
+      ),
+      Padding(
+        padding: const EdgeInsets.only(top: 40),
+        child: SubjectQueriesScreen(subject: widget.subject),
+      ),
+      Padding(
+        padding: const EdgeInsets.only(top: 40),
+        child: SubjectResultsScreen(subject: widget.subject),
+      ),
+      Padding(
+        padding: const EdgeInsets.only(top: 40),
+        child: SubjectAttendanceScreen(subject: widget.subject),
+      ),
+      Padding(
+        padding: const EdgeInsets.only(top: 40),
+        child: SubjectChatScreen(subject: widget.subject, teacherId: widget.teacherId),
+      ),
+      Padding(
+        padding: const EdgeInsets.only(top: 40),
+        child: SubjectAnnouncementScreen(subject: widget.subject),
+      ),
     ];
 
     return Scaffold(
       backgroundColor: TeacherColors.primaryBackground,
       body: Stack(
         children: [
-          // Main content
+          // Main content - now properly padded
           _currentIndex == 0
-              ? SingleChildScrollView(child: _buildOverviewScreen())
+              ? SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.only(top: 20),
+              child: _buildOverviewScreen(),
+            ),
+          )
               : screens[_currentIndex],
 
-          // Menu overlay
+          // Menu overlay (unchanged)
           if (_isMenuOpen) ...[
             BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
