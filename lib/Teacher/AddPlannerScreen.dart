@@ -8,11 +8,11 @@ import 'package:newapp/admin/themes/theme_colors.dart';
 import 'package:newapp/admin/themes/theme_text_styles.dart';
 
 class AddPlannerScreen extends StatefulWidget {
-  final int campusId;
+  final int subjectId;
   // final String subjectName;
 
   const AddPlannerScreen({
-    required this.campusId,
+    required this.subjectId,
     // required this.subjectName,
     Key? key,
   }) : super(key: key);
@@ -37,53 +37,12 @@ class _AddPlannerScreenState extends State<AddPlannerScreen> {
   List<File> _attachments = [];
   bool _isSubmitting = false;
 
-  List<Map<String, dynamic>> _subjects = [];
-  int? _selectedSubjectId;
-  bool _loadingSubjects = true;
-
   @override
   void initState() {
     super.initState();
-    _fetchSubjects();
     _dateController.text = DateFormat('yyyy-MM-dd').format(_selectedDate);
   }
-  // Future<void> _fetchSubjects() async {
-  //   try {
-  //     final response = await http.get(
-  //       Uri.parse('http://193.203.162.232:5050/Planner/subjects?campus_id=${widget.campusId}'),
-  //       headers: {'Content-Type': 'application/json'},
-  //     );
-  //
-  //     if (response.statusCode == 200) {
-  //       final data = json.decode(response.body);
-  //       if (data != null && data['subjects'] != null) {
-  //         setState(() {
-  //           _subjects = List<Map<String, dynamic>>.from(
-  //               data['subjects'].map((subject) => {
-  //                 'subject_id': subject['id'] ?? 0, // Using 'id' from API
-  //                 'subject_name': subject['name'] ?? 'Unknown Subject', // Using 'name' from API
-  //                 'teacher_name': subject['teacher'] ?? 'Not assigned', // Using 'teacher' from API
-  //                 'teacher_id': subject['teacher_id'] ?? 0 // Using 'teacher_id' from API
-  //               })
-  //           );
-  //           _loadingSubjects = false;
-  //         });
-  //       } else {
-  //         throw Exception('Invalid subjects data format');
-  //       }
-  //     } else {
-  //       throw Exception('Failed to load subjects: ${response.statusCode}');
-  //     }
-  //   } catch (e) {
-  //     setState(() => _loadingSubjects = false);
-  //     ScaffoldMessenger.of(context).showSnackBar(
-  //       SnackBar(
-  //         content: Text('Error loading subjects: ${e.toString()}'),
-  //         backgroundColor: AdminColors.dangerAccent,
-  //       ),
-  //     );
-  //   }
-  // }
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -102,138 +61,6 @@ class _AddPlannerScreenState extends State<AddPlannerScreen> {
     }
     super.dispose();
   }
-  Future<void> _fetchSubjects() async {
-    try {
-      final response = await http.get(
-        Uri.parse('http://193.203.162.232:5050/Planner/subjects?campus_id=${widget.campusId}'),
-        headers: {'Content-Type': 'application/json'},
-      );
-
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        if (data != null && data['subjects'] != null) {
-          setState(() {
-            _subjects = List<Map<String, dynamic>>.from(data['subjects']);
-            _loadingSubjects = false;
-
-            // Optionally select the first subject by default
-            if (_subjects.isNotEmpty && _selectedSubjectId == null) {
-              _selectedSubjectId = _subjects.first['id'];
-            }
-          });
-        } else {
-          throw Exception('Invalid subjects data format');
-        }
-      } else {
-        throw Exception('Failed to load subjects: ${response.statusCode}');
-      }
-    } catch (e) {
-      setState(() => _loadingSubjects = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error loading subjects: ${e.toString()}'),
-          backgroundColor: AdminColors.dangerAccent,
-        ),
-      );
-    }
-  }
-
-  Widget _buildSubjectDropdown() {
-    if (_loadingSubjects) {
-      return Center(
-        child: CircularProgressIndicator(
-          color: AdminColors.primaryAccent,
-        ),
-      );
-    }
-
-    if (_subjects.isEmpty) {
-      return Text(
-        'No subjects available for this campus',
-        style: AdminTextStyles.cardSubtitle,
-      );
-    }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Theme(
-          data: Theme.of(context).copyWith(
-            canvasColor: AdminColors.secondaryBackground, // Dropdown background
-          ),
-          child: DropdownButtonFormField<int>(
-            value: _selectedSubjectId,
-            decoration: InputDecoration(
-              labelText: 'Subject',
-              labelStyle: AdminTextStyles.cardSubtitle,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(
-                  color: AdminColors.cardBorder,
-                ),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(
-                  color: AdminColors.cardBorder,
-                ),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(
-                  color: AdminColors.primaryAccent,
-                ),
-              ),
-            ),
-            dropdownColor: AdminColors.secondaryBackground, // for newer Flutter versions
-            style: AdminTextStyles.primaryButton.copyWith(
-              color: AdminColors.primaryText,
-            ),
-            items: _subjects.map<DropdownMenuItem<int>>((subject) {
-              return DropdownMenuItem<int>(
-                value: subject['id'],
-                child: Text(
-                  subject['name'] ?? 'Unknown Subject',
-                  style: AdminTextStyles.primaryButton.copyWith(
-                    color: AdminColors.primaryText,
-                  ),
-                ),
-              );
-            }).toList(),
-            onChanged: (int? value) {
-              setState(() {
-                _selectedSubjectId = value;
-              });
-            },
-            validator: (value) {
-              if (value == null) {
-                return 'Please select a subject';
-              }
-              return null;
-            },
-          ),
-        ),
-        if (_selectedSubjectId != null)
-          Padding(
-            padding: const EdgeInsets.only(top: 8.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Selected: ${_subjects.firstWhere((s) => s['id'] == _selectedSubjectId)['name']}',
-                  style: AdminTextStyles.cardSubtitle,
-                ),
-                Text(
-                  'Teacher: ${_subjects.firstWhere((s) => s['id'] == _selectedSubjectId)['teacher']}',
-                  style: AdminTextStyles.cardSubtitle.copyWith(fontSize: 12),
-                ),
-              ],
-            ),
-          ),
-      ],
-    );
-  }
-
 
   Future<void> _selectDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
@@ -263,6 +90,7 @@ class _AddPlannerScreenState extends State<AddPlannerScreen> {
       });
     }
   }
+
   Future<void> _selectTime(BuildContext context) async {
     final TimeOfDay? picked = await showTimePicker(
       context: context,
@@ -361,7 +189,7 @@ class _AddPlannerScreenState extends State<AddPlannerScreen> {
           'title': _titleController.text,
           'description': _descriptionController.text,
           'planned_date': DateFormat('yyyy-MM-dd HH:mm').format(plannedDateTime),
-          'subject_id': _selectedSubjectId,
+          'subject_id': widget.subjectId,
           'points': points,
           'homework': _homeworkController.text,
         }),
@@ -647,8 +475,12 @@ class _AddPlannerScreenState extends State<AddPlannerScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              SizedBox(height: 16),
-              _buildSubjectDropdown(),
+              // Text(
+              //   'Subject: ${widget.subjectName}',
+              //   style: AdminTextStyles.cardTitle.copyWith(
+              //     color: AdminColors.primaryAccent,
+              //   ),
+              // ),
               SizedBox(height: 16),
               TextFormField(
                 controller: _titleController,

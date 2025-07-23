@@ -2,6 +2,8 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:newapp/Teacher/CreateAssessment.dart';
+import 'package:newapp/Teacher/HolographicCalendarScreen.dart';
+import 'package:newapp/Teacher/PlannerListScreen.dart';
 import 'package:newapp/Teacher/themes/theme_colors.dart';
 import 'package:newapp/Teacher/themes/theme_extensions.dart';
 import 'package:newapp/Teacher/themes/theme_text_styles.dart';
@@ -10,7 +12,8 @@ import 'package:url_launcher/url_launcher.dart';
 import 'dart:convert';
 
 // Import other screens
-import '../admin/AddPlannerScreen.dart';
+import '../Teacher//AddPlannerScreen.dart';
+import '../admin/themes/theme_colors.dart';
 import '../admin/themes/theme_text_styles.dart';
 import 'AnnouncementsScreen.dart';
 import 'SubjectAssignments.dart';
@@ -494,7 +497,7 @@ class _SubjectDashboardScreenState extends State<SubjectDashboardScreen> {
                 width: 1,
               ),
             ),
-            child: AddPlannerScreen(subjectId: widget.subject['id']),
+            child: AddPlannerScreen(subjectId: widget.subject['subject_id']),
           ),
         );
       },
@@ -634,25 +637,60 @@ class _SubjectDashboardScreenState extends State<SubjectDashboardScreen> {
   }
 
   Widget _buildPlannerStatsRow() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceAround,
-      children: [
-        _buildPlannerStatItem(
-          icon: Icons.event_available,
-          value: '12',
-          label: 'Plans',
-        ),
-        _buildPlannerStatItem(
-          icon: Icons.check_circle,
-          value: '8',
-          label: 'Completed',
-        ),
-        _buildPlannerStatItem(
-          icon: Icons.timer,
-          value: '4',
-          label: 'Pending',
-        ),
-      ],
+    Future<Map<String, int>> fetchStats() async {
+      final response = await http.get(Uri.parse('http://193.203.162.232:5050/Planner/subject/planner_stats?subject_id=${widget.subject['subject_id']}'));
+
+      if (response.statusCode == 200) {
+        return {
+          'completed': jsonDecode(response.body)['completed'] ?? 0,
+          'pending': jsonDecode(response.body)['pending'] ?? 0,
+          'upcoming': jsonDecode(response.body)['upcoming'] ?? 0,
+        };
+      } else {
+        throw Exception('Failed to load stats');
+      }
+    }
+
+    return FutureBuilder<Map<String, int>>(
+      future: fetchStats(),
+      builder: (context, snapshot) {
+        if (snapshot.hasData) {
+          return Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              gradient: AdminColors.accentGradient(AdminColors.plannerColor),
+              border: Border.all(
+                color: AdminColors.plannerColor.withOpacity(0.3),
+                width: 1,
+              ),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _buildPlannerStatItem(
+                  icon: Icons.event_available,
+                  value: snapshot.data!['completed'].toString(),
+                  label: 'Completed',
+                ),
+                _buildPlannerStatItem(
+                  icon: Icons.event_busy,
+                  value: snapshot.data!['pending'].toString(),
+                  label: 'Pending',
+                ),
+                _buildPlannerStatItem(
+                  icon: Icons.event,
+                  value: snapshot.data!['upcoming'].toString(),
+                  label: 'Upcoming',
+                ),
+              ],
+            ),
+          );
+        } else if (snapshot.hasError) {
+          return Text('Error: ${snapshot.error}');
+        }
+        return CircularProgressIndicator();
+      },
     );
   }
 
@@ -685,24 +723,37 @@ class _SubjectDashboardScreenState extends State<SubjectDashboardScreen> {
   }
 
   void _navigateToPlannerScreen() {
-    Navigator.pushNamed(
+    final subjectId = widget.subject['subject_id'];
+    if (subjectId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Subject ID is missing.')),
+      );
+      return;
+    }
+
+    Navigator.push(
       context,
-      '/planner',
-      arguments: {
-        'subjectId': widget.subject['id'],
-        'subjectName': widget.subject['name'],
-      },
+      MaterialPageRoute(
+        builder: (context) => PlannerListScreen(subjectID: subjectId),
+      ),
     );
   }
 
+
   void _navigateToCalendarScreen() {
-    Navigator.pushNamed(
+    final subjectId = widget.subject['subject_id'];
+    if (subjectId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Subject ID is missing.')),
+      );
+      return;
+    }
+
+    Navigator.push(
       context,
-      '/calendar',
-      arguments: {
-        'subjectId': widget.subject['id'],
-        'subjectName': widget.subject['name'],
-      },
+      MaterialPageRoute(
+        builder: (context) => HolographicCalendarScreen(subjectId: subjectId),
+      ),
     );
   }
 

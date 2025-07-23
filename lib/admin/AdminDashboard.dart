@@ -119,7 +119,7 @@ class _AdminDashboardContent extends StatelessWidget {
                 width: 1,
               ),
             ),
-            child: AddPlannerScreen(subjectId: campusID),
+            child: AddPlannerScreen(campusId: campusID),
           ),
         );
       },

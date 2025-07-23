@@ -9,9 +9,9 @@ import 'AddPlannerScreen.dart';
 import 'PlannerDetailScreen.dart';
 
 class PlannerListScreen extends StatefulWidget {
-  final int campusID;
+  final int subjectID;
 
-  const PlannerListScreen({required this.campusID, Key? key}) : super(key: key);
+  const PlannerListScreen({required this.subjectID, Key? key}) : super(key: key);
 
   @override
   _PlannerListScreenState createState() => _PlannerListScreenState();
@@ -34,7 +34,7 @@ class _PlannerListScreenState extends State<PlannerListScreen> {
       setState(() => _isLoading = true);
 
       final response = await http.get(
-        Uri.parse('http://193.203.162.232:5050/Planner/planners?campus_id=${widget.campusID}'),
+        Uri.parse('http://193.203.162.232:5050/Planner/subject/planners?subject_id=${widget.subjectID}'),
         headers: {'Content-Type': 'application/json'},
       );
 
@@ -100,7 +100,7 @@ class _PlannerListScreenState extends State<PlannerListScreen> {
     final result = await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => AddPlannerScreen(campusId: widget.campusID),
+        builder: (context) => AddPlannerScreen(subjectId: widget.subjectID),
       ),
     );
 

@@ -210,6 +210,10 @@ class _PlannerDetailScreenState extends State<PlannerDetailScreen> {
   Future<void> _showEditDialog() async {
     final titleController = TextEditingController(text: widget.planner.title);
     final descriptionController = TextEditingController(text: widget.planner.description);
+    final pointsController = TextEditingController(
+        text: widget.planner.points?.replaceAll('|||', '\n') ?? ''
+    );
+    final homeworkController = TextEditingController(text: widget.planner.homework ?? '');
     DateTime? selectedDate = DateTime.parse(widget.planner.plannedDate);
 
     await showDialog(
@@ -241,6 +245,32 @@ class _PlannerDetailScreenState extends State<PlannerDetailScreen> {
                 style: AdminTextStyles.cardTitle,
                 decoration: InputDecoration(
                   labelText: 'Description',
+                  labelStyle: AdminTextStyles.cardSubtitle,
+                  enabledBorder: UnderlineInputBorder(
+                    borderSide: BorderSide(color: AdminColors.primaryAccent),
+                  ),
+                ),
+                maxLines: 3,
+              ),
+              SizedBox(height: 16),
+              TextField(
+                controller: pointsController,
+                style: AdminTextStyles.cardTitle,
+                decoration: InputDecoration(
+                  labelText: 'Lesson Points (one per line)',
+                  labelStyle: AdminTextStyles.cardSubtitle,
+                  enabledBorder: UnderlineInputBorder(
+                    borderSide: BorderSide(color: AdminColors.primaryAccent),
+                  ),
+                ),
+                maxLines: 5,
+              ),
+              SizedBox(height: 16),
+              TextField(
+                controller: homeworkController,
+                style: AdminTextStyles.cardTitle,
+                decoration: InputDecoration(
+                  labelText: 'Homework',
                   labelStyle: AdminTextStyles.cardSubtitle,
                   enabledBorder: UnderlineInputBorder(
                     borderSide: BorderSide(color: AdminColors.primaryAccent),
@@ -306,6 +336,8 @@ class _PlannerDetailScreenState extends State<PlannerDetailScreen> {
               await _updatePlanner(
                 title: titleController.text,
                 description: descriptionController.text,
+                points: pointsController.text.split('\n').join('|||'),
+                homework: homeworkController.text,
                 plannedDate: selectedDate,
               );
             },
@@ -322,6 +354,8 @@ class _PlannerDetailScreenState extends State<PlannerDetailScreen> {
   Future<void> _updatePlanner({
     String? title,
     String? description,
+    String? points,
+    String? homework,
     DateTime? plannedDate,
     int? subjectId,
   }) async {
@@ -333,19 +367,31 @@ class _PlannerDetailScreenState extends State<PlannerDetailScreen> {
         body: json.encode({
           'title': title ?? widget.planner.title,
           'description': description ?? widget.planner.description,
+          'points': points ?? widget.planner.points,
+          'homework': homework ?? widget.planner.homework,
           'planned_date': plannedDate?.toIso8601String() ?? widget.planner.plannedDate,
           'subject_id': subjectId ?? widget.planner.subjectId,
         }),
       );
 
       if (response.statusCode == 200) {
+        final updatedPlanner = json.decode(response.body)['planner'];
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Plan updated successfully'),
             backgroundColor: AdminColors.successAccent,
           ),
         );
-        _fetchAttachments();
+        // Update the parent widget's data if needed
+        if (mounted) {
+          setState(() {
+            widget.planner.title = updatedPlanner['title'];
+            widget.planner.description = updatedPlanner['description'];
+            widget.planner.points = updatedPlanner['points'];
+            widget.planner.homework = updatedPlanner['homework'];
+            widget.planner.plannedDate = updatedPlanner['planned_date'];
+          });
+        }
       } else {
         throw Exception('Failed to update planner');
       }
@@ -359,6 +405,78 @@ class _PlannerDetailScreenState extends State<PlannerDetailScreen> {
     } finally {
       setState(() => _isLoading = false);
     }
+  }
+
+  Widget _buildPointsSection() {
+    if (widget.planner.points == null || widget.planner.points!.isEmpty) {
+      return SizedBox();
+    }
+
+    final points = widget.planner.points!.split('|||');
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(height: 16),
+        Text(
+          'LESSON POINTS',
+          style: AdminTextStyles.cardTitle.copyWith(
+            color: AdminColors.secondaryText,
+          ),
+        ),
+        SizedBox(height: 8),
+        ...points.map((point) => Padding(
+          padding: EdgeInsets.only(bottom: 4),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: EdgeInsets.only(top: 4, right: 8),
+                child: Icon(
+                  Icons.circle,
+                  size: 8,
+                  color: AdminColors.primaryAccent,
+                ),
+              ),
+              Expanded(
+                child: Text(
+                  point.trim(),
+                  style: AdminTextStyles.cardSubtitle.copyWith(
+                    fontSize: 14,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        )).toList(),
+      ],
+    );
+  }
+
+  Widget _buildHomeworkSection() {
+    if (widget.planner.homework == null || widget.planner.homework!.isEmpty) {
+      return SizedBox();
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(height: 16),
+        Text(
+          'HOMEWORK',
+          style: AdminTextStyles.cardTitle.copyWith(
+            color: AdminColors.secondaryText,
+          ),
+        ),
+        SizedBox(height: 8),
+        Text(
+          widget.planner.homework!,
+          style: AdminTextStyles.cardSubtitle.copyWith(
+            fontSize: 14,
+          ),
+        ),
+      ],
+    );
   }
 
   @override
@@ -443,6 +561,8 @@ class _PlannerDetailScreenState extends State<PlannerDetailScreen> {
                       ),
                     ),
                     SizedBox(height: 24),
+                    _buildPointsSection(),
+                    _buildHomeworkSection(),
                     Divider(color: AdminColors.cardBorder),
                     SizedBox(height: 16),
                     if (widget.planner.teacherName != null) ...[

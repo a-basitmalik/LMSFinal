@@ -7,15 +7,15 @@ import 'package:newapp/admin/themes/theme_text_styles.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'package:newapp/admin/PlannerListScreen.dart';
+import 'package:newapp/Teacher/PlannerListScreen.dart';
 
 import 'PlannerDetailScreen.dart';
 
 
 class HolographicCalendarScreen extends StatefulWidget {
-  final int campusID;
+  final int subjectId;
 
-  const HolographicCalendarScreen({required this.campusID, Key? key})
+  const HolographicCalendarScreen({required this.subjectId, Key? key})
       : super(key: key);
 
   @override
@@ -58,8 +58,8 @@ class _HolographicCalendarScreenState extends State<HolographicCalendarScreen>
 
       final response = await http.get(
         Uri.parse(
-            'http://193.203.162.232:5050/Planner/planners?campus_id=${widget
-                .campusID}'),
+            'http://193.203.162.232:5050/Planner/subject/planners?subject_id=${widget
+                .subjectId}'),
         headers: {'Content-Type': 'application/json'},
       );
 
