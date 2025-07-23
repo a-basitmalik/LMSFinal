@@ -9,10 +9,10 @@ import 'package:newapp/admin/themes/theme_text_styles.dart';
 
 
 class AddPlannerScreen extends StatefulWidget {
-  final int campusID;
+  final int subjectId;
 
   const AddPlannerScreen({
-    required this.campusID,
+    required this.subjectId,
     Key? key,
   }) : super(key: key);
 
@@ -65,7 +65,7 @@ class _AddPlannerScreenState extends State<AddPlannerScreen> {
     setState(() => _isLoadingSubjects = true);
     try {
       final response = await http.get(
-        Uri.parse('http://193.203.162.232:5050/Planner/subjects?campus_id=${widget.campusID}'),
+        Uri.parse('http://193.203.162.232:5050/Planner/subjects?campus_id=${widget.subjectId}'),
         headers: {'Content-Type': 'application/json'},
       );
 
@@ -274,7 +274,7 @@ class _AddPlannerScreenState extends State<AddPlannerScreen> {
           'description': _descriptionController.text,
           'planned_date': DateFormat('yyyy-MM-dd HH:mm').format(plannedDateTime),
           'subject_id': _selectedSubjectId,
-          'campus_id': widget.campusID,
+          'campus_id': widget.subjectId,
         }),
       );
 

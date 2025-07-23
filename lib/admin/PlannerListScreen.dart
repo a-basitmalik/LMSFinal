@@ -100,7 +100,7 @@ class _PlannerListScreenState extends State<PlannerListScreen> {
     final result = await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => AddPlannerScreen(campusID: widget.campusID),
+        builder: (context) => AddPlannerScreen(subjectId: widget.campusID),
       ),
     );
 

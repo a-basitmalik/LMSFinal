@@ -31,7 +31,8 @@ class TeacherColors {
   static const Color scheduleColor = Color(0xFF3B82F6); // Blue-500
   static const Color announcementColor = Color(0xFF00D1D1); // Teal-400
   static const Color reportColor = Color(0xFFF97316); // Orange-500
-
+  static const Color chatColor = Color(0xFF1CC8C8);
+  static const Color plannerColor = Colors.orangeAccent;
   // Glass morphism effects
   static Color glassEffectLight = Colors.white.withOpacity(0.1);
   static Color glassEffectDark = Colors.white.withOpacity(0.05);

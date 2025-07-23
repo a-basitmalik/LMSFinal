@@ -9,6 +9,12 @@ class TeacherTextStyles {
     letterSpacing: 1.2,
     fontWeight: FontWeight.w500,
   );
+  static const TextStyle headerTitle = TextStyle(
+    color: TeacherColors.primaryText,
+    fontSize: 22,
+    fontWeight: FontWeight.bold,
+    letterSpacing: 0.8,
+  );
 
   static const TextStyle className = TextStyle(
     color: TeacherColors.primaryText,
