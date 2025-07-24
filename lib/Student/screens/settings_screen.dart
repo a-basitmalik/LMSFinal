@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../login_screen.dart';
 import '../providers/theme_provider.dart';
-import '../utils/app_design_system.dart';
-import 'profile_edit_screen.dart';
 import '../services/auth_service.dart';
+import '../utils/theme.dart';
 import '../widgets/base_screen.dart';
-import 'package:newapp/login_screen.dart';
+import 'profile_edit_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   final String rfid;
@@ -29,36 +29,33 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final textTheme = theme.textTheme;
     final themeProvider = Provider.of<ThemeProvider>(context);
 
     return BaseScreen(
       title: 'Settings',
       body: ListView(
-        padding: AppDesignSystem.defaultPadding,
+        padding: const EdgeInsets.all(16),
         children: [
           // Notification Settings
-          AppDesignSystem.card(
-            context: context,
+          Card(
+            margin: EdgeInsets.zero,
+            color: AppColors.cardBackground,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+              side: BorderSide(color: AppColors.cardBorder, width: 1.5),
+            ),
             child: SwitchListTile(
               title: Text(
                 'Notifications',
-                style: Theme
-                    .of(context)
-                    .textTheme
-                    .bodyLarge
-                    ?.copyWith(
-                  color: Theme
-                      .of(context)
-                      .colorScheme
-                      .onSurface,
-                ),
+                style: textTheme.bodyLarge,
               ),
               subtitle: Text(
                 'Enable or disable app notifications',
-                style: Theme
-                    .of(context)
-                    .textTheme
-                    .bodyMedium,
+                style: textTheme.bodyMedium?.copyWith(
+                  color: AppColors.textSecondary,
+                ),
               ),
               value: _notificationsEnabled,
               onChanged: (value) {
@@ -66,103 +63,85 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   _notificationsEnabled = value;
                 });
               },
-              activeColor: Theme
-                  .of(context)
-                  .colorScheme
-                  .primary,
+              activeColor: AppColors.primary,
             ),
           ),
 
           const SizedBox(height: 16),
 
           // Dark Mode Settings
-          AppDesignSystem.card(
-            context: context,
+          Card(
+            margin: EdgeInsets.zero,
+            color: AppColors.cardBackground,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+              side: BorderSide(color: AppColors.cardBorder, width: 1.5),
+            ),
             child: SwitchListTile(
               title: Text(
                 'Dark Mode',
-                style: Theme
-                    .of(context)
-                    .textTheme
-                    .bodyLarge
-                    ?.copyWith(
-                  color: Theme
-                      .of(context)
-                      .colorScheme
-                      .onSurface,
-                ),
+                style: textTheme.bodyLarge,
               ),
               subtitle: Text(
                 'Switch between light and dark theme',
-                style: Theme
-                    .of(context)
-                    .textTheme
-                    .bodyMedium
-                    ?.copyWith(
-                  color: Theme
-                      .of(
-                    context,
-                  )
-                      .colorScheme
-                      .onSurface
-                      .withOpacity(0.7),
+                style: textTheme.bodyMedium?.copyWith(
+                  color: AppColors.textSecondary,
                 ),
               ),
               value: themeProvider.isDarkMode,
               onChanged: (value) {
                 themeProvider.toggleTheme();
               },
-              activeColor: Theme
-                  .of(context)
-                  .colorScheme
-                  .primary,
+              activeColor: AppColors.primary,
             ),
           ),
 
           const SizedBox(height: 16),
 
           // Auto Logout Time
-          AppDesignSystem.card(
-            context: context,
+          Card(
+            margin: EdgeInsets.zero,
+            color: AppColors.cardBackground,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+              side: BorderSide(color: AppColors.cardBorder, width: 1.5),
+            ),
             child: Padding(
-              padding: AppDesignSystem.sectionPadding,
+              padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     'Auto Logout Time',
-                    style: Theme
-                        .of(context)
-                        .textTheme
-                        .bodyLarge,
+                    style: textTheme.bodyLarge,
                   ),
                   const SizedBox(height: 8),
                   DropdownButtonFormField<String>(
                     value: _selectedLogoutTime,
                     decoration: InputDecoration(
                       border: OutlineInputBorder(
-                        borderRadius: AppDesignSystem.defaultBorderRadius,
-                        borderSide: BorderSide(
-                          color: Theme
-                              .of(context)
-                              .dividerColor,
-                        ),
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: AppColors.cardBorder),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: AppColors.cardBorder),
                       ),
                       contentPadding: const EdgeInsets.symmetric(
                         horizontal: 16,
                         vertical: 12,
                       ),
+                      filled: true,
+                      fillColor: AppColors.surface,
                     ),
-                    items:
-                    _logoutTimes
-                        .map(
-                          (time) =>
-                          DropdownMenuItem(
-                            value: time,
-                            child: Text(time),
-                          ),
-                    )
-                        .toList(),
+                    dropdownColor: AppColors.secondaryBackground,
+                    style: textTheme.bodyMedium,
+                    items: _logoutTimes.map((time) {
+                      return DropdownMenuItem(
+                        value: time,
+                        child: Text(time),
+                      );
+                    }).toList(),
                     onChanged: (value) {
                       setState(() {
                         _selectedLogoutTime = value!;
@@ -177,38 +156,36 @@ class _SettingsScreenState extends State<SettingsScreen> {
           const SizedBox(height: 16),
 
           // Edit Profile
-          AppDesignSystem.card(
-            context: context,
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const ProfileEditScreen(),
+          Card(
+            margin: EdgeInsets.zero,
+            color: AppColors.cardBackground,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+              side: BorderSide(color: AppColors.cardBorder, width: 1.5),
+            ),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(16),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const ProfileEditScreen(),
+                  ),
+                );
+              },
+              child: ListTile(
+                leading: Icon(
+                  Icons.person,
+                  color: AppColors.primary,
                 ),
-              );
-            },
-            child: ListTile(
-              leading: Icon(
-                Icons.person,
-                color: Theme
-                    .of(context)
-                    .colorScheme
-                    .primary,
-              ),
-              title: Text(
-                'Edit Profile',
-                style: Theme
-                    .of(context)
-                    .textTheme
-                    .bodyLarge,
-              ),
-              trailing: Icon(
-                Icons.chevron_right,
-                color: Theme
-                    .of(context)
-                    .textTheme
-                    .bodyMedium
-                    ?.color,
+                title: Text(
+                  'Edit Profile',
+                  style: textTheme.bodyLarge,
+                ),
+                trailing: Icon(
+                  Icons.chevron_right,
+                  color: AppColors.textSecondary,
+                ),
               ),
             ),
           ),
@@ -216,23 +193,27 @@ class _SettingsScreenState extends State<SettingsScreen> {
           const SizedBox(height: 16),
 
           // Logout
-          AppDesignSystem.card(
-            context: context,
-            onTap: _logout,
-            child: ListTile(
-              leading: Icon(
-                Icons.logout,
-                color: Theme
-                    .of(context)
-                    .colorScheme
-                    .error,
-              ),
-              title: Text(
-                'Logout',
-                style: TextStyle(color: Theme
-                    .of(context)
-                    .colorScheme
-                    .error),
+          Card(
+            margin: EdgeInsets.zero,
+            color: AppColors.cardBackground,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+              side: BorderSide(color: AppColors.cardBorder, width: 1.5),
+            ),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(16),
+              onTap: _logout,
+              child: ListTile(
+                leading: Icon(
+                  Icons.logout,
+                  color: AppColors.error,
+                ),
+                title: Text(
+                  'Logout',
+                  style: textTheme.bodyLarge?.copyWith(
+                    color: AppColors.error,
+                  ),
+                ),
               ),
             ),
           ),
@@ -244,21 +225,57 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Future<void> _logout() async {
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (context) =>
-          AlertDialog(
-            title: const Text('Logout'),
-            content: const Text('Are you sure you want to logout?'),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context, false),
-                child: const Text('Cancel'),
+      builder: (context) => Dialog(
+        backgroundColor: AppColors.cardBackground,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Logout',
+                style: Theme.of(context).textTheme.titleLarge,
               ),
-              TextButton(
-                onPressed: () => Navigator.pop(context, true),
-                child: const Text('Logout'),
+              const SizedBox(height: 16),
+              Text(
+                'Are you sure you want to logout?',
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+              const SizedBox(height: 24),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context, false),
+                    child: Text(
+                      'Cancel',
+                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  ElevatedButton(
+                    onPressed: () => Navigator.pop(context, true),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.error,
+                    ),
+                    child: Text(
+                      'Logout',
+                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
+        ),
+      ),
     );
 
     if (confirmed == true) {

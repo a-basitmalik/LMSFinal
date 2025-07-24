@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../utils/theme.dart';
+
 class AnnouncementTile extends StatelessWidget {
   final String title;
   final String message;
@@ -18,9 +20,16 @@ class AnnouncementTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final textTheme = theme.textTheme;
+
     return Card(
-      margin: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0),
+      margin: const EdgeInsets.all(8.0),
       color: color,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: const BorderSide(color: AppColors.cardBorder, width: 1.5),
+      ),
       child: Padding(
         padding: const EdgeInsets.all(12.0),
         child: Column(
@@ -29,11 +38,14 @@ class AnnouncementTile extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  title,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    fontWeight: isRead ? FontWeight.normal : FontWeight.bold,
-                    color: Colors.black87,
+                Expanded(
+                  child: Text(
+                    title,
+                    style: isRead
+                        ? textTheme.bodyMedium
+                        : textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
                 if (!isRead)
@@ -41,7 +53,7 @@ class AnnouncementTile extends StatelessWidget {
                     width: 8,
                     height: 8,
                     decoration: const BoxDecoration(
-                      color: Colors.red,
+                      color: AppColors.error,
                       shape: BoxShape.circle,
                     ),
                   ),
@@ -52,16 +64,12 @@ class AnnouncementTile extends StatelessWidget {
               message,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: Theme.of(
-                context,
-              ).textTheme.bodySmall?.copyWith(color: Colors.black54),
+              style: textTheme.bodySmall,
             ),
             const SizedBox(height: 4),
             Text(
               date,
-              style: Theme.of(
-                context,
-              ).textTheme.bodySmall?.copyWith(color: Colors.black45),
+              style: textTheme.labelSmall,
             ),
           ],
         ),

@@ -1,11 +1,5 @@
-// lib/screens/assignment_detail_screen.dart
 import 'dart:io';
-
-import 'package:newapp/Student/models/student_model.dart';
 import 'package:flutter/material.dart';
-import '../models/assignment_model.dart';
-import '../utils/theme.dart';
-import 'submit_assignment_screen.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:open_file/open_file.dart';
@@ -13,19 +7,22 @@ import 'package:path_provider/path_provider.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_pdfview/flutter_pdfview.dart';
 import 'package:file_picker/file_picker.dart';
+import '../models/assignment_model.dart';
+import '../utils/theme.dart';
+import 'submit_assignment_screen.dart';
 
 class AssignmentDetailScreen extends StatefulWidget {
   final Assignment assignment;
   final Function(String) onSubmission;
   final Function(String) onStatusUpdate;
-  final String StudentRfid;
+  final String studentRfid;
 
   const AssignmentDetailScreen({
     super.key,
-    required this.StudentRfid,
+    required this.studentRfid,
     required this.assignment,
     required this.onSubmission,
-    required this.onStatusUpdate, required String studentRfid,
+    required this.onStatusUpdate,
   });
 
   @override
@@ -39,18 +36,23 @@ class _AssignmentDetailScreenState extends State<AssignmentDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final textTheme = theme.textTheme;
     final assignment = widget.assignment;
     final subjectColor = _getSubjectColor(assignment.subject);
     final isSubmitted = assignment.status == 'submitted' || assignment.status == 'graded';
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(assignment.title),
+        title: Text(
+          assignment.title,
+          style: textTheme.titleLarge?.copyWith(color: AppColors.textPrimary),
+        ),
         backgroundColor: subjectColor,
-        foregroundColor: Colors.white,
+        foregroundColor: AppColors.textPrimary,
         elevation: 0,
         shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(bottom: Radius.circular(20)),
+          borderRadius: BorderRadius.vertical(bottom: Radius.circular(AppTheme.defaultBorderRadius)),
         ),
       ),
       body: Container(
@@ -58,11 +60,14 @@ class _AssignmentDetailScreenState extends State<AssignmentDetailScreen> {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [subjectColor.withOpacity(0.05), AppColors.background],
+            colors: [
+              subjectColor.withOpacity(0.05),
+              AppColors.primaryBackground,
+            ],
           ),
         ),
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
+          padding: AppTheme.defaultPadding,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -70,180 +75,62 @@ class _AssignmentDetailScreenState extends State<AssignmentDetailScreen> {
               Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                    padding: AppTheme.defaultPadding,
                     decoration: BoxDecoration(
                       color: subjectColor,
-                      borderRadius: BorderRadius.circular(20),
+                      borderRadius: BorderRadius.circular(AppTheme.defaultBorderRadius),
                     ),
                     child: Text(
                       assignment.subject,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                      ),
+                      style: textTheme.labelLarge?.copyWith(color: AppColors.textPrimary),
                     ),
                   ),
                   const Spacer(),
-                  const Icon(Icons.calendar_today, size: 16, color: AppColors.textSecondary),
-                  const SizedBox(width: 4),
+                  Icon(Icons.calendar_today, size: 16, color: AppColors.textSecondary),
+                  const SizedBox(width: AppTheme.defaultSpacing / 2),
                   Text(
                     'Due ${DateFormat('MMM d, y').format(assignment.dueDate)}',
-                    style: TextStyle(
+                    style: textTheme.bodyMedium?.copyWith(
                       color: assignment.isOverdue ? AppColors.error : AppColors.textSecondary,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: AppTheme.defaultSpacing),
 
               // Description
               Text(
                 assignment.description,
-                style: Theme.of(context).textTheme.bodyLarge,
+                style: textTheme.bodyLarge,
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: AppTheme.defaultSpacing * 1.5),
 
               // Attachments
               if (assignment.attachments.isNotEmpty) ...[
                 Text(
                   'Attachments:',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                  style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: AppTheme.defaultSpacing / 2),
                 ...assignment.attachments.map(
                       (file) => Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
-                    child: InkWell(
-                      onTap: () => _openDocument(context, file.filePath),
-                      child: Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: AppColors.lightGrey,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(_getFileIcon(file.fileName), color: _getFileColor(file.fileName)),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                file.fileName,
-                                style: const TextStyle(decoration: TextDecoration.underline),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
+                    padding: const EdgeInsets.only(bottom: AppTheme.defaultSpacing / 2),
+                    child: _buildAttachmentItem(file),
                   ),
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: AppTheme.defaultSpacing * 1.5),
               ],
 
               // Submission section
-              if (!isSubmitted) ...[
-                _buildFileSelector(),
-                const SizedBox(height: 16),
-                _buildSubmitButton(subjectColor),
-              ] else ...[
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: AppColors.primary.withOpacity(0.3)),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Icon(
-                            assignment.status == 'graded' ? Icons.grade : Icons.check_circle,
-                            color: assignment.status == 'graded' ? AppColors.accentAmber : AppColors.success,
-                            size: 24,
-                          ),
-                          const SizedBox(width: 12),
-                          Text(
-                            assignment.status == 'graded'
-                                ? 'GRADED (${assignment.grade}%)'
-                                : 'SUBMITTED',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: assignment.status == 'graded'
-                                  ? AppColors.accentAmber
-                                  : AppColors.success,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      Text(
-                        'Submitted on ${DateFormat('MMM d, y - h:mm a').format(assignment.submissionDate!)}',
-                        style: Theme.of(context).textTheme.bodyMedium,
-                      ),
-                      const SizedBox(height: 8),
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Row(
-                          children: [
-                            const Icon(Icons.insert_drive_file),
-                            const SizedBox(width: 8),
-                            Text(
-                              assignment.submissionFile!,
-                              style: const TextStyle(decoration: TextDecoration.underline),
-                            ),
-                          ],
-                        ),
-                      ),
-                      if (assignment.teacherFeedback != null) ...[
-                        const SizedBox(height: 12),
-                        Text(
-                          'Teacher Feedback:',
-                          style: Theme.of(context)
-                              .textTheme
-                              .titleMedium
-                              ?.copyWith(fontWeight: FontWeight.bold),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(assignment.teacherFeedback!),
-                      ],
-                    ],
-                  ),
-                ),
-              ],
-
-              const SizedBox(height: 24),
+              if (!isSubmitted)
+                _buildSubmissionForm(subjectColor)
+              else
+                _buildSubmissionStatus(assignment),
 
               // Warning if overdue
               if (assignment.isOverdue)
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: AppColors.error.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: AppColors.error),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.warning, color: AppColors.error),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          'This assignment is overdue. Late submissions may be penalized.',
-                          style: TextStyle(color: AppColors.error),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                _buildOverdueWarning(),
             ],
           ),
         ),
@@ -251,6 +138,218 @@ class _AssignmentDetailScreenState extends State<AssignmentDetailScreen> {
     );
   }
 
+  Widget _buildAttachmentItem(Attachment file) {
+    return InkWell(
+      onTap: () => _openDocument(context, file.filePath),
+      child: Container(
+        padding: AppTheme.defaultPadding,
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(AppTheme.defaultBorderRadius),
+        ),
+        child: Row(
+          children: [
+            Icon(_getFileIcon(file.fileName), color: _getFileColor(file.fileName)),
+            const SizedBox(width: AppTheme.defaultSpacing),
+            Expanded(
+              child: Text(
+                file.fileName,
+                style: const TextStyle(decoration: TextDecoration.underline),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSubmissionForm(Color subjectColor) {
+    return Column(
+      children: [
+        _buildFileSelector(),
+        const SizedBox(height: AppTheme.defaultSpacing),
+        _buildSubmitButton(subjectColor),
+      ],
+    );
+  }
+
+  Widget _buildFileSelector() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Select file to submit:',
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: AppTheme.defaultSpacing / 2),
+        InkWell(
+          onTap: _pickFile,
+          child: Container(
+            padding: AppTheme.defaultPadding,
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(AppTheme.defaultBorderRadius),
+              border: Border.all(color: AppColors.cardBorder),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.attach_file, color: AppColors.textSecondary),
+                const SizedBox(width: AppTheme.defaultSpacing),
+                Expanded(
+                  child: Text(
+                    _selectedFile?.path.split('/').last ?? 'No file selected',
+                    style:  Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: _selectedFile != null
+                          ? AppColors.textPrimary
+                          : AppColors.textSecondary,
+                    ),
+                  ),
+                ),
+                if (_selectedFile != null)
+                  IconButton(
+                    icon: const Icon(Icons.close, color: AppColors.textSecondary),
+                    onPressed: () => setState(() => _selectedFile = null),
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSubmitButton(Color subjectColor) {
+    return Center(
+      child: ElevatedButton.icon(
+        onPressed: _isSubmitting || _selectedFile == null ? null : _submitAssignment,
+        icon: _isSubmitting
+            ? SizedBox(
+          width: 20,
+          height: 20,
+          child: CircularProgressIndicator(
+            strokeWidth: 2,
+            color: AppColors.textPrimary,
+          ),
+        )
+            : const Icon(Icons.upload),
+        label: Text(_isSubmitting ? 'SUBMITTING...' : 'SUBMIT ASSIGNMENT'),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: subjectColor,
+          foregroundColor: AppColors.textPrimary,
+          padding: AppTheme.buttonPadding,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppTheme.defaultBorderRadius),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSubmissionStatus(Assignment assignment) {
+    final isGraded = assignment.status == 'graded';
+
+    return Container(
+      padding: AppTheme.defaultPadding,
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppTheme.defaultBorderRadius),
+        border: Border.all(color: AppColors.cardBorder),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                isGraded ? Icons.grade : Icons.check_circle,
+                color: isGraded ? AppColors.warning : AppColors.success,
+                size: 24,
+              ),
+              const SizedBox(width: AppTheme.defaultSpacing),
+              Text(
+                isGraded ? 'GRADED (${assignment.grade}%)' : 'SUBMITTED',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  color: isGraded ? AppColors.warning : AppColors.success,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppTheme.defaultSpacing),
+          Text(
+            'Submitted on ${DateFormat('MMM d, y - h:mm a').format(assignment.submissionDate!)}',
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+          const SizedBox(height: AppTheme.defaultSpacing / 2),
+          _buildSubmittedFileItem(assignment.submissionFile!),
+          if (assignment.teacherFeedback != null) ...[
+            const SizedBox(height: AppTheme.defaultSpacing),
+            Text(
+              'Teacher Feedback:',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: AppTheme.defaultSpacing / 2),
+            Text(assignment.teacherFeedback!),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSubmittedFileItem(String filePath) {
+    return InkWell(
+      onTap: () => _openDocument(context, filePath),
+      child: Container(
+        padding: AppTheme.defaultPadding,
+        decoration: BoxDecoration(
+          color: AppColors.cardBackground,
+          borderRadius: BorderRadius.circular(AppTheme.defaultBorderRadius),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              _getFileIcon(filePath),
+              color: _getFileColor(filePath),
+            ),
+            const SizedBox(width: AppTheme.defaultSpacing),
+            Text(
+              filePath.split('/').last,
+              style: const TextStyle(decoration: TextDecoration.underline),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildOverdueWarning() {
+    return Container(
+      padding: AppTheme.defaultPadding,
+      decoration: BoxDecoration(
+        color: AppColors.error.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(AppTheme.defaultBorderRadius),
+        border: Border.all(color: AppColors.error),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.warning, color: AppColors.error),
+          const SizedBox(width: AppTheme.defaultSpacing),
+          Expanded(
+            child: Text(
+              'This assignment is overdue. Late submissions may be penalized.',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: AppColors.error,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
   Future<void> _openDocument(BuildContext context, String url) async {
     try {
       if (url.endsWith('.pdf')) {
@@ -343,166 +442,6 @@ class _AssignmentDetailScreenState extends State<AssignmentDetailScreen> {
     return Colors.grey;
   }
 
-  Color _getSubjectColor(String subject) {
-    final colors = {
-      'Mathematics': AppColors.secondary,
-      'Physics': AppColors.accentBlue,
-      'Chemistry': AppColors.accentPink,
-      'Biology': AppColors.success,
-      'English': AppColors.primaryLight,
-      'History': AppColors.accentAmber,
-    };
-    return colors[subject] ?? AppColors.primary;
-  }
-
-
-  Widget _buildFileSelector() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Select file to submit:',
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        const SizedBox(height: 8),
-        InkWell(
-          onTap: _pickFile,
-          child: Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: AppColors.lightGrey,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppColors.primary.withOpacity(0.3)),
-            ),
-            child: Row(
-              children: [
-                const Icon(Icons.attach_file),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    _selectedFile?.path.split('/').last ?? 'No file selected',
-                    style: TextStyle(
-                      color: _selectedFile != null
-                          ? AppColors.textPrimary
-                          : AppColors.textSecondary,
-                    ),
-                  ),
-                ),
-                if (_selectedFile != null)
-                  IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: () => setState(() => _selectedFile = null),
-                  ),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildSubmitButton(Color subjectColor) {
-    return Center(
-      child: ElevatedButton.icon(
-        onPressed: _isSubmitting || _selectedFile == null ? null : _submitAssignment,
-        icon: _isSubmitting
-            ? const CircularProgressIndicator(color: Colors.white)
-            : const Icon(Icons.upload),
-        label: Text(_isSubmitting ? 'SUBMITTING...' : 'SUBMIT ASSIGNMENT'),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: subjectColor,
-          foregroundColor: Colors.white,
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSubmissionStatus() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.primary.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.primary.withOpacity(0.3)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(
-                widget.assignment.status == 'graded'
-                    ? Icons.grade
-                    : Icons.check_circle,
-                color: widget.assignment.status == 'graded'
-                    ? AppColors.accentAmber
-                    : AppColors.success,
-                size: 24,
-              ),
-              const SizedBox(width: 12),
-              Text(
-                widget.assignment.status == 'graded'
-                    ? 'GRADED (${widget.assignment.grade}%)'
-                    : 'SUBMITTED',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: widget.assignment.status == 'graded'
-                      ? AppColors.accentAmber
-                      : AppColors.success,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Text(
-            'Submitted on ${DateFormat('MMM d, y - h:mm a').format(widget.assignment.submissionDate!)}',
-            style: Theme.of(context).textTheme.bodyMedium,
-          ),
-          const SizedBox(height: 8),
-          InkWell(
-            onTap: () => _openDocument(context, widget.assignment.submissionFile!),
-            child: Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    _getFileIcon(widget.assignment.submissionFile!),
-                    color: _getFileColor(widget.assignment.submissionFile!),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    widget.assignment.submissionFile!.split('/').last,
-                    style: const TextStyle(decoration: TextDecoration.underline),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          if (widget.assignment.teacherFeedback != null) ...[
-            const SizedBox(height: 12),
-            Text(
-              'Teacher Feedback:',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(widget.assignment.teacherFeedback!),
-          ],
-        ],
-      ),
-    );
-  }
-
   Future<void> _pickFile() async {
     try {
       FilePickerResult? result = await FilePicker.platform.pickFiles(
@@ -530,7 +469,7 @@ class _AssignmentDetailScreenState extends State<AssignmentDetailScreen> {
     try {
       // Create multipart request
       var formData = FormData.fromMap({
-        'student_rfid': widget.StudentRfid, // Replace with actual RFID
+        'student_rfid': widget.studentRfid, // Replace with actual RFID
         'assignment_id': widget.assignment.id,
         'file_name': _selectedFile!.path.split('/').last,
         'file': await MultipartFile.fromFile(
@@ -561,6 +500,18 @@ class _AssignmentDetailScreenState extends State<AssignmentDetailScreen> {
     } finally {
       setState(() => _isSubmitting = false);
     }
+  }
+
+  Color _getSubjectColor(String subject) {
+    final colors = {
+      'Mathematics': AppColors.secondary,
+      // 'Physics': AppColors.accentBlue,
+      // 'Chemistry': AppColors.accentPink,
+      'Biology': AppColors.success,
+      'English': AppColors.primaryLight,
+      // 'History': AppColors.accentAmber,
+    };
+    return colors[subject] ?? AppColors.primary;
   }
 
 }

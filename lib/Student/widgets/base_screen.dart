@@ -1,6 +1,5 @@
-// lib/widgets/base_screen.dart
 import 'package:flutter/material.dart';
-import '../utils/app_design_system.dart';
+import '../utils/theme.dart';
 
 class BaseScreen extends StatelessWidget {
   final String title;
@@ -9,6 +8,7 @@ class BaseScreen extends StatelessWidget {
   final bool showBackButton;
   final bool extendBodyBehindAppBar;
   final Widget? floatingActionButton;
+  final bool useSafeArea;
 
   const BaseScreen({
     super.key,
@@ -18,16 +18,42 @@ class BaseScreen extends StatelessWidget {
     this.showBackButton = true,
     this.extendBodyBehindAppBar = false,
     this.floatingActionButton,
+    this.useSafeArea = true,
   });
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppDesignSystem.appBar(context, title, actions: actions),
+      backgroundColor: AppColors.primaryBackground,
+      appBar: AppBar(
+        title: Text(
+          title,
+          style: Theme.of(context).textTheme.titleLarge,
+        ),
+        leading: showBackButton
+            ? IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.of(context).pop(),
+        )
+            : null,
+        actions: actions,
+        backgroundColor: AppColors.primaryBackground,
+        elevation: 0,
+        iconTheme: const IconThemeData(color: AppColors.primary),
+      ),
       extendBodyBehindAppBar: extendBodyBehindAppBar,
       body: Container(
-        decoration: AppDesignSystem.gradientBackground(context),
-        child: SafeArea(child: body),
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              AppColors.primaryBackground,
+              AppColors.secondaryBackground,
+            ],
+          ),
+        ),
+        child: useSafeArea ? SafeArea(child: body) : body,
       ),
       floatingActionButton: floatingActionButton,
     );

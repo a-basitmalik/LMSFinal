@@ -1,4 +1,3 @@
-// lib/screens/home_screen_content.dart
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -51,7 +50,13 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
         hasError = true;
       });
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error fetching student data: $e')),
+        SnackBar(
+          content: Text(
+            'Error fetching student data: $e',
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+          backgroundColor: AppColors.error,
+        ),
       );
     }
   }
@@ -64,7 +69,6 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
     );
 
     if (response.statusCode == 200) {
-      print("Profile image URL: ${studentData?['profile_image']}");
       final data = jsonDecode(response.body);
       return data['data'];
     } else {
@@ -75,7 +79,9 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
   @override
   Widget build(BuildContext context) {
     if (isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(
+        child: CircularProgressIndicator(),
+      );
     }
 
     if (hasError || studentData == null) {
@@ -83,13 +89,27 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.error_outline, size: 48, color: Colors.red),
-            const SizedBox(height: 16),
-            const Text('Failed to load student data'),
-            const SizedBox(height: 16),
+            Icon(
+              Icons.error_outline,
+              size: 48,
+              color: AppColors.error,
+            ),
+            const SizedBox(height: AppTheme.defaultSpacing),
+            Text(
+              'Failed to load student data',
+              style: Theme.of(context).textTheme.bodyLarge,
+            ),
+            const SizedBox(height: AppTheme.defaultSpacing),
             ElevatedButton(
               onPressed: _fetchStudentData,
-              child: const Text('Retry'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.black,
+              ),
+              child: Text(
+                'Retry',
+                style: Theme.of(context).textTheme.labelLarge,
+              ),
             ),
           ],
         ),
@@ -99,108 +119,113 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
     return SafeArea(
       child: RefreshIndicator(
         onRefresh: _fetchStudentData,
+        backgroundColor: AppColors.primary.withOpacity(0.2),
+        color: AppColors.primary,
         child: CustomScrollView(
           slivers: [
             SliverToBoxAdapter(child: _buildHeader(context)),
             SliverPadding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              padding: AppTheme.defaultPadding,
               sliver: SliverToBoxAdapter(child: _buildStatsRow(context)),
             ),
             SliverPadding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              padding: AppTheme.defaultPadding,
               sliver: SliverToBoxAdapter(child: _buildTimetableSection(context)),
             ),
             SliverPadding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              padding: AppTheme.defaultPadding,
               sliver: SliverToBoxAdapter(
                 child: _buildAnnouncementsSection(context),
               ),
             ),
             SliverPadding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              padding: AppTheme.defaultPadding,
               sliver: SliverToBoxAdapter(
                 child: _buildAssignmentsSection(context),
               ),
             ),
-            SliverGrid(
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                crossAxisSpacing: 16,
-                mainAxisSpacing: 16,
-                childAspectRatio: 1,
+            SliverPadding(
+              padding: AppTheme.defaultPadding,
+              sliver: SliverGrid(
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  crossAxisSpacing: AppTheme.defaultSpacing,
+                  mainAxisSpacing: AppTheme.defaultSpacing,
+                  childAspectRatio: 1,
+                ),
+                delegate: SliverChildListDelegate([
+                  _buildQuickActionButton(
+                    context,
+                    icon: Icons.calendar_today,
+                    label: 'Attendance',
+                    color: AppColors.primary,
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => AttendanceScreen(rfid: widget.rfid),
+                      ),
+                    ),
+                  ),
+                  _buildQuickActionButton(
+                    context,
+                    icon: Icons.book,
+                    label: 'Syllabus',
+                    color: AppColors.secondary,
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => SyllabusScreen()),
+                    ),
+                  ),
+                  _buildQuickActionButton(
+                    context,
+                    icon: Icons.assignment,
+                    label: 'Assignments',
+                    color: AppColors.info,
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => AssignmentsScreen(studentRfid: widget.rfid),
+                      ),
+                    ),
+                  ),
+                  _buildQuickActionButton(
+                    context,
+                    icon: Icons.chat,
+                    label: 'Chat Rooms',
+                    color: AppColors.primaryLight,
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => ChatRoomsScreen(rfid: widget.rfid),
+                      ),
+                    ),
+                  ),
+                  _buildQuickActionButton(
+                    context,
+                    icon: Icons.help_outline,
+                    label: 'Queries',
+                    color: AppColors.warning,
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => QueriesScreen(studentRfid: widget.rfid),
+                      ),
+                    ),
+                  ),
+                  _buildQuickActionButton(
+                    context,
+                    icon: Icons.assessment,
+                    label: 'Assessments',
+                    color: AppColors.success,
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => AssessmentsScreen(rfid: widget.rfid),
+                      ),
+                    ),
+                  ),
+                ]),
               ),
-              delegate: SliverChildListDelegate([
-                _buildQuickActionButton(
-                  context,
-                  icon: Icons.calendar_today,
-                  label: 'Attendance',
-                  color: AppColors.primary,
-                  onTap: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => AttendanceScreen(rfid: widget.rfid),
-                    ),
-                  ),
-                ),
-                _buildQuickActionButton(
-                  context,
-                  icon: Icons.book,
-                  label: 'Syllabus',
-                  color: AppColors.secondary,
-                  onTap: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => SyllabusScreen()),
-                  ),
-                ),
-                _buildQuickActionButton(
-                  context,
-                  icon: Icons.assignment,
-                  label: 'Assignments',
-                  color: AppColors.accentPink,
-                  onTap: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => AssignmentsScreen(studentRfid: widget.rfid),
-                    ),
-                  ),
-                ),
-                _buildQuickActionButton(
-                  context,
-                  icon: Icons.chat,
-                  label: 'Chat Rooms',
-                  color: AppColors.accentBlue,
-                  onTap: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => ChatRoomsScreen(rfid: widget.rfid),
-                    ),
-                  ),
-                ),
-                _buildQuickActionButton(
-                  context,
-                  icon: Icons.help_outline,
-                  label: 'Queries',
-                  color: AppColors.accentAmber,
-                  onTap: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => QueriesScreen(studentRfid: widget.rfid),
-                    ),
-                  ),
-                ),
-                _buildQuickActionButton(
-                  context,
-                  icon: Icons.assessment,
-                  label: 'Assessments',
-                  color: AppColors.success,
-                  onTap: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => AssessmentsScreen(rfid: widget.rfid),
-                    ),
-                  ),
-                ),
-              ]),
             ),
           ],
         ),
@@ -210,24 +235,13 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
 
   Widget _buildHeader(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: AppTheme.defaultPadding,
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [AppColors.primary, AppColors.primaryLight],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        gradient: AppColors.accentGradient(AppColors.primary),
         borderRadius: const BorderRadius.only(
-          bottomLeft: Radius.circular(24),
-          bottomRight: Radius.circular(24),
+          bottomLeft: Radius.circular(AppTheme.defaultBorderRadius * 2),
+          bottomRight: Radius.circular(AppTheme.defaultBorderRadius * 2),
         ),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.primary.withOpacity(0.3),
-            blurRadius: 10,
-            spreadRadius: 2,
-          ),
-        ],
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -237,33 +251,30 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
             children: [
               Text(
                 'Good ${_getGreeting()}',
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  color: Colors.white.withOpacity(0.9),
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: AppColors.textPrimary.withOpacity(0.9),
                 ),
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: AppTheme.defaultSpacing / 2),
               Text(
                 studentData?['name'] ?? 'Student',
-                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: Theme.of(context).textTheme.headlineMedium,
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: AppTheme.defaultSpacing),
               Container(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 6,
+                  horizontal: AppTheme.defaultSpacing,
+                  vertical: AppTheme.defaultSpacing / 2,
                 ),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
+                  color: AppColors.glassEffectLight,
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
                   'Grade ${studentData?['grade']} - Section ${studentData?['section']}',
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodySmall?.copyWith(color: Colors.white),
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: AppColors.textPrimary,
+                  ),
                 ),
               ),
             ],
@@ -271,22 +282,17 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
           Container(
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              border: Border.all(color: Colors.white, width: 2),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  blurRadius: 8,
-                  spreadRadius: 2,
-                ),
-              ],
+              border: Border.all(
+                color: AppColors.textPrimary,
+                width: 2,
+              ),
             ),
-
             child: CircleAvatar(
               radius: 32,
-
               backgroundImage: studentData?['profile_image'] != null
                   ? NetworkImage(studentData!['profile_image'])
-                  : const AssetImage('assets/default_profile.png') as ImageProvider,
+                  : const AssetImage('assets/default_profile.png')
+              as ImageProvider,
             ),
           ),
         ],
@@ -313,7 +319,7 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
             color: AppColors.primary,
           ),
         ),
-        const SizedBox(width: 16),
+        const SizedBox(width: AppTheme.defaultSpacing),
         Expanded(
           child: _buildStatCard(
             context,
@@ -335,41 +341,38 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
         required Color color,
       }) {
     return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppTheme.defaultBorderRadius),
+      ),
       child: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [color.withOpacity(0.1), Colors.white],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          borderRadius: BorderRadius.circular(16),
-        ),
-        padding: const EdgeInsets.all(16),
+        decoration: AppColors.glassDecoration(borderColor: color),
+        padding: AppTheme.defaultPadding,
         child: Column(
           children: [
             Container(
-              padding: const EdgeInsets.all(12),
+              padding: AppTheme.defaultPadding,
               decoration: BoxDecoration(
                 color: color.withOpacity(0.2),
                 shape: BoxShape.circle,
               ),
-              child: Icon(icon, color: color, size: 24),
+              child: Icon(
+                icon,
+                color: color,
+                size: AppTheme.defaultIconSize,
+              ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppTheme.defaultSpacing),
             Text(
               value,
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
                 color: color,
+                fontWeight: FontWeight.bold,
               ),
             ),
             Text(
               label,
-              style: Theme.of(
-                context,
-              ).textTheme.bodyMedium?.copyWith(color: AppColors.textSecondary),
+              style: Theme.of(context).textTheme.bodyMedium,
             ),
           ],
         ),
@@ -384,16 +387,13 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.only(top: 16, bottom: 8),
+          padding: const EdgeInsets.only(bottom: AppTheme.defaultSpacing),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
                 "Today's Classes",
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  color: AppColors.primaryDark,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: Theme.of(context).textTheme.sectionHeader,
               ),
               TextButton(
                 onPressed: () {
@@ -406,23 +406,28 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
                 },
                 child: Text(
                   'View All',
-                  style: TextStyle(color: AppColors.primary),
+                  style: Theme.of(context).textTheme.accentText(AppColors.primary),
                 ),
               ),
             ],
           ),
         ),
         Card(
-          elevation: 2,
+          elevation: 0,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(AppTheme.defaultBorderRadius),
           ),
           child: Padding(
-            padding: const EdgeInsets.all(16),
+            padding: AppTheme.defaultPadding,
             child: Column(
               children: [
                 for (var i = 0; i < timetable.length; i++) ...[
-                  if (i > 0) const Divider(height: 16, thickness: 1),
+                  if (i > 0)
+                    Divider(
+                      height: AppTheme.defaultSpacing,
+                      thickness: 1,
+                      color: AppColors.cardBorder,
+                    ),
                   _buildClassItem(
                     context,
                     time: timetable[i]['time'],
@@ -432,9 +437,12 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
                   ),
                 ],
                 if (timetable.isEmpty)
-                  const Padding(
-                    padding: EdgeInsets.all(16),
-                    child: Text('No classes today'),
+                  Padding(
+                    padding: AppTheme.defaultPadding,
+                    child: Text(
+                      'No classes today',
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
                   ),
               ],
             ),
@@ -448,10 +456,10 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
     final colors = {
       'Mathematics': AppColors.primary,
       'Physics': AppColors.secondary,
-      'Chemistry': AppColors.accentBlue,
+      'Chemistry': AppColors.info,
       'Biology': AppColors.success,
-      'English': AppColors.accentPink,
-      'History': AppColors.accentAmber,
+      'English': AppColors.primaryLight,
+      'History': AppColors.warning,
     };
     return colors[subject] ?? AppColors.primary;
   }
@@ -464,7 +472,7 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
         required Color color,
       }) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.symmetric(vertical: AppTheme.defaultSpacing / 2),
       child: Row(
         children: [
           Container(
@@ -475,33 +483,35 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
               borderRadius: BorderRadius.circular(4),
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: AppTheme.defaultSpacing),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   time,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: AppColors.textSecondary,
-                  ),
+                  style: Theme.of(context).textTheme.bodyMedium,
                 ),
                 Text(
                   subject,
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold),
+                  style: Theme.of(context).textTheme.cardTitle,
                 ),
               ],
             ),
           ),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppTheme.defaultSpacing / 2,
+              vertical: AppTheme.defaultSpacing / 4,
+            ),
             decoration: BoxDecoration(
               color: color.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(AppTheme.defaultBorderRadius),
             ),
-            child: Text(room, style: TextStyle(color: color)),
+            child: Text(
+              room,
+              style: Theme.of(context).textTheme.accentText(color),
+            ),
           ),
         ],
       ),
@@ -519,10 +529,7 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
           children: [
             Text(
               "Latest Announcements",
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                color: AppColors.primaryDark,
-                fontWeight: FontWeight.bold,
-              ),
+              style: Theme.of(context).textTheme.sectionHeader,
             ),
             TextButton(
               onPressed: () {
@@ -535,22 +542,26 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
               },
               child: Text(
                 'View All',
-                style: TextStyle(color: AppColors.primary),
+                style: Theme.of(context).textTheme.accentText(AppColors.primary),
               ),
             ),
           ],
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppTheme.defaultSpacing),
         Card(
+          elevation: 0,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(AppTheme.defaultBorderRadius),
           ),
           child: Padding(
-            padding: const EdgeInsets.all(16),
+            padding: AppTheme.defaultPadding,
             child: Column(
               children: [
-                for (var i = 0; i < (announcements.length > 2 ? 2 : announcements.length); i++) ...[
-                  if (i > 0) const SizedBox(height: 16),
+                for (var i = 0;
+                i < (announcements.length > 2 ? 2 : announcements.length);
+                i++) ...[
+                  if (i > 0)
+                    const SizedBox(height: AppTheme.defaultSpacing),
                   _buildAnnouncementItem(
                     title: announcements[i]['title'],
                     message: announcements[i]['message'],
@@ -559,9 +570,12 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
                   ),
                 ],
                 if (announcements.isEmpty)
-                  const Padding(
-                    padding: EdgeInsets.all(16),
-                    child: Text('No announcements available'),
+                  Padding(
+                    padding: AppTheme.defaultPadding,
+                    child: Text(
+                      'No announcements available',
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
                   ),
               ],
             ),
@@ -575,8 +589,8 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
     final colors = [
       AppColors.secondary.withOpacity(0.2),
       AppColors.primary.withOpacity(0.2),
-      AppColors.accentBlue.withOpacity(0.2),
-      AppColors.accentPink.withOpacity(0.2),
+      AppColors.info.withOpacity(0.2),
+      AppColors.primaryLight.withOpacity(0.2),
     ];
     return colors[index % colors.length];
   }
@@ -591,12 +605,29 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
       leading: Container(
         width: 48,
         height: 48,
-        decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-        child: Icon(Icons.notifications, color: AppColors.primary),
+        decoration: BoxDecoration(
+          color: color,
+          shape: BoxShape.circle,
+        ),
+        child: Icon(
+          Icons.notifications,
+          color: AppColors.primary,
+        ),
       ),
-      title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
-      subtitle: Text(message, maxLines: 1, overflow: TextOverflow.ellipsis),
-      trailing: Text(time, style: TextStyle(color: AppColors.textSecondary)),
+      title: Text(
+        title,
+        style: Theme.of(context).textTheme.cardTitle,
+      ),
+      subtitle: Text(
+        message,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: Theme.of(context).textTheme.bodyMedium,
+      ),
+      trailing: Text(
+        time,
+        style: Theme.of(context).textTheme.bodySmall,
+      ),
       contentPadding: EdgeInsets.zero,
     );
   }
@@ -609,18 +640,24 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
         required VoidCallback onTap,
       }) {
     return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppTheme.defaultBorderRadius),
+      ),
       child: InkWell(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppTheme.defaultBorderRadius),
         onTap: onTap,
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: AppTheme.defaultPadding,
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, size: 32, color: color),
-              const SizedBox(height: 8),
+              Icon(
+                icon,
+                size: AppTheme.defaultIconSize,
+                color: color,
+              ),
+              const SizedBox(height: AppTheme.defaultSpacing),
               Text(
                 label,
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(
@@ -646,30 +683,30 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
           children: [
             Text(
               "Upcoming Assignments",
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                color: AppColors.primaryDark,
-                fontWeight: FontWeight.bold,
-              ),
+              style: Theme.of(context).textTheme.sectionHeader,
             ),
             TextButton(
               onPressed: () {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) =>  AssignmentsScreen(studentRfid: widget.rfid),
+                    builder: (context) =>
+                        AssignmentsScreen(studentRfid: widget.rfid),
                   ),
                 );
               },
               child: Text(
                 'View All',
-                style: TextStyle(color: AppColors.primary),
+                style: Theme.of(context).textTheme.accentText(AppColors.primary),
               ),
             ),
           ],
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppTheme.defaultSpacing),
         if (assignments.isNotEmpty)
-          for (var i = 0; i < (assignments.length > 2 ? 2 : assignments.length); i++)
+          for (var i = 0;
+          i < (assignments.length > 2 ? 2 : assignments.length);
+          i++)
             _buildAssignmentItem(
               context,
               subject: assignments[i]['subject'],
@@ -679,8 +716,9 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
             ),
         if (assignments.isEmpty)
           Card(
+            elevation: 0,
             child: Padding(
-              padding: const EdgeInsets.all(16),
+              padding: AppTheme.defaultPadding,
               child: Text(
                 'No upcoming assignments',
                 style: Theme.of(context).textTheme.bodyMedium,
@@ -699,15 +737,18 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
         required Color color,
       }) {
     return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      elevation: 0,
+      margin: const EdgeInsets.only(bottom: AppTheme.defaultSpacing),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppTheme.defaultBorderRadius),
+      ),
       child: InkWell(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppTheme.defaultBorderRadius),
         onTap: () {
           // Navigate to assignment detail
         },
         child: Padding(
-          padding: const EdgeInsets.all(12),
+          padding: AppTheme.defaultPadding,
           child: Row(
             children: [
               Container(
@@ -720,36 +761,34 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
                 child: Center(
                   child: Text(
                     subject[0],
-                    style: TextStyle(
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
                       color: color,
                       fontWeight: FontWeight.bold,
-                      fontSize: 16,
                     ),
                   ),
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: AppTheme.defaultSpacing),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       title,
-                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                      style: Theme.of(context).textTheme.cardTitle,
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: AppTheme.defaultSpacing / 4),
                     Text(
                       '$subject • Due in $dueIn',
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: AppColors.textSecondary,
-                      ),
+                      style: Theme.of(context).textTheme.bodyMedium,
                     ),
                   ],
                 ),
               ),
-              Icon(Icons.chevron_right, color: AppColors.textSecondary),
+              Icon(
+                Icons.chevron_right,
+                color: AppColors.textSecondary,
+              ),
             ],
           ),
         ),

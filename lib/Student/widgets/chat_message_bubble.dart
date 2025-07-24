@@ -19,6 +19,12 @@ class ChatMessageBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final textTheme = theme.textTheme;
+    final messageColor = isMe ? AppColors.primary : AppColors.textSecondary;
+    final textColor = isMe ? AppColors.textPrimary : AppColors.textPrimary;
+    final receiptColor = isMe ? AppColors.primaryLight : AppColors.textSecondary;
+
     return Column(
       crossAxisAlignment: isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
       children: [
@@ -26,8 +32,9 @@ class ChatMessageBubble extends StatelessWidget {
           margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: isMe ? AppColors.primaryLight : Colors.grey[200],
-            borderRadius: BorderRadius.circular(12),
+            color: isMe ? AppColors.primary : AppColors.surface,
+            borderRadius: BorderRadius.circular(AppTheme.defaultBorderRadius),
+            border: isMe ? null : Border.all(color: AppColors.cardBorder),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -35,14 +42,14 @@ class ChatMessageBubble extends StatelessWidget {
               if (!isMe)
                 Text(
                   message.senderName,
-                  style: TextStyle(
+                  style: textTheme.bodyMedium?.copyWith(
                     fontWeight: FontWeight.bold,
-                    color: isMe ? Colors.white : Colors.black,
+                    color: textColor,
                   ),
                 ),
               Text(
                 message.content,
-                style: TextStyle(color: isMe ? Colors.white : Colors.black),
+                style: textTheme.bodyMedium?.copyWith(color: textColor),
               ),
               const SizedBox(height: 4),
               Row(
@@ -50,9 +57,8 @@ class ChatMessageBubble extends StatelessWidget {
                 children: [
                   Text(
                     DateFormat('h:mm a').format(message.timestamp),
-                    style: TextStyle(
-                      fontSize: 10,
-                      color: isMe ? Colors.white70 : Colors.grey[600],
+                    style: textTheme.labelSmall?.copyWith(
+                      color: textColor.withOpacity(0.7),
                     ),
                   ),
                   if (isMe && showReadReceipt)
@@ -61,7 +67,9 @@ class ChatMessageBubble extends StatelessWidget {
                       child: Icon(
                         message.readers.isNotEmpty ? Icons.done_all : Icons.done,
                         size: 12,
-                        color: message.readers.isNotEmpty ? Colors.blue : Colors.white70,
+                        color: message.readers.isNotEmpty
+                            ? AppColors.secondary
+                            : textColor.withOpacity(0.7),
                       ),
                     ),
                 ],
@@ -69,32 +77,30 @@ class ChatMessageBubble extends StatelessWidget {
             ],
           ),
         ),
-        // Read receipts section
-        // Replace the read receipts section with this:
         if (isMe && showReadReceipt)
           Padding(
             padding: const EdgeInsets.only(right: 12, bottom: 4),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Always show the icon
                 Icon(
                   message.readers.isNotEmpty ? Icons.done_all : Icons.done,
                   size: 14,
-                  color: message.readers.isNotEmpty ? Colors.blue : Colors.grey,
+                  color: message.readers.isNotEmpty
+                      ? AppColors.secondary
+                      : receiptColor,
                 ),
                 const SizedBox(width: 4),
-                // Show either "Read by X" or "Delivered"
                 Text(
                   message.readers.isNotEmpty
                       ? 'Read by ${message.readers.length}'
                       : 'Delivered',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: message.readers.isNotEmpty ? Colors.blue : Colors.grey,
+                  style: textTheme.labelSmall?.copyWith(
+                    color: message.readers.isNotEmpty
+                        ? AppColors.secondary
+                        : receiptColor,
                   ),
                 ),
-                // Only show info button if there are readers
                 if (message.readers.isNotEmpty) ...[
                   const SizedBox(width: 4),
                   GestureDetector(
@@ -102,7 +108,7 @@ class ChatMessageBubble extends StatelessWidget {
                     child: Icon(
                       Icons.info_outline,
                       size: 16,
-                      color: Colors.blue,
+                      color: AppColors.secondary,
                     ),
                   ),
                 ],

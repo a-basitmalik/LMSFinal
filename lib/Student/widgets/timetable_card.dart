@@ -1,15 +1,32 @@
 import 'package:flutter/material.dart';
+import '../utils/theme.dart';
 
 class TimeTableCard extends StatelessWidget {
   final List<Map<String, String>> subjects;
+  final String title;
+  final String date;
 
-  const TimeTableCard({super.key, required this.subjects});
+  const TimeTableCard({
+    super.key,
+    required this.subjects,
+    this.title = "Today's Timetable",
+    required this.date,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final textTheme = theme.textTheme;
+
     return Card(
+      margin: AppTheme.defaultPadding,
+      color: AppColors.cardBackground,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppTheme.defaultBorderRadius),
+        side: const BorderSide(color: AppColors.cardBorder, width: 1.5),
+      ),
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: AppTheme.defaultPadding,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -17,41 +34,41 @@ class TimeTableCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  "Today's Timetable",
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold),
+                  title,
+                  style: textTheme.cardTitle?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 Text(
-                  'Mon, 12 Jun',
-                  style: Theme.of(context).textTheme.bodyMedium,
+                  date,
+                  style: textTheme.cardSubtitle,
                 ),
               ],
             ),
             const SizedBox(height: 16),
             ...subjects.map(
-              (subject) => Padding(
-                padding: const EdgeInsets.symmetric(vertical: 4.0),
+                  (subject) => Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8.0),
                 child: Row(
                   children: [
                     SizedBox(
                       width: 80,
                       child: Text(
                         subject['time']!,
-                        style: Theme.of(context).textTheme.bodyMedium,
+                        style: textTheme.bodyMedium,
                       ),
                     ),
                     Expanded(
                       child: Text(
                         subject['subject']!,
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        style: textTheme.bodyMedium?.copyWith(
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                     ),
                     Text(
                       subject['room']!,
-                      style: Theme.of(context).textTheme.bodyMedium,
+                      style: textTheme.bodyMedium,
                     ),
                   ],
                 ),

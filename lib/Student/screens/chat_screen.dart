@@ -1,5 +1,4 @@
 import 'dart:async';
-
 import 'package:flutter/material.dart';
 import '../models/chat_message_model.dart';
 import '../services/api_service.dart';
@@ -9,7 +8,7 @@ import '../utils/theme.dart';
 class ChatScreen extends StatefulWidget {
   final int subjectId;
   final String roomName;
-  final String currentUserRfid; // Add current user RFID
+  final String currentUserRfid;
 
   const ChatScreen({
     super.key,
@@ -72,7 +71,7 @@ class _ChatScreenState extends State<ChatScreen> {
         _messages.addAll(messages);
       });
       _scrollToBottom();
-      _markMessagesAsRead(); // Mark messages as read when loaded
+      _markMessagesAsRead();
     } catch (e) {
       setState(() => _errorMessage = 'Failed to load messages');
     }
@@ -88,15 +87,14 @@ class _ChatScreenState extends State<ChatScreen> {
 
     try {
       final newMessage = ChatMessage(
-        id: DateTime.now().millisecondsSinceEpoch, // convert int to String
-        roomId: _roomId ??0,                          // convert int to String
-        senderId: widget.currentUserRfid,                    // already String
+        id: DateTime.now().millisecondsSinceEpoch,
+        roomId: _roomId ?? 0,
+        senderId: widget.currentUserRfid,
         senderName: 'You',
         content: text,
         timestamp: DateTime.now(),
         isRead: true,
       );
-
 
       setState(() {
         _messages.add(newMessage);
@@ -113,7 +111,13 @@ class _ChatScreenState extends State<ChatScreen> {
       await _loadMessages();
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to send message: ${e.toString()}')),
+        SnackBar(
+          content: Text(
+            'Failed to send message: ${e.toString()}',
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+          backgroundColor: AppColors.error,
+        ),
       );
     }
   }
@@ -128,10 +132,8 @@ class _ChatScreenState extends State<ChatScreen> {
     if (_roomId == null) return;
 
     try {
-      // Get unread messages from others
       final unreadMessages = _messages.where((m) =>
-      m.senderId != widget.currentUserRfid && !m.isRead
-      ).toList();
+      m.senderId != widget.currentUserRfid && !m.isRead).toList();
 
       if (unreadMessages.isNotEmpty) {
         await _apiService.markMessagesAsRead(
@@ -139,7 +141,6 @@ class _ChatScreenState extends State<ChatScreen> {
           readerRfid: widget.currentUserRfid,
         );
 
-        // Update local state
         setState(() {
           for (final msg in unreadMessages) {
             msg.isRead = true;
@@ -167,30 +168,26 @@ class _ChatScreenState extends State<ChatScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.roomName),
-        backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
-        elevation: 0,
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(bottom: Radius.circular(20)),
+        title: Text(
+          widget.roomName,
+          style: Theme.of(context).textTheme.titleLarge,
         ),
+        backgroundColor: AppColors.primaryBackground,
+        elevation: 0,
+        iconTheme: IconThemeData(color: AppColors.primary),
         actions: [
           IconButton(
-            icon: const Icon(Icons.more_vert),
+            icon: Icon(
+              Icons.more_vert,
+              color: AppColors.primary,
+            ),
             onPressed: () => _showChatOptions(context),
           ),
         ],
       ),
       body: Container(
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              AppColors.primary.withOpacity(0.05),
-              AppColors.background
-            ],
-          ),
+          gradient: AppColors.accentGradient(AppColors.primary),
         ),
         child: Column(
           children: [
@@ -205,7 +202,9 @@ class _ChatScreenState extends State<ChatScreen> {
                 child: Center(
                   child: Text(
                     _errorMessage!,
-                    style: const TextStyle(color: Colors.red),
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: AppColors.error,
+                    ),
                   ),
                 ),
               )
@@ -214,17 +213,20 @@ class _ChatScreenState extends State<ChatScreen> {
                 child: RefreshIndicator(
                   onRefresh: _refreshMessages,
                   backgroundColor: AppColors.primary.withOpacity(0.2),
-                  color: Colors.white,
+                  color: AppColors.primary,
                   child: ListView.builder(
                     controller: _scrollController,
-                    padding: const EdgeInsets.only(top: 8, bottom: 8),
+                    padding: const EdgeInsets.only(
+                        top: AppTheme.defaultSpacing / 2,
+                        bottom: AppTheme.defaultSpacing / 2),
                     itemCount: _messages.length,
                     itemBuilder: (context, index) {
                       final message = _messages[index];
                       return ChatMessageBubble(
                         message: message,
                         isMe: message.senderId == widget.currentUserRfid,
-                        showReadReceipt: message.senderId == widget.currentUserRfid,
+                        showReadReceipt:
+                        message.senderId == widget.currentUserRfid,
                       );
                     },
                   ),
@@ -237,30 +239,48 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
-
   void _showChatOptions(BuildContext context) {
     showModalBottomSheet(
       context: context,
+      backgroundColor: AppColors.secondaryBackground,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(AppTheme.defaultBorderRadius),
+        ),
+      ),
       builder: (context) => Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           ListTile(
-            leading: const Icon(Icons.mark_as_unread),
-            title: const Text('Mark all as read'),
+            leading: Icon(
+              Icons.mark_as_unread,
+              color: AppColors.primary,
+            ),
+            title: Text(
+              'Mark all as read',
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
             onTap: () {
               Navigator.pop(context);
               _markAllMessagesAsRead();
             },
           ),
           ListTile(
-            leading: const Icon(Icons.delete),
-            title: const Text('Clear chat history'),
+            leading: Icon(
+              Icons.delete,
+              color: AppColors.error,
+            ),
+            title: Text(
+              'Clear chat history',
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
             onTap: () => _confirmClearChat(context),
           ),
         ],
       ),
     );
   }
+
 
   Future<void> _markAllMessagesAsRead() async {
     try {
@@ -285,7 +305,13 @@ class _ChatScreenState extends State<ChatScreen> {
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to mark messages as read: $e')),
+        SnackBar(
+          content: Text(
+            'Failed to mark messages as read: $e',
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+          backgroundColor: AppColors.error,
+        ),
       );
     }
   }
@@ -294,19 +320,35 @@ class _ChatScreenState extends State<ChatScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Clear chat history?'),
-        content: const Text('This will remove all messages from this chat.'),
+        backgroundColor: AppColors.secondaryBackground,
+        title: Text(
+          'Clear chat history?',
+          style: Theme.of(context).textTheme.titleLarge,
+        ),
+        content: Text(
+          'This will remove all messages from this chat.',
+          style: Theme.of(context).textTheme.bodyMedium,
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: Text(
+              'Cancel',
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
           ),
           TextButton(
             onPressed: () {
               Navigator.pop(context);
               _clearChatHistory();
             },
-            child: const Text('Clear', style: TextStyle(color: Colors.red)),
+            child: Text(
+              'Clear',
+              style: Theme.of(context)
+                  .textTheme
+                  .bodyMedium
+                  ?.copyWith(color: AppColors.error),
+            ),
           ),
         ],
       ),
@@ -321,17 +363,23 @@ class _ChatScreenState extends State<ChatScreen> {
       await _loadMessages();
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to clear chat: $e')),
+        SnackBar(
+          content: Text(
+            'Failed to clear chat: $e',
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+          backgroundColor: AppColors.error,
+        ),
       );
     }
   }
 
   Widget _buildMessageInput() {
     return Container(
-      margin: const EdgeInsets.all(8),
+      margin: const EdgeInsets.all(AppTheme.defaultSpacing / 2),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
+        color: AppColors.cardBackground,
+        borderRadius: BorderRadius.circular(AppTheme.defaultBorderRadius),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.1),
@@ -340,21 +388,32 @@ class _ChatScreenState extends State<ChatScreen> {
           ),
         ],
       ),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      padding: const EdgeInsets.symmetric(
+          horizontal: AppTheme.defaultSpacing / 2,
+          vertical: AppTheme.defaultSpacing / 4),
       child: Row(
         children: [
           IconButton(
-            icon: Icon(Icons.add, color: AppColors.primary),
+            icon: Icon(
+              Icons.add,
+              color: AppColors.primary,
+              size: AppTheme.defaultIconSize,
+            ),
             onPressed: _showAttachmentOptions,
           ),
           Expanded(
             child: TextField(
               controller: _messageController,
               focusNode: _focusNode,
+              style: Theme.of(context).textTheme.bodyMedium,
               decoration: InputDecoration(
                 hintText: 'Type a message...',
+                hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: AppColors.disabledText,
+                ),
                 border: InputBorder.none,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                contentPadding: const EdgeInsets.symmetric(
+                    horizontal: AppTheme.defaultSpacing),
               ),
               onSubmitted: (_) => _sendMessage(),
             ),
@@ -365,7 +424,11 @@ class _ChatScreenState extends State<ChatScreen> {
               shape: BoxShape.circle,
             ),
             child: IconButton(
-              icon: const Icon(Icons.send, color: Colors.white),
+              icon: Icon(
+                Icons.send,
+                color: AppColors.textPrimary,
+                size: AppTheme.defaultIconSize,
+              ),
               onPressed: _sendMessage,
             ),
           ),

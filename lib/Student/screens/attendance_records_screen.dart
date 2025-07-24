@@ -21,27 +21,25 @@ class _AttendanceRecordsScreenState extends State<AttendanceRecordsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Attendance Records'),
-        backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
-        elevation: 0,
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(bottom: Radius.circular(20)),
+        title: Text(
+          'Attendance Records',
+          style: Theme.of(context).textTheme.titleLarge,
         ),
+        backgroundColor: AppColors.primaryBackground,
+        elevation: 0,
+        iconTheme: IconThemeData(color: AppColors.primary),
       ),
       body: Container(
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [AppColors.primary.withOpacity(0.1), AppColors.background],
-          ),
+          gradient: AppColors.accentGradient(AppColors.primary),
         ),
         child: Column(
           children: [
             // Tab selector
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+              padding: const EdgeInsets.symmetric(
+                  horizontal: AppTheme.defaultSpacing,
+                  vertical: AppTheme.defaultSpacing),
               child: Row(
                 children: [
                   Expanded(
@@ -52,7 +50,7 @@ class _AttendanceRecordsScreenState extends State<AttendanceRecordsScreen> {
                       onTap: () => setState(() => _selectedTab = 0),
                     ),
                   ),
-                  const SizedBox(width: 16),
+                  const SizedBox(width: AppTheme.defaultSpacing),
                   Expanded(
                     child: _buildTabButton(
                       context,
@@ -67,10 +65,9 @@ class _AttendanceRecordsScreenState extends State<AttendanceRecordsScreen> {
 
             // Content based on selected tab
             Expanded(
-              child:
-                  _selectedTab == 0
-                      ? _buildGeneralAttendanceView(context)
-                      : _buildSubjectWiseView(context),
+              child: _selectedTab == 0
+                  ? _buildGeneralAttendanceView(context)
+                  : _buildSubjectWiseView(context),
             ),
           ],
         ),
@@ -79,21 +76,21 @@ class _AttendanceRecordsScreenState extends State<AttendanceRecordsScreen> {
   }
 
   Widget _buildTabButton(
-    BuildContext context, {
-    required String label,
-    required bool isSelected,
-    required VoidCallback onTap,
-  }) {
+      BuildContext context, {
+        required String label,
+        required bool isSelected,
+        required VoidCallback onTap,
+      }) {
     return Material(
       color: isSelected ? AppColors.primary : Colors.transparent,
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(AppTheme.defaultBorderRadius),
       child: InkWell(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppTheme.defaultBorderRadius),
         onTap: onTap,
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 12),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(AppTheme.defaultBorderRadius),
             border: Border.all(
               color: isSelected ? Colors.transparent : AppColors.primary,
               width: 1.5,
@@ -102,10 +99,9 @@ class _AttendanceRecordsScreenState extends State<AttendanceRecordsScreen> {
           child: Center(
             child: Text(
               label,
-              style: TextStyle(
-                color: isSelected ? Colors.white : AppColors.primary,
+              style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                color: isSelected ? Colors.black : AppColors.primary,
                 fontWeight: FontWeight.bold,
-                fontSize: 16,
               ),
             ),
           ),
@@ -116,67 +112,63 @@ class _AttendanceRecordsScreenState extends State<AttendanceRecordsScreen> {
 
   Widget _buildGeneralAttendanceView(BuildContext context) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
+      padding: AppTheme.defaultPadding,
       child: Column(
         children: [
           // Overall summary card
           Card(
-            elevation: 4,
+            elevation: 0,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(AppTheme.defaultBorderRadius),
             ),
             child: Container(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [AppColors.primaryLight, AppColors.accentBlue],
+                  colors: [AppColors.primaryLight, AppColors.primary],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(AppTheme.defaultBorderRadius),
               ),
-              padding: const EdgeInsets.all(20),
+              padding: AppTheme.defaultPadding,
               child: Column(
                 children: [
                   Row(
                     children: [
                       Container(
-                        padding: const EdgeInsets.all(12),
+                        padding: AppTheme.defaultPadding,
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
+                          color: AppColors.glassEffectLight,
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(
+                        child: Icon(
                           Icons.bar_chart,
-                          color: Colors.white,
-                          size: 28,
+                          color: AppColors.textPrimary,
+                          size: AppTheme.defaultIconSize,
                         ),
                       ),
-                      const SizedBox(width: 16),
+                      const SizedBox(width: AppTheme.defaultSpacing),
                       Expanded(
                         child: Text(
                           'Overall Attendance',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
+                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            color: AppColors.textPrimary,
                           ),
                         ),
                       ),
                       Text(
                         '${widget.summary.overallPercentage}%',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
+                        style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                          color: AppColors.textPrimary,
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: AppTheme.defaultSpacing),
                   AttendanceProgressBar(
                     percentage: widget.summary.overallPercentage,
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: AppTheme.defaultSpacing),
                   _buildStatRow(
                     present: widget.summary.totalPresent,
                     absent: widget.summary.totalAbsent,
@@ -186,19 +178,16 @@ class _AttendanceRecordsScreenState extends State<AttendanceRecordsScreen> {
               ),
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: AppTheme.defaultSpacing * 1.5),
 
           // Monthly breakdown
           Text(
             'Monthly Breakdown',
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-              color: AppColors.primaryDark,
-              fontWeight: FontWeight.bold,
-            ),
+            style: Theme.of(context).textTheme.sectionHeader,
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppTheme.defaultSpacing),
           ...widget.summary.monthlyData.map(
-            (monthData) => _buildMonthCard(
+                (monthData) => _buildMonthCard(
               context,
               month: monthData.month,
               present: monthData.present,
@@ -212,7 +201,7 @@ class _AttendanceRecordsScreenState extends State<AttendanceRecordsScreen> {
 
   Widget _buildSubjectWiseView(BuildContext context) {
     return ListView.builder(
-      padding: const EdgeInsets.all(16),
+      padding: AppTheme.defaultPadding,
       itemCount: widget.summary.subjects.length,
       itemBuilder: (context, index) {
         final subject = widget.summary.subjects[index];
@@ -234,8 +223,10 @@ class _AttendanceRecordsScreenState extends State<AttendanceRecordsScreen> {
           label: 'Present',
           color: AppColors.success,
         ),
-        _buildStatItem(value: absent, label: 'Absent', color: AppColors.error),
-        _buildStatItem(value: total, label: 'Total', color: AppColors.primary),
+        _buildStatItem(
+            value: absent, label: 'Absent', color: AppColors.error),
+        _buildStatItem(
+            value: total, label: 'Total', color: AppColors.primary),
       ],
     );
   }
@@ -249,36 +240,38 @@ class _AttendanceRecordsScreenState extends State<AttendanceRecordsScreen> {
       children: [
         Text(
           value.toString(),
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 20,
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+            color: AppColors.textPrimary,
             fontWeight: FontWeight.bold,
           ),
         ),
         const SizedBox(height: 4),
         Text(
           label,
-          style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 14),
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+            color: AppColors.textPrimary.withOpacity(0.9),
+          ),
         ),
       ],
     );
   }
 
   Widget _buildMonthCard(
-    BuildContext context, {
-    required String month,
-    required int present,
-    required int absent,
-  }) {
+      BuildContext context, {
+        required String month,
+        required int present,
+        required int absent,
+      }) {
     final total = present + absent;
     final percentage = total == 0 ? 0 : (present / total * 100).round();
 
     return Card(
-      margin: const EdgeInsets.only(bottom: 16),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-      elevation: 2,
+      margin: const EdgeInsets.only(bottom: AppTheme.defaultSpacing),
+      shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppTheme.defaultBorderRadius)),
+      elevation: 0,
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: AppTheme.defaultPadding,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -287,37 +280,34 @@ class _AttendanceRecordsScreenState extends State<AttendanceRecordsScreen> {
               children: [
                 Text(
                   month,
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold),
+                  style: Theme.of(context).textTheme.cardTitle,
                 ),
                 Text(
                   '$percentage%',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     color: _getPercentageColor(percentage),
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppTheme.defaultSpacing),
             AttendanceProgressBar(percentage: percentage),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppTheme.defaultSpacing),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
                   'Present: $present',
-                  style: TextStyle(color: AppColors.success),
+                  style: Theme.of(context).textTheme.accentText(AppColors.success),
                 ),
                 Text(
                   'Absent: $absent',
-                  style: TextStyle(color: AppColors.error),
+                  style: Theme.of(context).textTheme.accentText(AppColors.error),
                 ),
                 Text(
                   'Total: $total',
-                  style: TextStyle(color: AppColors.primary),
+                  style: Theme.of(context).textTheme.accentText(AppColors.primary),
                 ),
               ],
             ),
@@ -331,12 +321,17 @@ class _AttendanceRecordsScreenState extends State<AttendanceRecordsScreen> {
     final color = _getSubjectColor(subject.name);
 
     return Card(
-      margin: const EdgeInsets.only(bottom: 16),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-      elevation: 2,
+      margin: const EdgeInsets.only(bottom: AppTheme.defaultSpacing),
+      shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppTheme.defaultBorderRadius)),
+      elevation: 0,
       child: ExpansionTile(
-        tilePadding: const EdgeInsets.symmetric(horizontal: 16),
-        childrenPadding: const EdgeInsets.only(left: 16, right: 16, bottom: 16),
+        tilePadding: const EdgeInsets.symmetric(
+            horizontal: AppTheme.defaultSpacing),
+        childrenPadding: const EdgeInsets.only(
+            left: AppTheme.defaultSpacing,
+            right: AppTheme.defaultSpacing,
+            bottom: AppTheme.defaultSpacing),
         leading: Container(
           width: 48,
           height: 48,
@@ -345,26 +340,26 @@ class _AttendanceRecordsScreenState extends State<AttendanceRecordsScreen> {
             shape: BoxShape.circle,
           ),
           alignment: Alignment.center,
-          child: Icon(_getSubjectIcon(subject.name), color: color, size: 24),
+          child: Icon(_getSubjectIcon(subject.name),
+              color: color, size: AppTheme.defaultIconSize),
         ),
         title: Text(
           subject.name,
-          style: Theme.of(
-            context,
-          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+          style: Theme.of(context).textTheme.cardTitle,
         ),
         trailing: Text(
           '${subject.percentage}%',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(
             color: color,
+            fontWeight: FontWeight.bold,
           ),
         ),
         children: [
           // Attendance progress bar
           Padding(
-            padding: const EdgeInsets.only(top: 8, bottom: 16),
+            padding: const EdgeInsets.only(
+                top: AppTheme.defaultSpacing / 2,
+                bottom: AppTheme.defaultSpacing),
             child: AttendanceProgressBar(percentage: subject.percentage),
           ),
 
@@ -375,41 +370,44 @@ class _AttendanceRecordsScreenState extends State<AttendanceRecordsScreen> {
             total: subject.totalClasses,
           ),
 
-          const SizedBox(height: 24),
+          const SizedBox(height: AppTheme.defaultSpacing * 1.5),
 
           // Recent absences section
           if (subject.recentAbsences.isNotEmpty) ...[
-            Divider(color: Colors.grey[300], height: 1),
-            const SizedBox(height: 16),
+            Divider(
+                color: AppColors.cardBorder,
+                height: 1,
+                thickness: 1),
+            const SizedBox(height: AppTheme.defaultSpacing),
 
             // Section header
             Row(
               children: [
-                Icon(Icons.calendar_month, color: AppColors.error, size: 20),
+                Icon(Icons.calendar_month,
+                    color: AppColors.error, size: 20),
                 const SizedBox(width: 8),
                 Text(
                   'Recent Absences',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
+                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
                     color: AppColors.error,
-                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppTheme.defaultSpacing),
 
             // Absences list
             Column(
-              children:
-                  subject.recentAbsences
-                      .map(
-                        (date) => Padding(
-                          padding: const EdgeInsets.only(bottom: 12),
-                          child: _buildAbsenceItem(date, color),
-                        ),
-                      )
-                      .toList(),
+              children: subject.recentAbsences
+                  .map(
+                    (date) => Padding(
+                  padding: const EdgeInsets.only(
+                      bottom: AppTheme.defaultSpacing),
+                  child: _buildAbsenceItem(date, color),
+                ),
+              )
+                  .toList(),
             ),
           ],
         ],
@@ -419,10 +417,10 @@ class _AttendanceRecordsScreenState extends State<AttendanceRecordsScreen> {
 
   Widget _buildAbsenceItem(DateTime date, Color color) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: AppTheme.defaultPadding,
       decoration: BoxDecoration(
         color: color.withOpacity(0.05),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(AppTheme.defaultBorderRadius / 2),
       ),
       child: Row(
         children: [
@@ -436,27 +434,25 @@ class _AttendanceRecordsScreenState extends State<AttendanceRecordsScreen> {
             ),
             child: Text(
               date.day.toString(),
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
                 color: color,
-                fontSize: 16,
+                fontWeight: FontWeight.bold,
               ),
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: AppTheme.defaultSpacing),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 _getDayName(date),
-                style: TextStyle(
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   fontWeight: FontWeight.bold,
-                  color: AppColors.textPrimary,
                 ),
               ),
               Text(
                 '${_getMonthName(date)} ${date.year}',
-                style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                style: Theme.of(context).textTheme.labelSmall,
               ),
             ],
           ),
@@ -491,18 +487,18 @@ class _AttendanceRecordsScreenState extends State<AttendanceRecordsScreen> {
   }
 
   Color _getPercentageColor(int percentage) {
-    if (percentage >= 85) return Colors.green;
-    if (percentage >= 70) return Colors.orange;
-    return Colors.red;
+    if (percentage >= 85) return AppColors.success;
+    if (percentage >= 70) return AppColors.warning;
+    return AppColors.error;
   }
 
   Color _getSubjectColor(String subjectName) {
     final colors = {
       'Mathematics': AppColors.secondary,
-      'Physics': AppColors.accentBlue,
-      'Chemistry': AppColors.accentPink,
+      'Physics': AppColors.info,
+      'Chemistry': AppColors.primaryLight,
       'English': AppColors.primary,
-      'Computer Science': AppColors.accentAmber,
+      'Computer Science': AppColors.warning,
     };
     return colors[subjectName] ?? AppColors.primaryDark;
   }

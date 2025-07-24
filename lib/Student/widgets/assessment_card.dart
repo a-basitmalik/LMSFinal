@@ -1,4 +1,3 @@
-// lib/widgets/assessment_card.dart
 import 'package:flutter/material.dart';
 import '../utils/app_design_system.dart';
 import '../utils/theme.dart';
@@ -17,58 +16,86 @@ class AssessmentCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AppDesignSystem.card(
-      context: context,
-      onTap: () => _navigateToAssessmentDetails(context, title),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+    final theme = Theme.of(context);
+    final textTheme = theme.textTheme;
+
+    return Card(
+      margin: AppTheme.defaultPadding,
+      color: AppColors.cardBackground,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppTheme.defaultBorderRadius),
+        side: const BorderSide(color: AppColors.cardBorder, width: 1.5),
+      ),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(AppTheme.defaultBorderRadius),
+        onTap: () => _navigateToAssessmentDetails(context, title),
+        child: Padding(
+          padding: AppTheme.defaultPadding,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: color.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(icon, color: color, size: 28),
+              Row(
+                children: [
+                  Container(
+                    padding: AppTheme.defaultPadding,
+                    decoration: BoxDecoration(
+                      color: color.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(AppTheme.defaultBorderRadius),
+                    ),
+                    child: Icon(
+                      icon,
+                      color: color,
+                      size: 28,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Text(
+                      title,
+                      style: textTheme.cardTitle?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Text(
-                  title,
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    color: AppColors.textPrimary,
-                    fontWeight: FontWeight.bold,
+              const SizedBox(height: 16),
+              Align(
+                alignment: Alignment.centerRight,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: color.withOpacity(0.1),
+                    foregroundColor: color,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppTheme.defaultBorderRadius),
+                    ),
+                  ),
+                  onPressed: () => _navigateToAssessmentDetails(context, title),
+                  child: Text(
+                    'View Details',
+                    style: textTheme.labelMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 16),
-          Align(
-            alignment: Alignment.centerRight,
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: color.withOpacity(0.1),
-                foregroundColor: color,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              onPressed: () => _navigateToAssessmentDetails(context, title),
-              child: const Text('View Details'),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
 
   void _navigateToAssessmentDetails(BuildContext context, String title) {
-    // TODO: Implement navigation to detailed assessment list
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text('Viewing details for $title')));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          'Viewing details for $title',
+          style: Theme.of(context).textTheme.bodyMedium,
+
+        ),
+        backgroundColor: AppColors.surface,
+      ),
+    );
   }
 }

@@ -1,24 +1,32 @@
 import 'package:flutter/material.dart';
-import '../utils/theme.dart'; // Make sure AppColors is correctly imported
+import '../utils/theme.dart';
 
 class AttendanceProgressBar extends StatelessWidget {
   final int percentage;
+  final double height;
+  final double borderRadius;
 
-  const AttendanceProgressBar({super.key, required this.percentage});
+  const AttendanceProgressBar({
+    super.key,
+    required this.percentage,
+    this.height = 12.0,
+    this.borderRadius = 16.0,
+  });
 
-  // Function to pick bar color based on percentage
   Color getProgressColor(double percentage) {
-    if (percentage >= 85) return Colors.green;
-    if (percentage >= 70) return Colors.orange;
-    return Colors.red;
+    if (percentage >= 85) return AppColors.success;
+    if (percentage >= 70) return AppColors.warning;
+    return AppColors.error;
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final Color barColor = getProgressColor(percentage.toDouble());
 
     return Container(
       decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(borderRadius),
         boxShadow: [
           BoxShadow(
             color: barColor.withOpacity(0.4),
@@ -29,18 +37,17 @@ class AttendanceProgressBar extends StatelessWidget {
         ],
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(borderRadius),
         child: TweenAnimationBuilder<double>(
           tween: Tween<double>(begin: 0, end: percentage / 100),
           duration: const Duration(milliseconds: 800),
           curve: Curves.easeOutCubic,
-          builder:
-              (context, value, _) => LinearProgressIndicator(
-                value: value,
-                minHeight: 12, // Thicker bar
-                backgroundColor: AppColors.lightGrey,
-                valueColor: AlwaysStoppedAnimation<Color>(barColor),
-              ),
+          builder: (context, value, _) => LinearProgressIndicator(
+            value: value,
+            minHeight: height,
+            backgroundColor: AppColors.surface,
+            valueColor: AlwaysStoppedAnimation<Color>(barColor),
+          ),
         ),
       ),
     );

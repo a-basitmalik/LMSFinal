@@ -1,6 +1,4 @@
-// lib/screens/profile_edit_screen.dart
 import 'package:flutter/material.dart';
-import '../utils/app_design_system.dart';
 import '../utils/theme.dart';
 import '../models/student_model.dart';
 import '../widgets/base_screen.dart';
@@ -38,24 +36,35 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final textTheme = theme.textTheme;
+
     return BaseScreen(
       title: 'Edit Profile',
       body: Form(
         key: _formKey,
         child: ListView(
-          padding: AppDesignSystem.defaultPadding,
+          padding: const EdgeInsets.all(16),
           children: [
             // Profile Picture
             Center(
               child: Stack(
                 children: [
-                  CircleAvatar(
-                    radius: 60,
-                    backgroundImage:
-                        _student.profileImage != null
-                            ? NetworkImage(_student.profileImage!)
-                            : const AssetImage('assets/default_profile.png')
-                                as ImageProvider,
+                  Container(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: AppColors.cardBorder,
+                        width: 2,
+                      ),
+                    ),
+                    child: CircleAvatar(
+                      radius: 60,
+                      backgroundImage: _student.profileImage != null
+                          ? NetworkImage(_student.profileImage!)
+                          : const AssetImage('assets/default_profile.png')
+                      as ImageProvider,
+                    ),
                   ),
                   Positioned(
                     bottom: 0,
@@ -64,10 +73,14 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
                       decoration: BoxDecoration(
                         color: AppColors.primary,
                         shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white, width: 2),
+                        border: Border.all(
+                          color: AppColors.cardBackground,
+                          width: 2,
+                        ),
                       ),
                       child: IconButton(
-                        icon: const Icon(Icons.camera_alt, color: Colors.white),
+                        icon: const Icon(Icons.camera_alt),
+                        color: AppColors.textPrimary,
                         onPressed: _pickImage,
                       ),
                     ),
@@ -80,12 +93,11 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
             // Name Field
             TextFormField(
               controller: _nameController,
+              style: textTheme.bodyLarge,
               decoration: InputDecoration(
                 labelText: 'Full Name',
+                labelStyle: textTheme.labelMedium,
                 prefixIcon: Icon(Icons.person, color: AppColors.primary),
-                border: OutlineInputBorder(
-                  borderRadius: AppDesignSystem.defaultBorderRadius,
-                ),
               ),
               validator: (value) {
                 if (value == null || value.isEmpty) {
@@ -99,12 +111,11 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
             // Email Field
             TextFormField(
               controller: _emailController,
+              style: textTheme.bodyLarge,
               decoration: InputDecoration(
                 labelText: 'Email',
+                labelStyle: textTheme.labelMedium,
                 prefixIcon: Icon(Icons.email, color: AppColors.primary),
-                border: OutlineInputBorder(
-                  borderRadius: AppDesignSystem.defaultBorderRadius,
-                ),
               ),
               keyboardType: TextInputType.emailAddress,
               validator: (value) {
@@ -122,12 +133,11 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
             // Phone Field
             TextFormField(
               controller: _phoneController,
+              style: textTheme.bodyLarge,
               decoration: InputDecoration(
                 labelText: 'Phone Number',
+                labelStyle: textTheme.labelMedium,
                 prefixIcon: Icon(Icons.phone, color: AppColors.primary),
-                border: OutlineInputBorder(
-                  borderRadius: AppDesignSystem.defaultBorderRadius,
-                ),
               ),
               keyboardType: TextInputType.phone,
               validator: (value) {
@@ -142,10 +152,12 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
             // Save Button
             ElevatedButton(
               onPressed: _saveProfile,
-              style: ElevatedButton.styleFrom(
-                minimumSize: const Size(double.infinity, 50),
+              child: Text(
+                'Save Changes',
+                style: textTheme.labelLarge?.copyWith(
+                  color: AppColors.textPrimary,
+                ),
               ),
-              child: const Text('Save Changes'),
             ),
           ],
         ),
@@ -173,8 +185,7 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
         _student = _student.copyWith(
           name: _nameController.text,
           email: _emailController.text,
-          phone:
-              _phoneController.text.isNotEmpty ? _phoneController.text : null,
+          phone: _phoneController.text.isNotEmpty ? _phoneController.text : null,
         );
       });
 
@@ -183,7 +194,13 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
       // await AuthService().updateStudentProfile(_student);
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Profile updated successfully')),
+        SnackBar(
+          content: Text(
+            'Profile updated successfully',
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+          backgroundColor: AppColors.success,
+        ),
       );
       Navigator.pop(context, _student);
     }

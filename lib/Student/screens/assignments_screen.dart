@@ -54,16 +54,17 @@ class _AssignmentsScreenState extends State<AssignmentsScreen> {
       appBar: AppDesignSystem.appBar(context, 'My Assignments'),
       body: Container(
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [AppColors.primary.withOpacity(0.05), AppColors.background],
-          ),
+          gradient: AppColors.accentGradient(AppColors.primary),
         ),
         child: _isLoading
             ? const Center(child: CircularProgressIndicator())
             : _errorMessage != null
-            ? Center(child: Text(_errorMessage!))
+            ? Center(
+          child: Text(
+            _errorMessage!,
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+        )
             : RefreshIndicator(
           onRefresh: _loadAssignments,
           child: FutureBuilder<List<Assignment>>(
@@ -72,14 +73,18 @@ class _AssignmentsScreenState extends State<AssignmentsScreen> {
               if (snapshot.hasData) {
                 final assignments = snapshot.data!;
                 if (assignments.isEmpty) {
-                  return const Center(
-                    child: Text('No assignments found.'),
+                  return Center(
+                    child: Text(
+                      'No assignments found.',
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
                   );
                 }
 
                 final dueSoon = assignments
                     .where((a) =>
-                a.dueDate.difference(DateTime.now()).inDays <= 3 &&
+                a.dueDate.difference(DateTime.now()).inDays <=
+                    3 &&
                     a.status != 'graded' &&
                     a.status != 'submitted')
                     .toList();
@@ -89,7 +94,7 @@ class _AssignmentsScreenState extends State<AssignmentsScreen> {
                     .toList();
 
                 return ListView(
-                  padding: const EdgeInsets.all(16),
+                  padding: AppTheme.defaultPadding,
                   children: [
                     if (dueSoon.isNotEmpty)
                       _buildSectionHeader('Due Soon', dueSoon),
@@ -115,10 +120,7 @@ class _AssignmentsScreenState extends State<AssignmentsScreen> {
           padding: const EdgeInsets.only(top: 16, bottom: 8),
           child: Text(
             title,
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: AppColors.primaryDark,
-            ),
+            style: Theme.of(context).textTheme.sectionHeader,
           ),
         ),
         ...assignments.map((assignment) => _buildAssignmentCard(assignment)),
@@ -132,34 +134,36 @@ class _AssignmentsScreenState extends State<AssignmentsScreen> {
         assignment.status == 'submitted' || assignment.status == 'graded';
 
     return Card(
-      margin: const EdgeInsets.only(bottom: 16),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      elevation: 2,
+      margin: const EdgeInsets.only(bottom: AppTheme.defaultSpacing),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppTheme.defaultBorderRadius),
+      ),
+      elevation: 0,
       child: InkWell(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppTheme.defaultBorderRadius),
         onTap: () => _navigateToAssignmentDetail(assignment),
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: AppTheme.defaultPadding,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Subject header with colored tag
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 12, vertical: 4),
                 decoration: BoxDecoration(
                   color: subjectColor,
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
                   assignment.subjectName,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 12,
+                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                    color: AppColors.textPrimary,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: AppTheme.defaultSpacing),
 
               // Title and status
               Row(
@@ -167,9 +171,7 @@ class _AssignmentsScreenState extends State<AssignmentsScreen> {
                   Expanded(
                     child: Text(
                       assignment.title,
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                      style: Theme.of(context).textTheme.cardTitle,
                     ),
                   ),
                   if (assignment.isOverdue)
@@ -185,9 +187,11 @@ class _AssignmentsScreenState extends State<AssignmentsScreen> {
                       ),
                       child: Text(
                         'OVERDUE',
-                        style: TextStyle(
+                        style: Theme.of(context)
+                            .textTheme
+                            .labelMedium
+                            ?.copyWith(
                           color: AppColors.error,
-                          fontSize: 12,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -195,7 +199,7 @@ class _AssignmentsScreenState extends State<AssignmentsScreen> {
                   else
                     Text(
                       assignment.timeLeft,
-                      style: TextStyle(
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: assignment.dueDate
                             .difference(DateTime.now())
                             .inDays <
@@ -216,15 +220,16 @@ class _AssignmentsScreenState extends State<AssignmentsScreen> {
                 overflow: TextOverflow.ellipsis,
                 style: Theme.of(context).textTheme.bodyMedium,
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: AppTheme.defaultSpacing),
 
               // Status indicator
               if (isSubmitted)
                 Container(
-                  padding: const EdgeInsets.all(12),
+                  padding: AppTheme.defaultPadding,
                   decoration: BoxDecoration(
                     color: AppColors.primary.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius:
+                    BorderRadius.circular(AppTheme.defaultBorderRadius),
                     border: Border.all(
                       color: AppColors.primary.withOpacity(0.3),
                     ),
@@ -239,19 +244,22 @@ class _AssignmentsScreenState extends State<AssignmentsScreen> {
                                 ? Icons.grade
                                 : Icons.check_circle,
                             color: assignment.status == 'graded'
-                                ? AppColors.accentAmber
+                                ? AppColors.warning
                                 : AppColors.success,
-                            size: 20,
+                            size: AppTheme.defaultIconSize,
                           ),
                           const SizedBox(width: 8),
                           Text(
                             assignment.status == 'graded'
                                 ? 'GRADED (${assignment.grade}%)'
                                 : 'SUBMITTED',
-                            style: TextStyle(
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodyMedium
+                                ?.copyWith(
                               fontWeight: FontWeight.bold,
                               color: assignment.status == 'graded'
-                                  ? AppColors.accentAmber
+                                  ? AppColors.warning
                                   : AppColors.success,
                             ),
                           ),
@@ -278,8 +286,11 @@ class _AssignmentsScreenState extends State<AssignmentsScreen> {
                     ),
                     ...assignment.attachments.map(
                           (file) => Chip(
-                        label: Text(file.fileName, style: const TextStyle(fontSize: 12)),
-                        backgroundColor: AppColors.lightGrey,
+                        label: Text(
+                          file.fileName,
+                          style: Theme.of(context).textTheme.labelSmall,
+                        ),
+                        backgroundColor: AppColors.surface,
                       ),
                     ),
                   ],
@@ -296,7 +307,9 @@ class _AssignmentsScreenState extends State<AssignmentsScreen> {
                   ),
                   child: Text(
                     isSubmitted ? 'VIEW DETAILS' : 'VIEW & SUBMIT',
-                    style: const TextStyle(fontWeight: FontWeight.bold),
+                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ),
@@ -310,11 +323,11 @@ class _AssignmentsScreenState extends State<AssignmentsScreen> {
   Color _getSubjectColor(String subject) {
     final colors = {
       'Mathematics': AppColors.secondary,
-      'Physics': AppColors.accentBlue,
-      'Chemistry': AppColors.accentPink,
+      'Physics': AppColors.info,
+      'Chemistry': AppColors.primaryLight,
       'Biology': AppColors.success,
-      'English': AppColors.primaryLight,
-      'History': AppColors.accentAmber,
+      'English': AppColors.primary,
+      'History': AppColors.warning,
     };
     return colors[subject] ?? AppColors.primary;
   }
@@ -327,7 +340,8 @@ class _AssignmentsScreenState extends State<AssignmentsScreen> {
           assignment: assignment,
           studentRfid: widget.studentRfid,
           onSubmission: (file) => _handleSubmission(assignment, file),
-          onStatusUpdate: (newStatus) => _updateAssignmentStatus(assignment, newStatus), StudentRfid: '',
+          onStatusUpdate: (newStatus) =>
+              _updateAssignmentStatus(assignment, newStatus),
         ),
       ),
     );
@@ -347,16 +361,29 @@ class _AssignmentsScreenState extends State<AssignmentsScreen> {
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Assignment submitted successfully!')),
+        SnackBar(
+          content: Text(
+            'Assignment submitted successfully!',
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+          backgroundColor: AppColors.success,
+        ),
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to submit: ${e.toString()}')),
+        SnackBar(
+          content: Text(
+            'Failed to submit: ${e.toString()}',
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+          backgroundColor: AppColors.error,
+        ),
       );
     }
   }
 
-  Future<void> _updateAssignmentStatus(Assignment assignment, String newStatus) async {
+  Future<void> _updateAssignmentStatus(
+      Assignment assignment, String newStatus) async {
     try {
       // 1. Update locally in your state
       setState(() {
@@ -380,7 +407,13 @@ class _AssignmentsScreenState extends State<AssignmentsScreen> {
         assignment.status = assignment.status; // Revert to previous status
       });
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to update status: $e')),
+        SnackBar(
+          content: Text(
+            'Failed to update status: $e',
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+          backgroundColor: AppColors.error,
+        ),
       );
     }
   }

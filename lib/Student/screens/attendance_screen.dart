@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import '../utils/app_design_system.dart';
 import '../utils/theme.dart';
 import '../widgets/attendance_progress_bar.dart';
 import '../screens/attendance_records_screen.dart';
@@ -69,31 +70,35 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
   Widget build(BuildContext context) {
     if (isLoading) {
       return Scaffold(
-        appBar: AppBar(
-          title: const Text('Attendance'),
-          backgroundColor: AppColors.primary,
-          foregroundColor: Colors.white,
-        ),
+        appBar: AppDesignSystem.appBar(context, 'Attendance'),
         body: const Center(child: CircularProgressIndicator()),
       );
     }
 
     if (hasError) {
       return Scaffold(
-        appBar: AppBar(
-          title: const Text('Attendance'),
-          backgroundColor: AppColors.primary,
-          foregroundColor: Colors.white,
-        ),
+        appBar: AppDesignSystem.appBar(context, 'Attendance'),
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text(errorMessage, style: const TextStyle(color: Colors.red)),
-              const SizedBox(height: 20),
+              Text(
+                  errorMessage,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: AppColors.error
+                  )
+              ),
+              const SizedBox(height: AppTheme.defaultSpacing),
               ElevatedButton(
                 onPressed: _refreshData,
-                child: const Text('Retry'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.black,
+                ),
+                child: Text(
+                  'Retry',
+                  style: Theme.of(context).textTheme.labelLarge,
+                ),
               ),
             ],
           ),
@@ -110,22 +115,10 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     final monthlySummary = List<Map<String, dynamic>>.from(attendanceData['monthly_summary'] ?? []);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Attendance'),
-        backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
-        elevation: 0,
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(bottom: Radius.circular(20)),
-        ),
-      ),
+      appBar: AppDesignSystem.appBar(context, 'Attendance'),
       body: Container(
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [AppColors.primary.withOpacity(0.1), AppColors.background],
-          ),
+          gradient: AppColors.accentGradient(AppColors.primary),
         ),
         child: RefreshIndicator(
           onRefresh: _refreshData,
@@ -133,7 +126,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
             slivers: [
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.all(16),
+                  padding: AppTheme.defaultPadding,
                   child: _buildSummaryCard(
                     context,
                     overallAttendance,
@@ -146,33 +139,43 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                 ),
               ),
               SliverPadding(
-                padding: const EdgeInsets.only(left: 24, top: 16, right: 24),
+                padding: EdgeInsets.only(
+                    left: AppTheme.defaultSpacing,
+                    top: AppTheme.defaultSpacing,
+                    right: AppTheme.defaultSpacing
+                ),
                 sliver: SliverToBoxAdapter(
                   child: Text(
                     'Subject-wise Attendance',
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      color: AppColors.primaryDark,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: Theme.of(context).textTheme.sectionHeader,
                   ),
                 ),
               ),
               SliverPadding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: EdgeInsets.symmetric(
+                    horizontal: AppTheme.defaultSpacing,
+                    vertical: AppTheme.defaultSpacing / 2
+                ),
                 sliver: subjects.isEmpty
                     ? SliverToBoxAdapter(
-                  child: const Center(
+                  child: Center(
                     child: Padding(
-                      padding: EdgeInsets.all(16.0),
-                      child: Text('No attendance data available'),
+                      padding: AppTheme.defaultPadding,
+                      child: Text(
+                        'No attendance data available',
+                        style: Theme.of(context).textTheme.bodyMedium,
+                      ),
                     ),
                   ),
                 )
                     : SliverList(
-                  delegate: SliverChildBuilderDelegate((context, index) {
-                    final subject = subjects[index];
-                    return _buildSubjectCard(context, subject);
-                  }, childCount: subjects.length),
+                  delegate: SliverChildBuilderDelegate(
+                          (context, index) {
+                        final subject = subjects[index];
+                        return _buildSubjectCard(context, subject);
+                      },
+                      childCount: subjects.length
+                  ),
                 ),
               ),
             ],
@@ -192,74 +195,72 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
       List<Map<String, dynamic>> subjects,
       ) {
     return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppTheme.defaultBorderRadius),
+      ),
       child: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: [AppColors.primaryLight, AppColors.accentBlue],
+            colors: [AppColors.primaryLight, AppColors.primary],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(AppTheme.defaultBorderRadius),
         ),
-        padding: const EdgeInsets.all(20),
+        padding: AppTheme.defaultPadding,
         child: Column(
           children: [
             Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.all(12),
+                  padding: AppTheme.defaultPadding,
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
+                    color: AppColors.glassEffectLight,
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.bar_chart,
-                    color: Colors.white,
-                    size: 28,
+                    color: AppColors.textPrimary,
+                    size: AppTheme.defaultIconSize,
                   ),
                 ),
-                const SizedBox(width: 16),
+                const SizedBox(width: AppTheme.defaultSpacing),
                 Expanded(
                   child: Text(
                     'Overall Attendance',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      color: AppColors.textPrimary,
                     ),
                   ),
                 ),
                 Text(
                   '$overallPercentage%',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
+                  style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                    color: AppColors.textPrimary,
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppTheme.defaultSpacing),
             AttendanceProgressBar(percentage: overallPercentage),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppTheme.defaultSpacing / 2),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                _buildStatItem('Present', '$totalPresent', Colors.green),
-                _buildStatItem('Absent', '$totalAbsent', Colors.red),
-                _buildStatItem('Total', '$totalClasses', AppColors.primaryDark),
+                _buildStatItem('Present', '$totalPresent', AppColors.success),
+                _buildStatItem('Absent', '$totalAbsent', AppColors.error),
+                _buildStatItem('Total', '$totalClasses', AppColors.primary),
               ],
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppTheme.defaultSpacing),
             SizedBox(
               width: double.infinity,
-              child: TextButton(
-                style: TextButton.styleFrom(
-                  backgroundColor: Colors.white.withOpacity(0.2),
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.glassEffectLight,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(AppTheme.defaultBorderRadius),
                   ),
                   padding: const EdgeInsets.symmetric(vertical: 12),
                 ),
@@ -295,10 +296,10 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                     ),
                   );
                 },
-                child: const Text(
+                child: Text(
                   'View All Records',
-                  style: TextStyle(
-                    color: Colors.white,
+                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                    color: AppColors.textPrimary,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -315,17 +316,15 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
       children: [
         Text(
           label,
-          style: const TextStyle(
-            color: Colors.white70,
-            fontSize: 14,
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+            color: AppColors.textPrimary.withOpacity(0.9),
           ),
         ),
         const SizedBox(height: 4),
         Text(
           value,
-          style: TextStyle(
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(
             color: color,
-            fontSize: 18,
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -338,10 +337,11 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
 
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 8),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-      elevation: 2,
+      shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppTheme.defaultBorderRadius)),
+      elevation: 0,
       child: InkWell(
-        borderRadius: BorderRadius.circular(15),
+        borderRadius: BorderRadius.circular(AppTheme.defaultBorderRadius),
         onTap: () {
           Navigator.push(
             context,
@@ -373,7 +373,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
           );
         },
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: AppTheme.defaultPadding,
           child: Row(
             children: [
               Container(
@@ -384,31 +384,32 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                   shape: BoxShape.circle,
                 ),
                 alignment: Alignment.center,
-                child: Icon(_getSubjectIcon(subject['name']), color: color, size: 24),
+                child: Icon(
+                    _getSubjectIcon(subject['name']),
+                    color: color,
+                    size: AppTheme.defaultIconSize
+                ),
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: AppTheme.defaultSpacing),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       subject['name']?.toString() ?? 'Unknown',
-                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                      style: Theme.of(context).textTheme.cardTitle,
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: AppTheme.defaultSpacing / 2),
                     AttendanceProgressBar(percentage: subject['percentage'] ?? 0),
                   ],
                 ),
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: AppTheme.defaultSpacing),
               Text(
                 '${subject['percentage'] ?? 0}%',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
                   color: color,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
             ],
@@ -432,10 +433,10 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
   Color _getSubjectColor(String? subjectName) {
     final colors = {
       'Maths': AppColors.secondary,
-      'Physics': AppColors.accentBlue,
-      'Chemistry': AppColors.accentPink,
+      'Physics': AppColors.info,
+      'Chemistry': AppColors.primaryLight,
       'English': AppColors.primary,
-      'Computer Science': AppColors.accentAmber,
+      'Computer Science': AppColors.warning,
     };
     return colors[subjectName] ?? AppColors.primaryDark;
   }

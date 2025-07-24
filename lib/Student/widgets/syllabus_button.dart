@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../utils/app_design_system.dart';
+import '../utils/theme.dart';
 
 class SyllabusButton extends StatelessWidget {
   final String subjectName;
@@ -13,25 +13,36 @@ class SyllabusButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final textTheme = theme.textTheme;
+
     return ElevatedButton(
       onPressed: onPressed,
       style: ElevatedButton.styleFrom(
-        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+        padding: AppTheme.defaultPadding,
         shape: RoundedRectangleBorder(
-          borderRadius: AppDesignSystem.defaultBorderRadius, // Fixed line
+          borderRadius: BorderRadius.circular(AppTheme.defaultBorderRadius),
         ),
-        backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+        backgroundColor: theme.colorScheme.primaryContainer,
+        foregroundColor: theme.colorScheme.onPrimaryContainer,
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            subjectName,
-            style: Theme.of(
-              context,
-            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w500),
+          Expanded(
+            child: Text(
+              subjectName,
+              style: textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.w500,
+              ),
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
-          const Icon(Icons.picture_as_pdf, color: Colors.red),
+          const SizedBox(width: 8),
+          Icon(
+            Icons.picture_as_pdf,
+            color: AppColors.error, // Using error color for PDF icon for consistency
+          ),
         ],
       ),
     );

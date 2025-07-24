@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import '../models/query_model.dart';
 import '../models/subject_model.dart';
 import '../services/api_service.dart';
-import '../utils/app_design_system.dart';
 import '../utils/theme.dart';
 
 class QueriesScreen extends StatefulWidget {
@@ -54,20 +53,26 @@ class _QueriesScreenState extends State<QueriesScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final textTheme = theme.textTheme;
+
     return Scaffold(
-      appBar: AppDesignSystem.appBar(context, 'My Queries'),
+      appBar: AppBar(
+        title: Text('My Queries', style: textTheme.titleLarge),
+      ),
       body: Container(
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [AppColors.primary.withOpacity(0.05), AppColors.background],
-          ),
+          gradient: AppColors.accentGradient(AppColors.primary),
         ),
         child: _isLoading
             ? const Center(child: CircularProgressIndicator())
             : _errorMessage != null
-            ? Center(child: Text(_errorMessage!))
+            ? Center(
+          child: Text(
+            _errorMessage!,
+            style: textTheme.bodyMedium,
+          ),
+        )
             : RefreshIndicator(
           onRefresh: _loadData,
           child: FutureBuilder<List<Query>>(
@@ -76,8 +81,11 @@ class _QueriesScreenState extends State<QueriesScreen> {
               if (snapshot.hasData) {
                 final queries = snapshot.data!;
                 if (queries.isEmpty) {
-                  return const Center(
-                    child: Text('No queries yet. Ask your first question!'),
+                  return Center(
+                    child: Text(
+                      'No queries yet. Ask your first question!',
+                      style: textTheme.bodyMedium,
+                    ),
                   );
                 }
                 return ListView.builder(
@@ -97,16 +105,22 @@ class _QueriesScreenState extends State<QueriesScreen> {
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showNewQueryDialog(context),
         backgroundColor: AppColors.primary,
-        child: const Icon(Icons.add, color: Colors.white),
+        child: Icon(Icons.add, color: theme.colorScheme.onPrimary),
       ),
     );
   }
-  
+
   Widget _buildQueryCard(BuildContext context, Query query) {
+    final theme = Theme.of(context);
+    final textTheme = theme.textTheme;
+
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
+      elevation: 0,
+      color: AppColors.cardBackground,
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
         onTap: () {},
@@ -115,6 +129,7 @@ class _QueriesScreenState extends State<QueriesScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Subject Chip
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                 decoration: BoxDecoration(
@@ -123,21 +138,24 @@ class _QueriesScreenState extends State<QueriesScreen> {
                 ),
                 child: Text(
                   query.subject,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 12,
+                  style: textTheme.labelMedium?.copyWith(
+                    color: AppColors.textPrimary,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
               ),
               const SizedBox(height: 12),
+
+              // Question
               Text(
                 query.question,
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                style: textTheme.bodyLarge?.copyWith(
                   fontWeight: FontWeight.w600,
                 ),
               ),
               const SizedBox(height: 12),
+
+              // Answer or Pending
               if (query.answer != null) ...[
                 Container(
                   padding: const EdgeInsets.all(12),
@@ -146,7 +164,6 @@ class _QueriesScreenState extends State<QueriesScreen> {
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
                       color: AppColors.primary.withOpacity(0.3),
-                      width: 1,
                     ),
                   ),
                   child: Column(
@@ -162,15 +179,18 @@ class _QueriesScreenState extends State<QueriesScreen> {
                           const SizedBox(width: 8),
                           Text(
                             'Teacher\'s Response',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
+                            style: textTheme.labelMedium?.copyWith(
                               color: AppColors.primary,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
                         ],
                       ),
                       const SizedBox(height: 8),
-                      Text(query.answer!),
+                      Text(
+                        query.answer!,
+                        style: textTheme.bodyMedium,
+                      ),
                     ],
                   ),
                 ),
@@ -178,7 +198,7 @@ class _QueriesScreenState extends State<QueriesScreen> {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: AppColors.lightGrey,
+                    color: AppColors.surface,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Row(
@@ -191,7 +211,7 @@ class _QueriesScreenState extends State<QueriesScreen> {
                       const SizedBox(width: 8),
                       Text(
                         'Waiting for teacher\'s response',
-                        style: TextStyle(
+                        style: textTheme.bodyMedium?.copyWith(
                           color: AppColors.textSecondary,
                           fontStyle: FontStyle.italic,
                         ),
@@ -201,11 +221,12 @@ class _QueriesScreenState extends State<QueriesScreen> {
                 ),
               ],
               const SizedBox(height: 8),
+
+              // Time ago
               Text(
                 query.timeAgo,
-                style: TextStyle(
+                style: textTheme.labelSmall?.copyWith(
                   color: AppColors.textSecondary,
-                  fontSize: 12,
                 ),
               ),
             ],
@@ -218,11 +239,11 @@ class _QueriesScreenState extends State<QueriesScreen> {
   Color _getSubjectColor(String subject) {
     final colors = {
       'Mathematics': AppColors.secondary,
-      'Physics': AppColors.accentBlue,
-      'Chemistry': AppColors.accentPink,
+      'Physics': AppColors.info,
+      'Chemistry': AppColors.facultyColor,
       'Biology': AppColors.success,
       'English': AppColors.primaryLight,
-      'History': AppColors.accentAmber,
+      'History': AppColors.resultsColor,
     };
     return colors[subject] ?? AppColors.primary;
   }
@@ -232,6 +253,8 @@ class _QueriesScreenState extends State<QueriesScreen> {
     final TextEditingController questionController = TextEditingController();
     final GlobalKey<FormState> formKey = GlobalKey<FormState>();
 
+    final theme = Theme.of(context);
+    final textTheme = theme.textTheme;
     final subjects = await _subjectsFuture;
 
     await showDialog(
@@ -239,100 +262,120 @@ class _QueriesScreenState extends State<QueriesScreen> {
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setState) {
-            return AlertDialog(
+            return Dialog(
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
               ),
-              title: const Text('Ask a Question'),
-              content: SingleChildScrollView(
-                child: Form(
-                  key: formKey,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      DropdownButtonFormField<String>(
-                        value: selectedSubjectId,
-                        decoration: InputDecoration(
-                          labelText: 'Select Subject',
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
+              backgroundColor: AppColors.cardBackground,
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'Ask a Question',
+                      style: textTheme.titleLarge,
+                    ),
+                    const SizedBox(height: 16),
+                    Form(
+                      key: formKey,
+                      child: Column(
+                        children: [
+                          DropdownButtonFormField<String>(
+                            value: selectedSubjectId,
+                            decoration: InputDecoration(
+                              labelText: 'Select Subject',
+                              labelStyle: textTheme.labelMedium,
+                            ),
+                            items: subjects.map((subject) {
+                              return DropdownMenuItem(
+                                value: subject.id,
+                                child: Text(
+                                  subject.name,
+                                  style: textTheme.bodyMedium,
+                                ),
+                              );
+                            }).toList(),
+                            validator: (value) =>
+                            value == null ? 'Please select a subject' : null,
+                            onChanged: (value) {
+                              setState(() {
+                                selectedSubjectId = value;
+                              });
+                            },
+                            style: textTheme.bodyMedium,
+                            dropdownColor: AppColors.secondaryBackground,
                           ),
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 12,
+                          const SizedBox(height: 16),
+                          TextFormField(
+                            controller: questionController,
+                            maxLines: 4,
+                            style: textTheme.bodyMedium,
+                            decoration: InputDecoration(
+                              hintText: 'Type your question here...',
+                              hintStyle: textTheme.bodyMedium?.copyWith(
+                                color: AppColors.disabledText,
+                              ),
+                              border: const OutlineInputBorder(),
+                            ),
+                            validator: (value) =>
+                            value == null || value.isEmpty
+                                ? 'Please enter your question'
+                                : null,
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: Text(
+                            'Cancel',
+                            style: textTheme.labelLarge?.copyWith(
+                              color: AppColors.textSecondary,
+                            ),
                           ),
                         ),
-                        items: subjects.map((subject) {
-                          return DropdownMenuItem(
-                            value: subject.id,
-                            child: Text(subject.name),
-                          );
-                        }).toList(),
-                        validator: (value) =>
-                        value == null ? 'Please select a subject' : null,
-                        onChanged: (value) {
-                          setState(() {
-                            selectedSubjectId = value;
-                          });
-                        },
-                      ),
-                      const SizedBox(height: 16),
-                      TextFormField(
-                        controller: questionController,
-                        maxLines: 4,
-                        decoration: InputDecoration(
-                          hintText: 'Type your question here...',
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
+                        const SizedBox(width: 8),
+                        ElevatedButton(
+                          onPressed: () async {
+                            if (formKey.currentState!.validate()) {
+                              try {
+                                await _apiService.submitQuery(
+                                  subjectId: selectedSubjectId!,
+                                  question: questionController.text,
+                                  studentRfid: widget.studentRfid,
+                                );
+                                Navigator.pop(context);
+                                _loadData();
+                              } catch (e) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      'Failed to submit query: $e',
+                                      style: textTheme.bodyMedium,
+                                    ),
+                                    backgroundColor: AppColors.error,
+                                  ),
+                                );
+                              }
+                            }
+                          },
+                          child: Text(
+                            'Submit Question',
+                            style: textTheme.labelLarge?.copyWith(
+                              color: theme.colorScheme.onPrimary,
+                            ),
                           ),
-                          contentPadding: const EdgeInsets.all(16),
                         ),
-                        validator: (value) =>
-                        value == null || value.isEmpty
-                            ? 'Please enter your question'
-                            : null,
-                      ),
-                    ],
-                  ),
+                      ],
+                    ),
+                  ],
                 ),
               ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text('Cancel'),
-                ),
-                ElevatedButton(
-                  onPressed: () async {
-                    if (formKey.currentState!.validate()) {
-                      try {
-                        final newQuery = await _apiService.submitQuery(
-                          subjectId: selectedSubjectId!,
-                          question: questionController.text,
-                          studentRfid: widget.studentRfid
-                        );
-                        Navigator.pop(context);
-                        setState(() {
-                          _queriesFuture = _apiService.getQueries(widget.studentRfid);
-                        });
-                      } catch (e) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('Failed to submit query: $e'),
-                          ),
-                        );
-                      }
-                    }
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: const Text('Submit Question'),
-                ),
-              ],
             );
           },
         );
