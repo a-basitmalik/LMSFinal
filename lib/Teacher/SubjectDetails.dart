@@ -439,6 +439,7 @@ class _SubjectDashboardScreenState extends State<SubjectDashboardScreen> {
               ),
             ),
           ),
+          ],
           const SizedBox(height: 32),
           // Announcements Console Section
           // Announcements Console Section
@@ -525,7 +526,7 @@ class _SubjectDashboardScreenState extends State<SubjectDashboardScreen> {
             ),
           ),
           const SizedBox(height: 24),
-        ],
+
       ],
     );
   }

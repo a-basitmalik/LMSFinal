@@ -520,16 +520,28 @@ class _TeacherHomeScreenState extends State<TeacherHomeScreen> {
             color: Colors.transparent,
             child: InkWell(
               borderRadius: BorderRadius.circular(16),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => SubjectDashboardScreen(
-                      subject: subject,
-                      teacherId: widget.userId,
-                    ),
+              onTap: () {final subjectDetail = {
+                'subject_id': subject['subject_id'] ?? 'NA',
+                'name': subject['subject_name'] ?? 'NA',
+                'code': subject['subject_code'] ?? 'NA',
+                'color': _getColorForSubject(subject['subject_id'] ?? 0),
+                'icon': _getIconForSubject(subject['subject_name'] ?? ''),
+                'students': subject['student_count'] ?? 0,
+                // 'classes': _parseClasses(subject['classes'] ?? ''),
+                // 'schedule': _parseSchedule(subject['schedule'] ?? []),
+                'year': subject['year'] ?? 'NA',
+                'room': subject['room'] ?? 'NA',
+              };
+
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => SubjectDashboardScreen(
+                    subject: subjectDetail,
+                    teacherId: widget.userId,
                   ),
-                );
+                ),
+              );
               },
               splashColor: Colors.white.withOpacity(0.2),
               child: Padding(
