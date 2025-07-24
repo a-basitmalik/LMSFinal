@@ -283,7 +283,7 @@ class _AdminSingleStudentViewState extends State<AdminSingleStudentView> {
       setState(() {
         if (data is Map && data.isNotEmpty) {
           fines = "FINANCIAL\n" +
-              data.entries.map((e) => "${e.key}: ${e.value.toString()}Rs").join("\n");
+              data.entries.map((e) => "${e.key}: ${e.value.toString()}").join("\n");
         } else {
           fines = "No fines or dues pending.";
         }
@@ -550,48 +550,58 @@ class _AdminSingleStudentViewState extends State<AdminSingleStudentView> {
                               Row(
                                 children: [
                                   Icon(
-                                    _getComplaintIcon(complaint['status']),
-                                    color: _getComplaintColor(complaint['status'], colors),
+                                    Icons.report_problem_outlined,
+                                    color: Colors.orange,
                                     size: 16,
                                   ),
                                   SizedBox(width: 8),
-                                  Text(
-                                    complaint['title'],
-                                    style: AdminTextStyles.cardTitle.copyWith(
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  Spacer(),
-                                  Text(
-                                    complaint['status'].toString().replaceAll('_', ' '),
-                                    style: AdminTextStyles.cardSubtitle.copyWith(
-                                      color: _getComplaintColor(complaint['status'], colors),
+                                  Expanded(
+                                    child: Text(
+                                      complaint['title'] ?? 'No title',
+                                      style: AdminTextStyles.cardTitle.copyWith(
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                     ),
                                   ),
                                 ],
                               ),
                               SizedBox(height: 4),
                               Text(
-                                complaint['description'],
+                                complaint['description'] ?? 'No description',
                                 style: AdminTextStyles.cardSubtitle.copyWith(
                                   color: AdminColors.secondaryText,
                                 ),
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
                               ),
+                              if (complaint['subject_name'] != null) ...[
+                                SizedBox(height: 4),
+                                Text(
+                                  'Subject: ${complaint['subject_name']}',
+                                  style: AdminTextStyles.cardSubtitle.copyWith(
+                                    color: AdminColors.disabledText,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
                               SizedBox(height: 4),
                               Text(
-                                '${DateFormat('MMM dd, yyyy').format(DateTime.parse(complaint['created_at']))}',
+                                DateFormat('MMM dd, yyyy').format(
+                                  DateFormat("EEE, dd MMM yyyy HH:mm:ss 'GMT'", 'en_US')
+                                      .parseUtc(complaint['created_at']),
+                                ),
                                 style: AdminTextStyles.cardSubtitle.copyWith(
                                   color: AdminColors.disabledText,
                                   fontSize: 12,
                                 ),
                               ),
+
                             ],
                           ),
                         )),
                       SizedBox(height: 10),
-                      Align(
+
+                  Align(
                         alignment: Alignment.centerRight,
                         child: TextButton.icon(
                           onPressed: () => _showAddComplaintModal(context),

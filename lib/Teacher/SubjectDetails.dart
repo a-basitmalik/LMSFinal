@@ -16,6 +16,7 @@ import '../Teacher//AddPlannerScreen.dart';
 import '../admin/themes/theme_colors.dart';
 import '../admin/themes/theme_text_styles.dart';
 import 'AnnouncementsScreen.dart';
+import 'ComplaintsScreen.dart';
 import 'SubjectAssignments.dart';
 import 'SubjectQueries.dart';
 import 'SubjectResults.dart';
@@ -347,37 +348,7 @@ class _SubjectDashboardScreenState extends State<SubjectDashboardScreen> {
         ),
         const SizedBox(height: 24),
 
-        const SizedBox(height: 24),
-        _buildSectionHeader(
-          icon: Icons.announcement,
-          title: 'Annoucement',
-          color: subjectColor,
-          onTap: () => _navigateToScreen(6),
-        ),
-        const SizedBox(height: 16),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Column(
-            children: [
-              _buildResourceItem(
-                icon: Icons.note,
-                title: 'View Annoucements',
-                subtitle: 'See recent Announcements',
-                color: TeacherColors.successAccent,
-                onTap: () => _navigateToScreen(6),
-              ),
-              const SizedBox(height: 12),
-              _buildResourceItem(
-                icon: Icons.announcement,
-                title: 'New Annoucement',
-                subtitle: 'Add announcement',
-                color: TeacherColors.primaryAccent,
-                onTap: () => _navigateToScreen(6),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 24),
+
 
         // Lesson Planner Section
         _buildSectionHeader(
@@ -434,10 +405,6 @@ class _SubjectDashboardScreenState extends State<SubjectDashboardScreen> {
         ),
         const SizedBox(height: 24),
 
-        // Assignments Section
-
-
-        // Recent Messages Section
         // Recent Queries Section
         _buildSectionHeader(
           icon: Icons.question_answer,
@@ -473,8 +440,423 @@ class _SubjectDashboardScreenState extends State<SubjectDashboardScreen> {
             ),
           ),
           const SizedBox(height: 32),
+          // Announcements Console Section
+          // Announcements Console Section
+          _buildSectionHeader(
+            icon: Icons.announcement,
+            title: 'ANNOUNCEMENT CONSOLE',
+            color: TeacherColors.infoAccent,
+          ),
+          const SizedBox(height: 16),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: GlassCard(
+              borderRadius: 16,
+              borderColor: TeacherColors.infoAccent.withOpacity(0.3),
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  children: [
+                    // _buildAnimatedButton(
+                    //   icon: Icons.add_rounded,
+                    //   label: 'CREATE NEW ANNOUNCEMENT',
+                    //   color: TeacherColors.infoAccent,
+                    //   onTap: () => _showAddAnnouncementModal(context),
+                    // ),
+                    // const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildConsoleOption(
+                            icon: Icons.campaign_rounded,
+                            label: 'View',
+                            subLabel: 'Announcements',
+                            color: TeacherColors.infoAccent,
+                            onTap: () => _navigateToAnnouncementsScreen(),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _buildConsoleOption(
+                            icon: Icons.history_rounded,
+                            label: 'Call',
+                            subLabel: 'History',
+                            color: TeacherColors.infoAccent,
+                            onTap: () => _navigateToCallHistoryScreen(),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    _buildAnimatedButton(
+                      icon: Icons.add_rounded,
+                      label: 'CREATE NEW ANNOUNCEMENT',
+                      color: TeacherColors.infoAccent,
+                      onTap: () => _showAddAnnouncementModal(context),
+                    ),
+
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildConsoleOption(
+                            icon: Icons.report_problem,
+                            label: 'Add',
+                            subLabel: 'Complaint',
+                            color: TeacherColors.infoAccent,
+                            onTap: () => _showAddComplaintModal(context),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _buildConsoleOption(
+                            icon: Icons.list_alt,
+                            label: 'View',
+                            subLabel: 'Complaints',
+                            color: TeacherColors.infoAccent,
+                            onTap: () => _navigateToComplaintsScreen(),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 24),
         ],
       ],
+    );
+  }
+
+  void _navigateToComplaintsScreen() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ComplaintsScreen(subjectId: widget.subject['subject_id']),
+      ),
+    );
+  }
+  void _showAddComplaintModal(BuildContext context) {
+    String? selectedStudentId;
+    final titleController = TextEditingController();
+    final descriptionController = TextEditingController();
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Theme.of(context).scaffoldBackgroundColor,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Add Student Complaint',
+                style: TeacherTextStyles.headerTitle.copyWith(fontSize: 22),
+              ),
+              const SizedBox(height: 20),
+
+              // Student Dropdown
+              FutureBuilder<List<Map<String, dynamic>>>(
+                future: _fetchStudentsForSubject(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const CircularProgressIndicator();
+                  }
+                  if (snapshot.hasError) {
+                    return Text('Error loading students');
+                  }
+                  final students = snapshot.data ?? [];
+
+                  return DropdownButtonFormField<String>(
+                    decoration: InputDecoration(
+                      labelText: 'Select Student',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    items: students.map((student) {
+                      return DropdownMenuItem<String>(
+                        value: student['rfid'],
+                        child: Text('${student['name']} (${student['rfid']})'),
+                      );
+                    }).toList(),
+                    onChanged: (value) {
+                      selectedStudentId = value;
+                    },
+                    validator: (value) => value == null ? 'Please select a student' : null,
+                  );
+                },
+              ),
+              const SizedBox(height: 16),
+
+              // Title
+              TextField(
+                controller: titleController,
+                decoration: InputDecoration(
+                  labelText: 'Title',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // Description
+              TextField(
+                controller: descriptionController,
+                maxLines: 4,
+                decoration: InputDecoration(
+                  labelText: 'Description',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+
+              // Submit Button
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.pop(context),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: Text('Cancel', style: TeacherTextStyles.primaryButton),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        if (selectedStudentId == null ||
+                            titleController.text.isEmpty ||
+                            descriptionController.text.isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('Please fill all fields')),
+                          );
+                          return;
+                        }
+
+                        try {
+                          await _submitComplaint(
+                            selectedStudentId!,
+                            titleController.text,
+                            descriptionController.text,
+                            widget.subject['subject_id'],
+                          );
+                          Navigator.pop(context);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('Complaint submitted successfully')),
+                          );
+                        } catch (e) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('Failed to submit complaint: $e')),
+                          );
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: TeacherColors.infoAccent,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: Text('Submit', style: TeacherTextStyles.primaryButton),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<List<Map<String, dynamic>>> _fetchStudentsForSubject() async {
+    // Implement API call to fetch students for this subject
+    // Example:
+    // return await StudentService.getStudentsForSubject(widget.subject['subject_id']);
+    return [
+      {'rfid': '123', 'name': 'John Doe'},
+      {'rfid': '456', 'name': 'Jane Smith'},
+    ];
+  }
+
+  Future<void> _submitComplaint(
+      String rfid,
+      String title,
+      String description,
+      String subjectId,
+      ) async {
+    // Implement API call to submit complaint
+    // Example:
+    // await ComplaintService.addComplaint(
+    //   rfid: rfid,
+    //   title: title,
+    //   description: description,
+    //   complaintBy: 'teacher',
+    //   subjectId: subjectId,
+    // );
+  }
+
+  void _navigateToAnnouncementsScreen() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => AnnouncementScreen(subjectId: widget.subject['subject_id']),
+      ),
+    );
+  }
+
+  void _navigateToCallHistoryScreen() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => AnnouncementScreen(subjectId: widget.subject['subject_id']),
+      ),
+    );
+  }
+  Widget _buildConsoleOption({
+    required IconData icon,
+    required String label,
+    required String subLabel,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: color.withOpacity(0.3), width: 1),
+        ),
+        child: Column(
+          children: [
+            Icon(icon, color: color, size: 28),
+            const SizedBox(height: 8),
+            Text(label, style: TeacherTextStyles.cardSubtitle.copyWith(color: color)),
+            Text(subLabel, style: TeacherTextStyles.cardSubtitle.copyWith(color: color)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showAddAnnouncementModal(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Theme.of(context).scaffoldBackgroundColor,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'New Announcement',
+                style: TeacherTextStyles.headerTitle.copyWith(fontSize: 22),
+              ),
+              const SizedBox(height: 20),
+              TextField(
+                decoration: InputDecoration(
+                  labelText: 'Title',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                maxLines: 4,
+                decoration: InputDecoration(
+                  labelText: 'Description',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              InkWell(
+                onTap: () {
+                  // Handle file attachment
+                },
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: TeacherColors.cardBorder),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.attach_file, color: TeacherColors.infoAccent),
+                      const SizedBox(width: 10),
+                      Text('Add Attachment', style: TeacherTextStyles.cardSubtitle),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.pop(context),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: Text('Cancel', style: TeacherTextStyles.primaryButton),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        // Handle announcement creation
+                        Navigator.pop(context);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: TeacherColors.infoAccent,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: Text('Publish', style: TeacherTextStyles.primaryButton),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
