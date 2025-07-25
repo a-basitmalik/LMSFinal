@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:http/http.dart' as http;
@@ -30,6 +33,353 @@ class _SubjectAssignmentsScreenState extends State<SubjectAssignmentsScreen> {
   final TextEditingController _pointsController = TextEditingController();
   DateTime? _dueDate;
   List<Map<String, dynamic>> _attachments = [];
+
+  final Dio _dio = Dio();
+  List<File> _selectedFiles = [];
+  List<Map<String, dynamic>> _uploadedAttachments = [];
+
+  Future<void> _pickFiles() async {
+    final result = await FilePicker.platform.pickFiles(
+      allowMultiple: true,
+      type: FileType.any,
+    );
+
+    if (result != null) {
+      setState(() {
+        _selectedFiles = result.paths.map((path) => File(path!)).toList();
+      });
+    }
+  }
+
+  Future<void> _uploadFiles() async {
+    if (_selectedFiles.isEmpty) return;
+
+    setState(() {
+      _uploadedAttachments = [];
+    });
+
+    for (var file in _selectedFiles) {
+      try {
+        String fileName = file.path
+            .split('/')
+            .last;
+        FormData formData = FormData.fromMap({
+          "file": await MultipartFile.fromFile(
+            file.path,
+            filename: fileName,
+          ),
+        });
+
+        final response = await _dio.post(
+          'http://193.203.162.232:5050/teacher/api/assignments/upload',
+          data: formData,
+        );
+
+        if (response.statusCode == 200) {
+          setState(() {
+            _uploadedAttachments.add({
+              'file_name': response.data['file_name'],
+              'file_path': response.data['file_path'],
+            });
+          });
+        }
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to upload ${file.path
+                .split('/')
+                .last}'),
+            backgroundColor: TeacherColors.dangerAccent,
+          ),
+        );
+      }
+    }
+
+    setState(() {
+      _selectedFiles = [];
+    });
+  }
+
+  Widget _buildFileAttachments() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 16),
+        Text(
+          'Attachments:',
+          style: TeacherTextStyles.cardSubtitle.copyWith(
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 8),
+
+        // Selected files to upload
+        if (_selectedFiles.isNotEmpty) ...[
+          ..._selectedFiles.map((file) =>
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Row(
+                  children: [
+                    Icon(Icons.insert_drive_file, size: 20,
+                        color: TeacherColors.secondaryText),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        file.path
+                            .split('/')
+                            .last,
+                        style: TeacherTextStyles.cardSubtitle,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    IconButton(
+                      icon: Icon(Icons.close, size: 18,
+                          color: TeacherColors.dangerAccent),
+                      onPressed: () =>
+                          setState(() =>
+                              _selectedFiles.remove(file)),
+                    ),
+                  ],
+                ),
+              )).toList(),
+          ElevatedButton(
+            onPressed: _uploadFiles,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: TeacherColors.primaryAccent,
+            ),
+            child: Text(
+              'Upload Files',
+              style: TeacherTextStyles.primaryButton,
+            ),
+          ),
+          const SizedBox(height: 16),
+        ],
+
+        // Uploaded attachments
+        if (_uploadedAttachments.isNotEmpty) ...[
+          ..._uploadedAttachments.map((attachment) =>
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Row(
+                  children: [
+                    Icon(Icons.attach_file, size: 20,
+                        color: TeacherColors.infoAccent),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        attachment['file_name'],
+                        style: TeacherTextStyles.cardSubtitle,
+                      ),
+                    ),
+                    IconButton(
+                      icon: Icon(Icons.check_circle, size: 18,
+                          color: TeacherColors.successAccent),
+                      onPressed: null,
+                    ),
+                  ],
+                ),
+              )).toList(),
+        ],
+
+        // Add files button
+        OutlinedButton(
+          onPressed: _pickFiles,
+          style: OutlinedButton.styleFrom(
+            side: BorderSide(color: TeacherColors.cardBorder),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.add, size: 18, color: TeacherColors.primaryAccent),
+              const SizedBox(width: 8),
+              Text(
+                'Add Files',
+                style: TeacherTextStyles.cardSubtitle,
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildAssignmentDialog() {
+    return AlertDialog(
+      backgroundColor: TeacherColors.secondaryBackground,
+      title: Text(
+        'Create New Assignment',
+        style: TeacherTextStyles.sectionHeader,
+      ),
+      content: SingleChildScrollView(
+        child: Form(
+          key: _formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextFormField(
+                controller: _titleController,
+                style: TeacherTextStyles.listItemTitle,
+                decoration: InputDecoration(
+                  labelText: 'Title',
+                  labelStyle: TeacherTextStyles.cardSubtitle,
+                  border: OutlineInputBorder(
+                    borderSide: BorderSide(color: TeacherColors.cardBorder),
+                  ),
+                ),
+                validator: (value) =>
+                value?.isEmpty ?? true
+                    ? 'Title is required'
+                    : null,
+              ),
+              const SizedBox(height: 16),
+
+              TextFormField(
+                controller: _descriptionController,
+                style: TeacherTextStyles.listItemTitle,
+                decoration: InputDecoration(
+                  labelText: 'Description',
+                  labelStyle: TeacherTextStyles.cardSubtitle,
+                  border: OutlineInputBorder(
+                    borderSide: BorderSide(color: TeacherColors.cardBorder),
+                  ),
+                ),
+                maxLines: 3,
+              ),
+              const SizedBox(height: 16),
+
+              TextFormField(
+                controller: _pointsController,
+                style: TeacherTextStyles.listItemTitle,
+                decoration: InputDecoration(
+                  labelText: 'Total Points',
+                  labelStyle: TeacherTextStyles.cardSubtitle,
+                  border: OutlineInputBorder(
+                    borderSide: BorderSide(color: TeacherColors.cardBorder),
+                  ),
+                ),
+                keyboardType: TextInputType.number,
+                validator: (value) =>
+                value?.isEmpty ?? true
+                    ? 'Points are required'
+                    : null,
+              ),
+              const SizedBox(height: 16),
+
+              ListTile(
+                title: Text(
+                  _dueDate == null
+                      ? 'Select Due Date'
+                      : 'Due: ${DateFormat('MMM dd, yyyy - hh:mm a').format(
+                      _dueDate!)}',
+                  style: TeacherTextStyles.listItemTitle,
+                ),
+                trailing: Icon(
+                  Icons.calendar_today,
+                  color: TeacherColors.primaryAccent,
+                ),
+                onTap: _pickDueDate,
+              ),
+              const SizedBox(height: 16),
+
+              _buildFileAttachments(),
+              const SizedBox(height: 24),
+
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: TeacherColors.dangerAccent,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _showAssignmentDialog = false;
+                        _titleController.clear();
+                        _descriptionController.clear();
+                        _pointsController.clear();
+                        _dueDate = null;
+                        _selectedFiles = [];
+                        _uploadedAttachments = [];
+                      });
+                    },
+                    child: Text(
+                      'Cancel',
+                      style: TeacherTextStyles.primaryButton,
+                    ),
+                  ),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: TeacherColors.successAccent,
+                    ),
+                    onPressed: _submitAssignment,
+                    child: Text(
+                      'Create',
+                      style: TeacherTextStyles.primaryButton,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _submitAssignment() async {
+    if (!_formKey.currentState!.validate() || _dueDate == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Please fill all required fields'),
+          backgroundColor: TeacherColors.warningAccent,
+        ),
+      );
+      return;
+    }
+
+    try {
+      final response = await http.post(
+        Uri.parse('http://193.203.162.232:5050/student/api/subjects/${widget
+            .subject['subject_id']}/assignments'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({
+          'title': _titleController.text,
+          'description': _descriptionController.text,
+          'due_date': _dueDate?.toIso8601String(),
+          'total_points': int.tryParse(_pointsController.text) ?? 100,
+          'attachments': _uploadedAttachments,
+        }),
+      );
+
+      if (response.statusCode == 201) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Assignment created successfully'),
+            backgroundColor: TeacherColors.successAccent,
+          ),
+        );
+        setState(() {
+          _showAssignmentDialog = false;
+          _titleController.clear();
+          _descriptionController.clear();
+          _pointsController.clear();
+          _dueDate = null;
+          _selectedFiles = [];
+          _uploadedAttachments = [];
+        });
+        await _fetchAssignments();
+      } else {
+        throw Exception('Failed to create assignment: ${response.statusCode}');
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to create assignment: ${e.toString()}'),
+          backgroundColor: TeacherColors.dangerAccent,
+        ),
+      );
+    }
+  }
 
   @override
   void initState() {
@@ -160,99 +510,99 @@ class _SubjectAssignmentsScreenState extends State<SubjectAssignmentsScreen> {
     }
   }
 
-  Widget _buildAssignmentDialog() {
-    return AlertDialog(
-      backgroundColor: TeacherColors.secondaryBackground,
-      title: Text(
-        'Create New Assignment',
-        style: TeacherTextStyles.sectionHeader,
-      ),
-      content: SingleChildScrollView(
-        child: Form(
-          key: _formKey,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextFormField(
-                controller: _titleController,
-                style: TeacherTextStyles.listItemTitle,
-                decoration: InputDecoration(
-                  labelText: 'Title',
-                  labelStyle: TeacherTextStyles.cardSubtitle,
-                ),
-                validator: (value) =>
-                value?.isEmpty ?? true ? 'Title is required' : null,
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _descriptionController,
-                style: TeacherTextStyles.listItemTitle,
-                decoration: InputDecoration(
-                  labelText: 'Description',
-                  labelStyle: TeacherTextStyles.cardSubtitle,
-                ),
-                maxLines: 3,
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _pointsController,
-                style: TeacherTextStyles.listItemTitle,
-                decoration: InputDecoration(
-                  labelText: 'Total Points',
-                  labelStyle: TeacherTextStyles.cardSubtitle,
-                ),
-                keyboardType: TextInputType.number,
-                validator: (value) =>
-                value?.isEmpty ?? true ? 'Points are required' : null,
-              ),
-              const SizedBox(height: 12),
-              ListTile(
-                title: Text(
-                  _dueDate == null
-                      ? 'Select Due Date'
-                      : 'Due: ${DateFormat('MMM dd, yyyy - hh:mm a').format(
-                      _dueDate!)}',
-                  style: TeacherTextStyles.listItemTitle,
-                ),
-                trailing: Icon(
-                  Icons.calendar_today,
-                  color: TeacherColors.primaryAccent,
-                ),
-                onTap: _pickDueDate,
-              ),
-              const SizedBox(height: 20),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: TeacherColors.dangerAccent,
-                    ),
-                    onPressed: () =>
-                        setState(() => _showAssignmentDialog = false),
-                    child: Text(
-                      'Cancel',
-                      style: TeacherTextStyles.primaryButton,
-                    ),
-                  ),
-                  ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: TeacherColors.successAccent,
-                    ),
-                    onPressed: _createAssignment,
-                    child: Text(
-                      'Create',
-                      style: TeacherTextStyles.primaryButton,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
+  // Widget _buildAssignmentDialog() {
+  //   return AlertDialog(
+  //     backgroundColor: TeacherColors.secondaryBackground,
+  //     title: Text(
+  //       'Create New Assignment',
+  //       style: TeacherTextStyles.sectionHeader,
+  //     ),
+  //     content: SingleChildScrollView(
+  //       child: Form(
+  //         key: _formKey,
+  //         child: Column(
+  //           mainAxisSize: MainAxisSize.min,
+  //           children: [
+  //             TextFormField(
+  //               controller: _titleController,
+  //               style: TeacherTextStyles.listItemTitle,
+  //               decoration: InputDecoration(
+  //                 labelText: 'Title',
+  //                 labelStyle: TeacherTextStyles.cardSubtitle,
+  //               ),
+  //               validator: (value) =>
+  //               value?.isEmpty ?? true ? 'Title is required' : null,
+  //             ),
+  //             const SizedBox(height: 12),
+  //             TextFormField(
+  //               controller: _descriptionController,
+  //               style: TeacherTextStyles.listItemTitle,
+  //               decoration: InputDecoration(
+  //                 labelText: 'Description',
+  //                 labelStyle: TeacherTextStyles.cardSubtitle,
+  //               ),
+  //               maxLines: 3,
+  //             ),
+  //             const SizedBox(height: 12),
+  //             TextFormField(
+  //               controller: _pointsController,
+  //               style: TeacherTextStyles.listItemTitle,
+  //               decoration: InputDecoration(
+  //                 labelText: 'Total Points',
+  //                 labelStyle: TeacherTextStyles.cardSubtitle,
+  //               ),
+  //               keyboardType: TextInputType.number,
+  //               validator: (value) =>
+  //               value?.isEmpty ?? true ? 'Points are required' : null,
+  //             ),
+  //             const SizedBox(height: 12),
+  //             ListTile(
+  //               title: Text(
+  //                 _dueDate == null
+  //                     ? 'Select Due Date'
+  //                     : 'Due: ${DateFormat('MMM dd, yyyy - hh:mm a').format(
+  //                     _dueDate!)}',
+  //                 style: TeacherTextStyles.listItemTitle,
+  //               ),
+  //               trailing: Icon(
+  //                 Icons.calendar_today,
+  //                 color: TeacherColors.primaryAccent,
+  //               ),
+  //               onTap: _pickDueDate,
+  //             ),
+  //             const SizedBox(height: 20),
+  //             Row(
+  //               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+  //               children: [
+  //                 ElevatedButton(
+  //                   style: ElevatedButton.styleFrom(
+  //                     backgroundColor: TeacherColors.dangerAccent,
+  //                   ),
+  //                   onPressed: () =>
+  //                       setState(() => _showAssignmentDialog = false),
+  //                   child: Text(
+  //                     'Cancel',
+  //                     style: TeacherTextStyles.primaryButton,
+  //                   ),
+  //                 ),
+  //                 ElevatedButton(
+  //                   style: ElevatedButton.styleFrom(
+  //                     backgroundColor: TeacherColors.successAccent,
+  //                   ),
+  //                   onPressed: _createAssignment,
+  //                   child: Text(
+  //                     'Create',
+  //                     style: TeacherTextStyles.primaryButton,
+  //                   ),
+  //                 ),
+  //               ],
+  //             ),
+  //           ],
+  //         ),
+  //       ),
+  //     ),
+  //   );
+  // }
 
   Widget _buildFloatingActionButton() {
     return SpeedDial(
@@ -450,53 +800,94 @@ class _SubjectAssignmentsScreenState extends State<SubjectAssignmentsScreen> {
           borderRadius: BorderRadius.vertical(bottom: Radius.circular(16)),
         ),
       ),
-      body: Stack(
+      body: Column(
         children: [
-          if (isLoading)
-            Center(
-              child: CircularProgressIndicator(
-                color: TeacherColors.primaryAccent,
-              ),
-            )
-          else
-            if (errorMessage.isNotEmpty)
-              Center(
-                child: Text(
-                  errorMessage,
-                  style: TeacherTextStyles.cardSubtitle.copyWith(
-                    color: TeacherColors.dangerAccent,
-                  ),
+          // Glass Card Create Assignment Button at Top
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: GestureDetector(
+              onTap: () => setState(() => _showAssignmentDialog = true),
+              child: Container(
+                decoration: TeacherColors.glassDecoration(
+                  borderRadius: 16,
+                  borderColor: TeacherColors.assignmentColor.withOpacity(0.3),
                 ),
-              )
-            else
-              if (assignments.isEmpty)
-                Center(
-                  child: Text(
-                    'No assignments yet',
-                    style: TeacherTextStyles.cardSubtitle,
-                  ),
-                )
-              else
-                RefreshIndicator(
-                  onRefresh: _fetchAssignments,
-                  color: TeacherColors.assignmentColor,
-                  child: ListView.builder(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: assignments.length,
-                    itemBuilder: (context, index) =>
-                        _buildAssignmentCard(
-                          assignments[index],
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.add_circle_outline,
+                        color: TeacherColors.assignmentColor,
+                        size: 24,
+                      ),
+                      const SizedBox(width: 12),
+                      Text(
+                        'CREATE NEW ASSIGNMENT',
+                        style: TeacherTextStyles.sectionHeader.copyWith(
+                          color: TeacherColors.assignmentColor,
+                          fontSize: 16,
                         ),
+                      ),
+                    ],
                   ),
                 ),
-          if (_showAssignmentDialog) _buildAssignmentDialog(),
+              ),
+            ),
+          ),
+
+          // Main Content Stack inside Expanded
+          Expanded(
+            child: Stack(
+              children: [
+                if (isLoading)
+                  Center(
+                    child: CircularProgressIndicator(
+                      color: TeacherColors.primaryAccent,
+                    ),
+                  )
+                else
+                  if (errorMessage.isNotEmpty)
+                    Center(
+                      child: Text(
+                        errorMessage,
+                        style: TeacherTextStyles.cardSubtitle.copyWith(
+                          color: TeacherColors.dangerAccent,
+                        ),
+                      ),
+                    )
+                  else
+                    if (assignments.isEmpty)
+                      Center(
+                        child: Text(
+                          'No assignments yet',
+                          style: TeacherTextStyles.cardSubtitle,
+                        ),
+                      )
+                    else
+                      RefreshIndicator(
+                        onRefresh: _fetchAssignments,
+                        color: TeacherColors.assignmentColor,
+                        child: ListView.builder(
+                          padding: const EdgeInsets.all(16),
+                          itemCount: assignments.length,
+                          itemBuilder: (context, index) =>
+                              _buildAssignmentCard(assignments[index]),
+                        ),
+                      ),
+
+                if (_showAssignmentDialog) _buildAssignmentDialog(),
+              ],
+            ),
+          ),
         ],
       ),
       floatingActionButton: _buildFloatingActionButton(),
     );
   }
 }
-class AssignmentSubmissionsScreen extends StatefulWidget {
+  class AssignmentSubmissionsScreen extends StatefulWidget {
   final dynamic assignment;
   final Color subjectColor;
   final String baseUrl;
