@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import '../../Teacher/themes/theme_extensions.dart';
+import '../../Teacher/themes/theme_colors.dart';
+import '../../Teacher/themes/theme_text_styles.dart';
 import '../services/api_service.dart';
 import '../screens/chat_screen.dart';
-import '../utils/app_design_system.dart';
 import '../widgets/base_screen.dart';
-import '../utils/theme.dart';
 
 class ChatRoomsScreen extends StatefulWidget {
   final String rfid;
@@ -34,10 +35,8 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
 
     try {
       final subjects = await _apiService.getSubjectsByStudentRfid(widget.rfid);
-      print('API Response Subjects: $subjects');
 
       if (subjects == null || subjects.isEmpty) {
-        print('No subjects received from API');
         setState(() {
           _chatRoomsFuture = Future.value([]);
           _isLoading = false;
@@ -49,8 +48,6 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
       final rooms = await Future.wait(subjects.map((subject) async {
         final unreadCount = await _apiService.getUnreadCount(
             widget.rfid, subject.id.toString());
-        print('Unread count for ${subject.name}: $unreadCount');
-
         return {
           'id': subject.id,
           'name': subject.name,
@@ -61,8 +58,6 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
           'instructor': subject.instructor,
         };
       }));
-
-      print('Created rooms: $rooms');
 
       // Add general chat with its unread count
       final generalUnreadCount = await _apiService.getUnreadCount(
@@ -82,7 +77,6 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
         _isLoading = false;
       });
     } catch (e) {
-      print('Error loading chat rooms: $e');
       setState(() {
         _errorMessage = 'Failed to load chat rooms. Please try again.';
         _isLoading = false;
@@ -93,30 +87,54 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return BaseScreen(
-      title: 'Chat Rooms',
+    final colors = context.teacherColors;
+    final textStyles = context.teacherTextStyles;
+
+    return Scaffold(
+      backgroundColor: TeacherColors.primaryBackground,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        title: Text(
+          'CHAT ROOMS',
+          style: TeacherTextStyles.sectionHeader,
+        ),
+        centerTitle: true,
+        iconTheme: IconThemeData(color: TeacherColors.primaryText),
+      ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? Center(
+        child: CircularProgressIndicator(
+          valueColor: AlwaysStoppedAnimation<Color>(TeacherColors.primaryAccent),
+        ),
+      )
           : _errorMessage != null
           ? Center(
         child: Text(
           _errorMessage!,
-          style: Theme.of(context).textTheme.bodyMedium,
+          style: TeacherTextStyles.cardSubtitle.copyWith(
+            color: TeacherColors.dangerAccent,
+          ),
         ),
       )
           : RefreshIndicator(
         onRefresh: _loadChatRooms,
+        backgroundColor: TeacherColors.primaryAccent.withOpacity(0.2),
+        color: TeacherColors.primaryAccent,
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'General Chat',
-                style: Theme.of(context).textTheme.sectionHeader,
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                child: Text(
+                  'General Chat',
+                  style: TeacherTextStyles.sectionHeader,
+                ),
               ),
               Padding(
-                padding: AppTheme.defaultPadding,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: FutureBuilder<List<Map<String, dynamic>>>(
                   future: _chatRoomsFuture,
                   builder: (context, snapshot) {
@@ -130,12 +148,15 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
                   },
                 ),
               ),
-              Text(
-                'Subject Chats',
-                style: Theme.of(context).textTheme.sectionHeader,
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
+                child: Text(
+                  'Subject Chats',
+                  style: TeacherTextStyles.sectionHeader,
+                ),
               ),
               Padding(
-                padding: AppTheme.defaultPadding,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: FutureBuilder<List<Map<String, dynamic>>>(
                   future: _chatRoomsFuture,
                   builder: (context, snapshot) {
@@ -146,12 +167,10 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
 
                       if (subjectRooms.isEmpty) {
                         return Padding(
-                          padding: AppTheme.defaultPadding,
+                          padding: const EdgeInsets.all(16),
                           child: Text(
                             'No subjects enrolled',
-                            style: Theme.of(context)
-                                .textTheme
-                                .bodyMedium,
+                            style: TeacherTextStyles.cardSubtitle,
                           ),
                         );
                       }
@@ -176,43 +195,48 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
 
   Widget _buildGeneralChatCard(
       BuildContext context, Map<String, dynamic> generalRoom) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: AppTheme.defaultSpacing),
-      shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppTheme.defaultBorderRadius)),
-      elevation: 0,
+    final colors = context.teacherColors;
+    final textStyles = context.teacherTextStyles;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: TeacherColors.glassDecoration(),
       child: InkWell(
-        borderRadius: BorderRadius.circular(AppTheme.defaultBorderRadius),
+        borderRadius: BorderRadius.circular(12),
         onTap: () => _navigateToChatScreen(context, generalRoom),
         child: Padding(
-          padding: AppTheme.defaultPadding,
+          padding: const EdgeInsets.all(16),
           child: Row(
             children: [
               Container(
-                padding: AppTheme.defaultPadding,
+                padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: AppColors.primaryLight,
+                  color: TeacherColors.primaryAccent.withOpacity(0.1),
                   shape: BoxShape.circle,
+                  border: Border.all(
+                    color: TeacherColors.primaryAccent.withOpacity(0.3),
+                    width: 1.5,
+                  ),
                 ),
                 child: Icon(
                   Icons.people,
-                  color: AppColors.textPrimary,
-                  size: AppTheme.defaultIconSize,
+                  color: TeacherColors.primaryAccent,
+                  size: 24,
                 ),
               ),
-              const SizedBox(width: AppTheme.defaultSpacing),
+              const SizedBox(width: 16),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       generalRoom['name'],
-                      style: Theme.of(context).textTheme.cardTitle,
+                      style: TeacherTextStyles.cardTitle,
                     ),
                     const SizedBox(height: 4),
                     Text(
                       generalRoom['lastMessage'],
-                      style: Theme.of(context).textTheme.bodyMedium,
+                      style: TeacherTextStyles.cardSubtitle,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -220,17 +244,17 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
                 ),
               ),
               if (generalRoom['unreadCount'] > 0) ...[
-                const SizedBox(width: AppTheme.defaultSpacing / 2),
+                const SizedBox(width: 8),
                 Container(
                   padding: const EdgeInsets.all(6),
-                  decoration: const BoxDecoration(
-                    color: AppColors.error,
+                  decoration: BoxDecoration(
+                    color: TeacherColors.dangerAccent,
                     shape: BoxShape.circle,
                   ),
                   child: Text(
                     generalRoom['unreadCount'].toString(),
-                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: AppColors.textPrimary,
+                    style: TeacherTextStyles.cardSubtitle.copyWith(
+                      color: TeacherColors.primaryText,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -245,74 +269,76 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
 
   Widget _buildSubjectChatCard(
       BuildContext context, Map<String, dynamic> room) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: AppTheme.defaultSpacing),
-      child: Card(
-        margin: EdgeInsets.zero,
-        shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppTheme.defaultBorderRadius)),
-        elevation: 0,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(AppTheme.defaultBorderRadius),
-          onTap: () => _navigateToChatScreen(context, room),
-          child: Padding(
-            padding: AppTheme.defaultPadding,
-            child: Row(
-              children: [
+    final colors = context.teacherColors;
+    final textStyles = context.teacherTextStyles;
+    final subjectColor = _getSubjectColor(room['subject']);
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: TeacherColors.glassDecoration(),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: () => _navigateToChatScreen(context, room),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: subjectColor.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: subjectColor.withOpacity(0.3),
+                    width: 1.5,
+                  ),
+                ),
+                alignment: Alignment.center,
+                child: Text(
+                  room['subject'].toString().substring(0, 1),
+                  style: TeacherTextStyles.cardTitle.copyWith(
+                    color: subjectColor,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      room['name'],
+                      style: TeacherTextStyles.cardTitle,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '${room['instructor']} • ${room['lastMessage']}',
+                      style: TeacherTextStyles.cardSubtitle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+              if (room['unreadCount'] > 0) ...[
+                const SizedBox(width: 8),
                 Container(
-                  width: 48,
-                  height: 48,
+                  padding: const EdgeInsets.all(6),
                   decoration: BoxDecoration(
-                    color: _getSubjectColor(room['subject']),
+                    color: TeacherColors.dangerAccent,
                     shape: BoxShape.circle,
                   ),
-                  alignment: Alignment.center,
                   child: Text(
-                    room['subject'].toString().substring(0, 1),
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      color: AppColors.textPrimary,
+                    room['unreadCount'].toString(),
+                    style: TeacherTextStyles.cardSubtitle.copyWith(
+                      color: TeacherColors.primaryText,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                 ),
-                const SizedBox(width: AppTheme.defaultSpacing),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        room['name'],
-                        style: Theme.of(context).textTheme.cardTitle,
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '${room['instructor']} • ${room['lastMessage']}',
-                        style: Theme.of(context).textTheme.bodyMedium,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ),
-                ),
-                if (room['unreadCount'] > 0) ...[
-                  const SizedBox(width: AppTheme.defaultSpacing / 2),
-                  Container(
-                    padding: const EdgeInsets.all(6),
-                    decoration: const BoxDecoration(
-                      color: AppColors.error,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Text(
-                      room['unreadCount'].toString(),
-                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        color: AppColors.textPrimary,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ],
               ],
-            ),
+            ],
           ),
         ),
       ),
@@ -325,16 +351,16 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
         : subjectCode;
 
     final colors = {
-      '11': AppColors.secondary,
-      '17': AppColors.info,
-      '18': AppColors.warning,
-      '19': AppColors.primaryLight,
-      '110': AppColors.secondaryDark,
-      '111': AppColors.secondaryLight,
-      '119': AppColors.primaryDark,
+      '11': TeacherColors.secondaryAccent,
+      '17': TeacherColors.infoAccent,
+      '18': TeacherColors.warningAccent,
+      '19': TeacherColors.primaryAccent,
+      '110': TeacherColors.successAccent,
+      '111': TeacherColors.secondaryAccent,
+      '119': TeacherColors.dangerAccent,
     };
 
-    return colors[prefix] ?? AppColors.primary;
+    return colors[prefix] ?? TeacherColors.primaryAccent;
   }
 
   void _navigateToChatScreen(
@@ -343,21 +369,12 @@ class _ChatRoomsScreenState extends State<ChatRoomsScreen> {
 
     Navigator.push(
       context,
-      PageRouteBuilder(
-        pageBuilder: (context, animation, secondaryAnimation) => ChatScreen(
+      MaterialPageRoute(
+        builder: (context) => ChatScreen(
           currentUserRfid: widget.rfid,
           subjectId: subjectId,
           roomName: room['name'].toString(),
         ),
-        transitionsBuilder: (context, animation, secondaryAnimation, child) {
-          return SlideTransition(
-            position: Tween<Offset>(
-              begin: const Offset(0, 0.5),
-              end: Offset.zero,
-            ).animate(animation),
-            child: child,
-          );
-        },
       ),
     );
   }

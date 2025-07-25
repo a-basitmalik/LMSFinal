@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import '../utils/theme.dart';
+import '../../Teacher/themes/theme_extensions.dart';
+import '../../Teacher/themes/theme_colors.dart';
+import '../../Teacher/themes/theme_text_styles.dart';
 import 'SingleResult.dart';
 
 class AssessmentsScreen extends StatefulWidget {
@@ -75,46 +77,47 @@ class _AssessmentsScreenState extends State<AssessmentsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final textTheme = theme.textTheme;
+    final colors = context.teacherColors;
+    final textStyles = context.teacherTextStyles;
 
     return Scaffold(
-      backgroundColor: AppColors.primaryBackground,
+      backgroundColor: TeacherColors.primaryBackground,
       appBar: AppBar(
-        title: Text(
-          'Assessments',
-          style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-        ),
-        backgroundColor: AppColors.primaryBackground,
+        backgroundColor: Colors.transparent,
         elevation: 0,
-        iconTheme: const IconThemeData(color: AppColors.primary),
+        title: Text(
+          'ASSESSMENTS',
+          style: TeacherTextStyles.sectionHeader,
+        ),
+        centerTitle: true,
+        iconTheme: IconThemeData(color: TeacherColors.primaryText),
       ),
-      body: _buildBody(context, textTheme),
+      body: _buildBody(context, colors, textStyles),
     );
   }
 
-  Widget _buildBody(BuildContext context, TextTheme textTheme) {
+  Widget _buildBody(BuildContext context, TeacherColors colors, TeacherTextStyles textStyles) {
     if (_isLoading) {
       return Center(
         child: CircularProgressIndicator(
-          valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+          valueColor: AlwaysStoppedAnimation<Color>(TeacherColors.primaryAccent),
         ),
       );
     }
 
     if (_hasError) {
-      return _buildErrorState(textTheme);
+      return _buildErrorState(textStyles);
     }
 
     if (_assessmentTypes.isEmpty) {
-      return _buildEmptyState(textTheme);
+      return _buildEmptyState(textStyles);
     }
 
     return ListView(
-      padding: AppTheme.defaultPadding,
+      padding: const EdgeInsets.all(16),
       children: _assessmentTypes.map((type) {
         return Padding(
-          padding: const EdgeInsets.only(bottom: AppTheme.defaultSpacing),
+          padding: const EdgeInsets.only(bottom: 16),
           child: _buildAssessmentCard(
             title: type,
             icon: _getAssessmentIcon(type),
@@ -127,29 +130,44 @@ class _AssessmentsScreenState extends State<AssessmentsScreen> {
     );
   }
 
-  Widget _buildErrorState(TextTheme textTheme) {
+  Widget _buildErrorState(TeacherTextStyles textStyles) {
     return Center(
       child: Padding(
-        padding: AppTheme.defaultPadding,
+        padding: const EdgeInsets.all(16),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.error_outline, size: 48, color: AppColors.error),
-            const SizedBox(height: AppTheme.defaultSpacing),
+            Icon(
+              Icons.error_outline,
+              size: 48,
+              color: TeacherColors.dangerAccent,
+            ),
+            const SizedBox(height: 16),
             Text(
               _errorMessage ?? 'Unknown error occurred',
-              style: textTheme.bodyMedium,
+              style: TeacherTextStyles.cardSubtitle,
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: AppTheme.defaultSpacing),
+            const SizedBox(height: 16),
             ElevatedButton(
               onPressed: _fetchAssessmentTypes,
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: AppColors.textPrimary,
-                padding: AppTheme.buttonPadding,
+                backgroundColor: TeacherColors.primaryAccent.withOpacity(0.1),
+                foregroundColor: TeacherColors.primaryAccent,
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  side: BorderSide(
+                    color: TeacherColors.primaryAccent.withOpacity(0.3),
+                  ),
+                ),
               ),
-              child: Text('Retry', style: textTheme.labelLarge),
+              child: Text(
+                'Retry',
+                style: TeacherTextStyles.cardSubtitle.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ),
           ],
         ),
@@ -157,26 +175,43 @@ class _AssessmentsScreenState extends State<AssessmentsScreen> {
     );
   }
 
-  Widget _buildEmptyState(TextTheme textTheme) {
+  Widget _buildEmptyState(TeacherTextStyles textStyles) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.assignment_outlined, size: 48, color: AppColors.textSecondary),
-          const SizedBox(height: AppTheme.defaultSpacing),
+          Icon(
+            Icons.assignment_outlined,
+            size: 48,
+            color: TeacherColors.secondaryText,
+          ),
+          const SizedBox(height: 16),
           Text(
             'No assessment types available',
-            style: textTheme.bodyMedium?.copyWith(color: AppColors.textSecondary),
+            style: TeacherTextStyles.cardSubtitle.copyWith(
+              color: TeacherColors.secondaryText,
+            ),
           ),
-          const SizedBox(height: AppTheme.defaultSpacing),
+          const SizedBox(height: 16),
           ElevatedButton(
             onPressed: _fetchAssessmentTypes,
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
-              foregroundColor: AppColors.textPrimary,
-              padding: AppTheme.buttonPadding,
+              backgroundColor: TeacherColors.primaryAccent.withOpacity(0.1),
+              foregroundColor: TeacherColors.primaryAccent,
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+                side: BorderSide(
+                  color: TeacherColors.primaryAccent.withOpacity(0.3),
+                ),
+              ),
             ),
-            child: Text('Refresh', style: textTheme.labelLarge),
+            child: Text(
+              'Refresh',
+              style: TeacherTextStyles.cardSubtitle.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ),
         ],
       ),
@@ -190,16 +225,12 @@ class _AssessmentsScreenState extends State<AssessmentsScreen> {
     required BuildContext context,
     required VoidCallback onTap,
   }) {
-    final theme = Theme.of(context);
-    final textTheme = theme.textTheme;
+    final textStyles = context.teacherTextStyles;
 
-    return Card(
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppTheme.defaultBorderRadius),
-      ),
+    return Container(
+      decoration: TeacherColors.glassDecoration(),
       child: InkWell(
-        borderRadius: BorderRadius.circular(AppTheme.defaultBorderRadius),
+        borderRadius: BorderRadius.circular(12),
         onTap: onTap,
         child: Container(
           decoration: BoxDecoration(
@@ -208,32 +239,32 @@ class _AssessmentsScreenState extends State<AssessmentsScreen> {
               end: Alignment.centerRight,
               colors: [color.withOpacity(0.9), color.withOpacity(0.7)],
             ),
-            borderRadius: BorderRadius.circular(AppTheme.defaultBorderRadius),
+            borderRadius: BorderRadius.circular(12),
           ),
-          padding: AppTheme.defaultPadding,
+          padding: const EdgeInsets.all(16),
           child: Row(
             children: [
               Container(
-                padding: AppTheme.defaultPadding,
+                padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: AppColors.textPrimary.withOpacity(0.2),
+                  color: TeacherColors.primaryBackground.withOpacity(0.2),
                   shape: BoxShape.circle,
                 ),
-                child: Icon(icon, color: AppColors.textPrimary),
+                child: Icon(
+                  icon,
+                  color: TeacherColors.primaryText,
+                ),
               ),
-              const SizedBox(width: AppTheme.defaultSpacing),
+              const SizedBox(width: 16),
               Expanded(
                 child: Text(
                   title,
-                  style: textTheme.titleMedium?.copyWith(
-                    color: AppColors.textPrimary,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TeacherTextStyles.cardTitle,
                 ),
               ),
               Icon(
                 Icons.chevron_right,
-                color: AppColors.textPrimary.withOpacity(0.7),
+                color: TeacherColors.primaryText.withOpacity(0.7),
               ),
             ],
           ),
@@ -245,23 +276,23 @@ class _AssessmentsScreenState extends State<AssessmentsScreen> {
   Color _getAssessmentColor(String assessmentType) {
     final type = assessmentType.toLowerCase();
     if (type.contains('monthly')) {
-      return AppColors.studentColor;
+      return TeacherColors.primaryAccent;
     } else if (type.contains('send up')) {
-      return AppColors.primary;
+      return TeacherColors.secondaryAccent;
     } else if (type.contains('half book')) {
-      return AppColors.secondary;
+      return TeacherColors.infoAccent;
     } else if (type.contains('test session')) {
-      return AppColors.warning;
+      return TeacherColors.warningAccent;
     } else if (type.contains('full book')) {
-      return AppColors.facultyColor;
+      return TeacherColors.successAccent;
     } else if (type.contains('other')) {
-      return AppColors.surface;
+      return TeacherColors.cardBackground;
     } else if (type.contains('mocks')) {
-      return AppColors.secondaryDark;
+      return TeacherColors.dangerAccent;
     } else if (type.contains('weekly')) {
-      return AppColors.primaryDark;
+      return TeacherColors.primaryAccent.withOpacity(0.8);
     }
-    return AppColors.info;
+    return TeacherColors.primaryAccent;
   }
 
   IconData _getAssessmentIcon(String assessmentType) {

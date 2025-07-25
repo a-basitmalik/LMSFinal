@@ -7,9 +7,11 @@ import 'package:path_provider/path_provider.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_pdfview/flutter_pdfview.dart';
 import 'package:file_picker/file_picker.dart';
+import '../../Teacher/themes/theme_extensions.dart';
+import '../../Teacher/themes/theme_colors.dart';
+import '../../Teacher/themes/theme_text_styles.dart';
 import '../models/assignment_model.dart';
-import '../utils/theme.dart';
-import 'submit_assignment_screen.dart';
+import '../services/api_service.dart';
 
 class AssignmentDetailScreen extends StatefulWidget {
   final Assignment assignment;
@@ -36,103 +38,102 @@ class _AssignmentDetailScreenState extends State<AssignmentDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final textTheme = theme.textTheme;
+    final colors = context.teacherColors;
+    final textStyles = context.teacherTextStyles;
     final assignment = widget.assignment;
-    final subjectColor = _getSubjectColor(assignment.subject);
+    final subjectColor = _getSubjectColor(assignment.subjectName);
     final isSubmitted = assignment.status == 'submitted' || assignment.status == 'graded';
 
     return Scaffold(
+      backgroundColor: TeacherColors.primaryBackground,
       appBar: AppBar(
+        backgroundColor: subjectColor.withOpacity(0.1),
+        elevation: 0,
+        iconTheme: IconThemeData(color: TeacherColors.primaryText),
         title: Text(
           assignment.title,
-          style: textTheme.titleLarge?.copyWith(color: AppColors.textPrimary),
+          style: TeacherTextStyles.cardTitle,
         ),
-        backgroundColor: subjectColor,
-        foregroundColor: AppColors.textPrimary,
-        elevation: 0,
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(bottom: Radius.circular(AppTheme.defaultBorderRadius)),
-        ),
+        centerTitle: true,
       ),
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              subjectColor.withOpacity(0.05),
-              AppColors.primaryBackground,
-            ],
-          ),
-        ),
-        child: SingleChildScrollView(
-          padding: AppTheme.defaultPadding,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Subject and due date
-              Row(
-                children: [
-                  Container(
-                    padding: AppTheme.defaultPadding,
-                    decoration: BoxDecoration(
-                      color: subjectColor,
-                      borderRadius: BorderRadius.circular(AppTheme.defaultBorderRadius),
-                    ),
-                    child: Text(
-                      assignment.subject,
-                      style: textTheme.labelLarge?.copyWith(color: AppColors.textPrimary),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Subject and due date
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: subjectColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: subjectColor.withOpacity(0.3),
+                      width: 1.5,
                     ),
                   ),
-                  const Spacer(),
-                  Icon(Icons.calendar_today, size: 16, color: AppColors.textSecondary),
-                  const SizedBox(width: AppTheme.defaultSpacing / 2),
-                  Text(
-                    'Due ${DateFormat('MMM d, y').format(assignment.dueDate)}',
-                    style: textTheme.bodyMedium?.copyWith(
-                      color: assignment.isOverdue ? AppColors.error : AppColors.textSecondary,
+                  child: Text(
+                    assignment.subjectName,
+                    style: TeacherTextStyles.cardSubtitle.copyWith(
+                      color: subjectColor,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                ],
-              ),
-              const SizedBox(height: AppTheme.defaultSpacing),
-
-              // Description
-              Text(
-                assignment.description,
-                style: textTheme.bodyLarge,
-              ),
-              const SizedBox(height: AppTheme.defaultSpacing * 1.5),
-
-              // Attachments
-              if (assignment.attachments.isNotEmpty) ...[
-                Text(
-                  'Attachments:',
-                  style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
                 ),
-                const SizedBox(height: AppTheme.defaultSpacing / 2),
-                ...assignment.attachments.map(
-                      (file) => Padding(
-                    padding: const EdgeInsets.only(bottom: AppTheme.defaultSpacing / 2),
-                    child: _buildAttachmentItem(file),
+                const Spacer(),
+                Icon(Icons.calendar_today,
+                    size: 16,
+                    color: TeacherColors.secondaryText
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Due ${DateFormat('MMM d, y').format(assignment.dueDate)}',
+                  style: TeacherTextStyles.cardSubtitle.copyWith(
+                    color: assignment.isOverdue
+                        ? TeacherColors.dangerAccent
+                        : TeacherColors.secondaryText,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
-                const SizedBox(height: AppTheme.defaultSpacing * 1.5),
               ],
+            ),
+            const SizedBox(height: 16),
 
-              // Submission section
-              if (!isSubmitted)
-                _buildSubmissionForm(subjectColor)
-              else
-                _buildSubmissionStatus(assignment),
+            // Description
+            Text(
+              assignment.description,
+              style: TeacherTextStyles.cardSubtitle,
+            ),
+            const SizedBox(height: 24),
 
-              // Warning if overdue
-              if (assignment.isOverdue)
-                _buildOverdueWarning(),
+            // Attachments
+            if (assignment.attachments.isNotEmpty) ...[
+              Text(
+                'Attachments:',
+                style: TeacherTextStyles.sectionHeader,
+              ),
+              const SizedBox(height: 8),
+              ...assignment.attachments.map(
+                    (file) => Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: _buildAttachmentItem(file),
+                ),
+              ),
+              const SizedBox(height: 24),
             ],
-          ),
+
+            // Submission section
+            if (!isSubmitted)
+              _buildSubmissionForm(subjectColor)
+            else
+              _buildSubmissionStatus(assignment),
+
+            // Warning if overdue
+            if (assignment.isOverdue)
+              _buildOverdueWarning(),
+          ],
         ),
       ),
     );
@@ -142,19 +143,28 @@ class _AssignmentDetailScreenState extends State<AssignmentDetailScreen> {
     return InkWell(
       onTap: () => _openDocument(context, file.filePath),
       child: Container(
-        padding: AppTheme.defaultPadding,
+        padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(AppTheme.defaultBorderRadius),
+          color: TeacherColors.cardBackground,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: TeacherColors.cardBorder.withOpacity(0.3),
+          ),
         ),
         child: Row(
           children: [
-            Icon(_getFileIcon(file.fileName), color: _getFileColor(file.fileName)),
-            const SizedBox(width: AppTheme.defaultSpacing),
+            Icon(
+              _getFileIcon(file.fileName),
+              color: _getFileColor(file.fileName),
+              size: 20,
+            ),
+            const SizedBox(width: 12),
             Expanded(
               child: Text(
                 file.fileName,
-                style: const TextStyle(decoration: TextDecoration.underline),
+                style: TeacherTextStyles.cardSubtitle.copyWith(
+                  decoration: TextDecoration.underline,
+                ),
               ),
             ),
           ],
@@ -167,49 +177,59 @@ class _AssignmentDetailScreenState extends State<AssignmentDetailScreen> {
     return Column(
       children: [
         _buildFileSelector(),
-        const SizedBox(height: AppTheme.defaultSpacing),
+        const SizedBox(height: 16),
         _buildSubmitButton(subjectColor),
       ],
     );
   }
 
   Widget _buildFileSelector() {
+    final textStyles = context.teacherTextStyles;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           'Select file to submit:',
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.bold,
-          ),
+          style: TeacherTextStyles.sectionHeader,
         ),
-        const SizedBox(height: AppTheme.defaultSpacing / 2),
+        const SizedBox(height: 8),
         InkWell(
           onTap: _pickFile,
           child: Container(
-            padding: AppTheme.defaultPadding,
+            padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.circular(AppTheme.defaultBorderRadius),
-              border: Border.all(color: AppColors.cardBorder),
+              color: TeacherColors.cardBackground,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: TeacherColors.cardBorder.withOpacity(0.3),
+              ),
             ),
             child: Row(
               children: [
-                const Icon(Icons.attach_file, color: AppColors.textSecondary),
-                const SizedBox(width: AppTheme.defaultSpacing),
+                const Icon(
+                  Icons.attach_file,
+                  color: TeacherColors.secondaryText,
+                  size: 20,
+                ),
+                const SizedBox(width: 12),
                 Expanded(
                   child: Text(
                     _selectedFile?.path.split('/').last ?? 'No file selected',
-                    style:  Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    style: TeacherTextStyles.cardSubtitle.copyWith(
                       color: _selectedFile != null
-                          ? AppColors.textPrimary
-                          : AppColors.textSecondary,
+                          ? TeacherColors.primaryText
+                          : TeacherColors.secondaryText,
                     ),
                   ),
                 ),
                 if (_selectedFile != null)
                   IconButton(
-                    icon: const Icon(Icons.close, color: AppColors.textSecondary),
+                    icon: const Icon(
+                      Icons.close,
+                      color: TeacherColors.secondaryText,
+                      size: 20,
+                    ),
                     onPressed: () => setState(() => _selectedFile = null),
                   ),
               ],
@@ -221,41 +241,67 @@ class _AssignmentDetailScreenState extends State<AssignmentDetailScreen> {
   }
 
   Widget _buildSubmitButton(Color subjectColor) {
+    final textStyles = context.teacherTextStyles;
+
     return Center(
-      child: ElevatedButton.icon(
+      child: ElevatedButton(
         onPressed: _isSubmitting || _selectedFile == null ? null : _submitAssignment,
-        icon: _isSubmitting
-            ? SizedBox(
-          width: 20,
-          height: 20,
-          child: CircularProgressIndicator(
-            strokeWidth: 2,
-            color: AppColors.textPrimary,
-          ),
-        )
-            : const Icon(Icons.upload),
-        label: Text(_isSubmitting ? 'SUBMITTING...' : 'SUBMIT ASSIGNMENT'),
         style: ElevatedButton.styleFrom(
-          backgroundColor: subjectColor,
-          foregroundColor: AppColors.textPrimary,
-          padding: AppTheme.buttonPadding,
+          backgroundColor: subjectColor.withOpacity(0.1),
+          foregroundColor: subjectColor,
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppTheme.defaultBorderRadius),
+            borderRadius: BorderRadius.circular(12),
+            side: BorderSide(
+              color: subjectColor.withOpacity(0.3),
+              width: 1.5,
+            ),
           ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (_isSubmitting)
+              SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(subjectColor),
+                ),
+              )
+            else
+              Icon(
+                Icons.upload,
+                size: 20,
+              ),
+            const SizedBox(width: 8),
+            Text(
+              _isSubmitting ? 'SUBMITTING...' : 'SUBMIT ASSIGNMENT',
+              style: TeacherTextStyles.cardSubtitle.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
 
   Widget _buildSubmissionStatus(Assignment assignment) {
+    final textStyles = context.teacherTextStyles;
     final isGraded = assignment.status == 'graded';
+    final statusColor = isGraded ? TeacherColors.warningAccent : TeacherColors.successAccent;
 
     return Container(
-      padding: AppTheme.defaultPadding,
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(AppTheme.defaultBorderRadius),
-        border: Border.all(color: AppColors.cardBorder),
+        color: statusColor.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: statusColor.withOpacity(0.3),
+          width: 1.5,
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -264,36 +310,39 @@ class _AssignmentDetailScreenState extends State<AssignmentDetailScreen> {
             children: [
               Icon(
                 isGraded ? Icons.grade : Icons.check_circle,
-                color: isGraded ? AppColors.warning : AppColors.success,
+                color: statusColor,
                 size: 24,
               ),
-              const SizedBox(width: AppTheme.defaultSpacing),
+              const SizedBox(width: 12),
               Text(
                 isGraded ? 'GRADED (${assignment.grade}%)' : 'SUBMITTED',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: isGraded ? AppColors.warning : AppColors.success,
+                style: TeacherTextStyles.cardSubtitle.copyWith(
+                  color: statusColor,
                   fontWeight: FontWeight.bold,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: AppTheme.defaultSpacing),
+          const SizedBox(height: 12),
           Text(
             'Submitted on ${DateFormat('MMM d, y - h:mm a').format(assignment.submissionDate!)}',
-            style: Theme.of(context).textTheme.bodyMedium,
+            style: TeacherTextStyles.cardSubtitle,
           ),
-          const SizedBox(height: AppTheme.defaultSpacing / 2),
+          const SizedBox(height: 8),
           _buildSubmittedFileItem(assignment.submissionFile!),
           if (assignment.teacherFeedback != null) ...[
-            const SizedBox(height: AppTheme.defaultSpacing),
+            const SizedBox(height: 12),
             Text(
               'Teacher Feedback:',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              style: TeacherTextStyles.cardSubtitle.copyWith(
                 fontWeight: FontWeight.bold,
               ),
             ),
-            const SizedBox(height: AppTheme.defaultSpacing / 2),
-            Text(assignment.teacherFeedback!),
+            const SizedBox(height: 8),
+            Text(
+              assignment.teacherFeedback!,
+              style: TeacherTextStyles.cardSubtitle,
+            ),
           ],
         ],
       ),
@@ -304,21 +353,27 @@ class _AssignmentDetailScreenState extends State<AssignmentDetailScreen> {
     return InkWell(
       onTap: () => _openDocument(context, filePath),
       child: Container(
-        padding: AppTheme.defaultPadding,
+        padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: AppColors.cardBackground,
-          borderRadius: BorderRadius.circular(AppTheme.defaultBorderRadius),
+          color: TeacherColors.cardBackground,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: TeacherColors.cardBorder.withOpacity(0.3),
+          ),
         ),
         child: Row(
           children: [
             Icon(
               _getFileIcon(filePath),
               color: _getFileColor(filePath),
+              size: 20,
             ),
-            const SizedBox(width: AppTheme.defaultSpacing),
+            const SizedBox(width: 12),
             Text(
               filePath.split('/').last,
-              style: const TextStyle(decoration: TextDecoration.underline),
+              style: TeacherTextStyles.cardSubtitle.copyWith(
+                decoration: TextDecoration.underline,
+              ),
             ),
           ],
         ),
@@ -327,22 +382,32 @@ class _AssignmentDetailScreenState extends State<AssignmentDetailScreen> {
   }
 
   Widget _buildOverdueWarning() {
+    final textStyles = context.teacherTextStyles;
+
     return Container(
-      padding: AppTheme.defaultPadding,
+      margin: const EdgeInsets.only(top: 16),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.error.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(AppTheme.defaultBorderRadius),
-        border: Border.all(color: AppColors.error),
+        color: TeacherColors.dangerAccent.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: TeacherColors.dangerAccent.withOpacity(0.3),
+          width: 1.5,
+        ),
       ),
       child: Row(
         children: [
-          const Icon(Icons.warning, color: AppColors.error),
-          const SizedBox(width: AppTheme.defaultSpacing),
+          Icon(
+            Icons.warning,
+            color: TeacherColors.dangerAccent,
+            size: 24,
+          ),
+          const SizedBox(width: 12),
           Expanded(
             child: Text(
               'This assignment is overdue. Late submissions may be penalized.',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: AppColors.error,
+              style: TeacherTextStyles.cardSubtitle.copyWith(
+                color: TeacherColors.dangerAccent,
               ),
             ),
           ),
@@ -350,6 +415,7 @@ class _AssignmentDetailScreenState extends State<AssignmentDetailScreen> {
       ),
     );
   }
+
   Future<void> _openDocument(BuildContext context, String url) async {
     try {
       if (url.endsWith('.pdf')) {
@@ -359,7 +425,13 @@ class _AssignmentDetailScreenState extends State<AssignmentDetailScreen> {
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to open document: ${e.toString()}')),
+        SnackBar(
+          content: Text(
+            'Failed to open document: ${e.toString()}',
+            style: TeacherTextStyles.cardSubtitle,
+          ),
+          backgroundColor: TeacherColors.dangerAccent,
+        ),
       );
     }
   }
@@ -372,7 +444,13 @@ class _AssignmentDetailScreenState extends State<AssignmentDetailScreen> {
 
       try {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Downloading PDF...')),
+          SnackBar(
+            content: Text(
+              'Downloading PDF...',
+              style: TeacherTextStyles.cardSubtitle,
+            ),
+            backgroundColor: TeacherColors.primaryAccent,
+          ),
         );
 
         await Dio().download(pdfUrl, filePath);
@@ -381,7 +459,16 @@ class _AssignmentDetailScreenState extends State<AssignmentDetailScreen> {
           context,
           MaterialPageRoute(
             builder: (context) => Scaffold(
-              appBar: AppBar(title: const Text('PDF Viewer')),
+              backgroundColor: TeacherColors.primaryBackground,
+              appBar: AppBar(
+                backgroundColor: Colors.transparent,
+                elevation: 0,
+                iconTheme: IconThemeData(color: TeacherColors.primaryText),
+                title: Text(
+                  'PDF Viewer',
+                  style: TeacherTextStyles.cardTitle,
+                ),
+              ),
               body: PDFView(
                 filePath: filePath,
                 enableSwipe: true,
@@ -400,7 +487,16 @@ class _AssignmentDetailScreenState extends State<AssignmentDetailScreen> {
         context,
         MaterialPageRoute(
           builder: (context) => Scaffold(
-            appBar: AppBar(title: const Text('PDF Viewer')),
+            backgroundColor: TeacherColors.primaryBackground,
+            appBar: AppBar(
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              iconTheme: IconThemeData(color: TeacherColors.primaryText),
+              title: Text(
+                'PDF Viewer',
+                style: TeacherTextStyles.cardTitle,
+              ),
+            ),
             body: PDFView(
               filePath: pdfUrl,
               enableSwipe: true,
@@ -435,11 +531,11 @@ class _AssignmentDetailScreenState extends State<AssignmentDetailScreen> {
   }
 
   Color _getFileColor(String fileName) {
-    if (fileName.endsWith('.pdf')) return Colors.red;
-    if (fileName.endsWith('.doc') || fileName.endsWith('.docx')) return Colors.blue;
-    if (fileName.endsWith('.xls') || fileName.endsWith('.xlsx')) return Colors.green;
-    if (fileName.endsWith('.ppt') || fileName.endsWith('.pptx')) return Colors.orange;
-    return Colors.grey;
+    if (fileName.endsWith('.pdf')) return TeacherColors.dangerAccent;
+    if (fileName.endsWith('.doc') || fileName.endsWith('.docx')) return TeacherColors.infoAccent;
+    if (fileName.endsWith('.xls') || fileName.endsWith('.xlsx')) return TeacherColors.successAccent;
+    if (fileName.endsWith('.ppt') || fileName.endsWith('.pptx')) return TeacherColors.warningAccent;
+    return TeacherColors.secondaryText;
   }
 
   Future<void> _pickFile() async {
@@ -456,7 +552,13 @@ class _AssignmentDetailScreenState extends State<AssignmentDetailScreen> {
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error selecting file: $e')),
+        SnackBar(
+          content: Text(
+            'Error selecting file: $e',
+            style: TeacherTextStyles.cardSubtitle,
+          ),
+          backgroundColor: TeacherColors.dangerAccent,
+        ),
       );
     }
   }
@@ -467,35 +569,17 @@ class _AssignmentDetailScreenState extends State<AssignmentDetailScreen> {
     setState(() => _isSubmitting = true);
 
     try {
-      // Create multipart request
-      var formData = FormData.fromMap({
-        'student_rfid': widget.studentRfid, // Replace with actual RFID
-        'assignment_id': widget.assignment.id,
-        'file_name': _selectedFile!.path.split('/').last,
-        'file': await MultipartFile.fromFile(
-          _selectedFile!.path,
-          filename: _selectedFile!.path.split('/').last,
-        ),
-      });
-
-      // Send request
-      final response = await Dio().post(
-        'http://193.203.162.232:5050/assignments/submit',
-        data: formData,
-        options: Options(
-          contentType: 'multipart/form-data',
-        ),
-      );
-
-      if (response.statusCode == 201) {
-        widget.onStatusUpdate('submitted');
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Assignment submitted successfully!')),
-        );
-      }
+      await widget.onSubmission(_selectedFile!.path);
+      Navigator.pop(context);
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error submitting assignment: $e')),
+        SnackBar(
+          content: Text(
+            'Error submitting assignment: $e',
+            style: TeacherTextStyles.cardSubtitle,
+          ),
+          backgroundColor: TeacherColors.dangerAccent,
+        ),
       );
     } finally {
       setState(() => _isSubmitting = false);
@@ -504,14 +588,13 @@ class _AssignmentDetailScreenState extends State<AssignmentDetailScreen> {
 
   Color _getSubjectColor(String subject) {
     final colors = {
-      'Mathematics': AppColors.secondary,
-      // 'Physics': AppColors.accentBlue,
-      // 'Chemistry': AppColors.accentPink,
-      'Biology': AppColors.success,
-      'English': AppColors.primaryLight,
-      // 'History': AppColors.accentAmber,
+      'Mathematics': TeacherColors.primaryAccent,
+      'Physics': TeacherColors.secondaryAccent,
+      'Chemistry': TeacherColors.infoAccent,
+      'Biology': TeacherColors.successAccent,
+      'English': TeacherColors.warningAccent,
+      'History': TeacherColors.dangerAccent,
     };
-    return colors[subject] ?? AppColors.primary;
+    return colors[subject] ?? TeacherColors.primaryAccent;
   }
-
 }

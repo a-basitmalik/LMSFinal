@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:newapp/Teacher/themes/theme_extensions.dart';
+import '../../Teacher/themes/theme_colors.dart';
+import '../../Teacher/themes/theme_text_styles.dart';
 import '../models/query_model.dart';
 import '../models/subject_model.dart';
 import '../services/api_service.dart';
@@ -39,9 +42,7 @@ class _QueriesScreenState extends State<QueriesScreen> {
     try {
       _subjectsFuture = _apiService.getSubjectsByStudentRfid(widget.studentRfid);
       _queriesFuture = _apiService.getQueries(widget.studentRfid);
-
       await Future.wait([_subjectsFuture, _queriesFuture]);
-
       setState(() => _isLoading = false);
     } catch (e) {
       setState(() {
@@ -53,76 +54,82 @@ class _QueriesScreenState extends State<QueriesScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final textTheme = theme.textTheme;
+    final colors = context.teacherColors;
+    final textStyles = context.teacherTextStyles;
 
     return Scaffold(
+      backgroundColor: TeacherColors.primaryBackground,
       appBar: AppBar(
-        title: Text('My Queries', style: textTheme.titleLarge),
-      ),
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: AppColors.accentGradient(AppColors.primary),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        title: Text(
+          'MY QUERIES',
+          style: TeacherTextStyles.sectionHeader,
         ),
-        child: _isLoading
-            ? const Center(child: CircularProgressIndicator())
-            : _errorMessage != null
-            ? Center(
-          child: Text(
-            _errorMessage!,
-            style: textTheme.bodyMedium,
-          ),
-        )
-            : RefreshIndicator(
-          onRefresh: _loadData,
-          child: FutureBuilder<List<Query>>(
-            future: _queriesFuture,
-            builder: (context, snapshot) {
-              if (snapshot.hasData) {
-                final queries = snapshot.data!;
-                if (queries.isEmpty) {
-                  return Center(
-                    child: Text(
-                      'No queries yet. Ask your first question!',
-                      style: textTheme.bodyMedium,
-                    ),
-                  );
-                }
-                return ListView.builder(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: queries.length,
-                  itemBuilder: (context, index) {
-                    final query = queries[index];
-                    return _buildQueryCard(context, query);
-                  },
+        centerTitle: true,
+      ),
+      body: _isLoading
+          ? Center(
+        child: CircularProgressIndicator(
+          valueColor: AlwaysStoppedAnimation<Color>(TeacherColors.primaryAccent),
+        ),
+      )
+          : _errorMessage != null
+          ? Center(
+        child: Text(
+          _errorMessage!,
+          style: TeacherTextStyles.cardSubtitle,
+        ),
+      )
+          : RefreshIndicator(
+        onRefresh: _loadData,
+        child: FutureBuilder<List<Query>>(
+          future: _queriesFuture,
+          builder: (context, snapshot) {
+            if (snapshot.hasData) {
+              final queries = snapshot.data!;
+              if (queries.isEmpty) {
+                return Center(
+                  child: Text(
+                    'No queries yet. Ask your first question!',
+                    style: TeacherTextStyles.cardSubtitle,
+                  ),
                 );
               }
-              return const SizedBox.shrink();
-            },
-          ),
+              return ListView.builder(
+                padding: const EdgeInsets.all(16),
+                itemCount: queries.length,
+                itemBuilder: (context, index) {
+                  final query = queries[index];
+                  return _buildQueryCard(context, query);
+                },
+              );
+            }
+            return const SizedBox.shrink();
+          },
         ),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showNewQueryDialog(context),
-        backgroundColor: AppColors.primary,
-        child: Icon(Icons.add, color: theme.colorScheme.onPrimary),
+        backgroundColor: TeacherColors.primaryAccent,
+        child: Icon(
+          Icons.add,
+          color: TeacherColors.primaryText,
+        ),
       ),
     );
   }
 
   Widget _buildQueryCard(BuildContext context, Query query) {
-    final theme = Theme.of(context);
-    final textTheme = theme.textTheme;
+    final colors = context.teacherColors;
+    final textStyles = context.teacherTextStyles;
+    final subjectColor = _getSubjectColor(query.subject);
 
-    return Card(
+    return Container(
       margin: const EdgeInsets.only(bottom: 16),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
-      elevation: 0,
-      color: AppColors.cardBackground,
+      decoration: TeacherColors.glassDecoration(),
       child: InkWell(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(12),
         onTap: () {},
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -131,15 +138,19 @@ class _QueriesScreenState extends State<QueriesScreen> {
             children: [
               // Subject Chip
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: _getSubjectColor(query.subject),
+                  color: subjectColor.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: subjectColor.withOpacity(0.3),
+                    width: 1,
+                  ),
                 ),
                 child: Text(
                   query.subject,
-                  style: textTheme.labelMedium?.copyWith(
-                    color: AppColors.textPrimary,
+                  style: TeacherTextStyles.cardSubtitle.copyWith(
+                    color: subjectColor,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -149,9 +160,7 @@ class _QueriesScreenState extends State<QueriesScreen> {
               // Question
               Text(
                 query.question,
-                style: textTheme.bodyLarge?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
+                style: TeacherTextStyles.cardTitle,
               ),
               const SizedBox(height: 12),
 
@@ -160,10 +169,10 @@ class _QueriesScreenState extends State<QueriesScreen> {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.1),
+                    color: TeacherColors.successAccent.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: AppColors.primary.withOpacity(0.3),
+                      color: TeacherColors.successAccent.withOpacity(0.3),
                     ),
                   ),
                   child: Column(
@@ -173,14 +182,14 @@ class _QueriesScreenState extends State<QueriesScreen> {
                         children: [
                           Icon(
                             Icons.check_circle,
-                            color: AppColors.success,
+                            color: TeacherColors.successAccent,
                             size: 16,
                           ),
                           const SizedBox(width: 8),
                           Text(
                             'Teacher\'s Response',
-                            style: textTheme.labelMedium?.copyWith(
-                              color: AppColors.primary,
+                            style: TeacherTextStyles.cardSubtitle.copyWith(
+                              color: TeacherColors.successAccent,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -189,7 +198,7 @@ class _QueriesScreenState extends State<QueriesScreen> {
                       const SizedBox(height: 8),
                       Text(
                         query.answer!,
-                        style: textTheme.bodyMedium,
+                        style: TeacherTextStyles.cardSubtitle,
                       ),
                     ],
                   ),
@@ -198,22 +207,24 @@ class _QueriesScreenState extends State<QueriesScreen> {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: AppColors.surface,
+                    color: TeacherColors.warningAccent.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: TeacherColors.warningAccent.withOpacity(0.3),
+                    ),
                   ),
                   child: Row(
                     children: [
                       Icon(
                         Icons.access_time,
-                        color: AppColors.warning,
+                        color: TeacherColors.warningAccent,
                         size: 16,
                       ),
                       const SizedBox(width: 8),
                       Text(
                         'Waiting for teacher\'s response',
-                        style: textTheme.bodyMedium?.copyWith(
-                          color: AppColors.textSecondary,
-                          fontStyle: FontStyle.italic,
+                        style: TeacherTextStyles.cardSubtitle.copyWith(
+                          color: TeacherColors.warningAccent,
                         ),
                       ),
                     ],
@@ -225,8 +236,8 @@ class _QueriesScreenState extends State<QueriesScreen> {
               // Time ago
               Text(
                 query.timeAgo,
-                style: textTheme.labelSmall?.copyWith(
-                  color: AppColors.textSecondary,
+                style: TeacherTextStyles.cardSubtitle.copyWith(
+                  fontSize: 10,
                 ),
               ),
             ],
@@ -238,14 +249,14 @@ class _QueriesScreenState extends State<QueriesScreen> {
 
   Color _getSubjectColor(String subject) {
     final colors = {
-      'Mathematics': AppColors.secondary,
-      'Physics': AppColors.info,
-      'Chemistry': AppColors.facultyColor,
-      'Biology': AppColors.success,
-      'English': AppColors.primaryLight,
-      'History': AppColors.resultsColor,
+      'Mathematics': TeacherColors.primaryAccent,
+      'Physics': TeacherColors.secondaryAccent,
+      'Chemistry': TeacherColors.infoAccent,
+      'Biology': TeacherColors.successAccent,
+      'English': TeacherColors.warningAccent,
+      'History': TeacherColors.dangerAccent,
     };
-    return colors[subject] ?? AppColors.primary;
+    return colors[subject] ?? TeacherColors.primaryAccent;
   }
 
   Future<void> _showNewQueryDialog(BuildContext context) async {
@@ -253,30 +264,51 @@ class _QueriesScreenState extends State<QueriesScreen> {
     final TextEditingController questionController = TextEditingController();
     final GlobalKey<FormState> formKey = GlobalKey<FormState>();
 
-    final theme = Theme.of(context);
-    final textTheme = theme.textTheme;
+    final colors = context.teacherColors;
+    final textStyles = context.teacherTextStyles;
     final subjects = await _subjectsFuture;
 
-    await showDialog(
+    await showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setState) {
-            return Dialog(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
+            return Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                border: Border.all(
+                  color: TeacherColors.cardBorder,
+                  width: 1.0,
+                ),
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    TeacherColors.glassEffectLight,
+                    TeacherColors.glassEffectDark,
+                  ],
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.2),
+                    blurRadius: 10,
+                    spreadRadius: 2,
+                  ),
+                ],
               ),
-              backgroundColor: AppColors.cardBackground,
-              child: Padding(
-                padding: const EdgeInsets.all(16),
+
+              child: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      'Ask a Question',
-                      style: textTheme.titleLarge,
+                      'ASK A QUESTION',
+                      style: TeacherTextStyles.sectionHeader,
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 20),
                     Form(
                       key: formKey,
                       child: Column(
@@ -285,14 +317,26 @@ class _QueriesScreenState extends State<QueriesScreen> {
                             value: selectedSubjectId,
                             decoration: InputDecoration(
                               labelText: 'Select Subject',
-                              labelStyle: textTheme.labelMedium,
+                              labelStyle: TeacherTextStyles.cardSubtitle,
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide(
+                                  color: TeacherColors.cardBorder,
+                                ),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide(
+                                  color: TeacherColors.cardBorder,
+                                ),
+                              ),
                             ),
                             items: subjects.map((subject) {
                               return DropdownMenuItem(
                                 value: subject.id,
                                 child: Text(
                                   subject.name,
-                                  style: textTheme.bodyMedium,
+                                  style: TeacherTextStyles.cardTitle,
                                 ),
                               );
                             }).toList(),
@@ -303,76 +347,97 @@ class _QueriesScreenState extends State<QueriesScreen> {
                                 selectedSubjectId = value;
                               });
                             },
-                            style: textTheme.bodyMedium,
-                            dropdownColor: AppColors.secondaryBackground,
+                            style: TeacherTextStyles.cardTitle,
+                            dropdownColor: TeacherColors.cardBackground,
                           ),
                           const SizedBox(height: 16),
                           TextFormField(
                             controller: questionController,
                             maxLines: 4,
-                            style: textTheme.bodyMedium,
+                            style: TeacherTextStyles.cardTitle,
                             decoration: InputDecoration(
                               hintText: 'Type your question here...',
-                              hintStyle: textTheme.bodyMedium?.copyWith(
-                                color: AppColors.disabledText,
+                              hintStyle: TeacherTextStyles.cardSubtitle,
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide(
+                                  color: TeacherColors.cardBorder,
+                                ),
                               ),
-                              border: const OutlineInputBorder(),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide(
+                                  color: TeacherColors.cardBorder,
+                                ),
+                              ),
                             ),
                             validator: (value) =>
-                            value == null || value.isEmpty
-                                ? 'Please enter your question'
-                                : null,
+                            value == null || value.isEmpty ? 'Please enter your question' : null,
                           ),
                         ],
                       ),
                     ),
                     const SizedBox(height: 24),
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
                       children: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(context),
-                          child: Text(
-                            'Cancel',
-                            style: textTheme.labelLarge?.copyWith(
-                              color: AppColors.textSecondary,
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: () => Navigator.pop(context),
+                            style: OutlinedButton.styleFrom(
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              side: BorderSide(
+                                color: TeacherColors.cardBorder,
+                              ),
+                            ),
+                            child: Text(
+                              'Cancel',
+                              style: TeacherTextStyles.cardSubtitle,
                             ),
                           ),
                         ),
-                        const SizedBox(width: 8),
-                        ElevatedButton(
-                          onPressed: () async {
-                            if (formKey.currentState!.validate()) {
-                              try {
-                                await _apiService.submitQuery(
-                                  subjectId: selectedSubjectId!,
-                                  question: questionController.text,
-                                  studentRfid: widget.studentRfid,
-                                );
-                                Navigator.pop(context);
-                                _loadData();
-                              } catch (e) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(
-                                      'Failed to submit query: $e',
-                                      style: textTheme.bodyMedium,
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () async {
+                              if (formKey.currentState!.validate()) {
+                                try {
+                                  await _apiService.submitQuery(
+                                    subjectId: selectedSubjectId!,
+                                    question: questionController.text,
+                                    studentRfid: widget.studentRfid,
+                                  );
+                                  Navigator.pop(context);
+                                  _loadData();
+                                } catch (e) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        'Failed to submit query: $e',
+                                        style: TeacherTextStyles.cardSubtitle,
+                                      ),
+                                      backgroundColor: TeacherColors.dangerAccent,
                                     ),
-                                    backgroundColor: AppColors.error,
-                                  ),
-                                );
+                                  );
+                                }
                               }
-                            }
-                          },
-                          child: Text(
-                            'Submit Question',
-                            style: textTheme.labelLarge?.copyWith(
-                              color: theme.colorScheme.onPrimary,
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: TeacherColors.primaryAccent,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            child: Text(
+                              'Submit Question',
+                              style: TeacherTextStyles.primaryButton,
                             ),
                           ),
                         ),
                       ],
                     ),
+                    const SizedBox(height: 10),
                   ],
                 ),
               ),

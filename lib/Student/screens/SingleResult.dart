@@ -2,9 +2,9 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:newapp/admin/themes/theme_colors.dart';
-import 'package:newapp/admin/themes/theme_extensions.dart';
-import 'package:newapp/admin/themes/theme_text_styles.dart';
+import 'package:newapp/Teacher/themes/theme_colors.dart';
+import 'package:newapp/Teacher/themes/theme_extensions.dart';
+import 'package:newapp/Teacher/themes/theme_text_styles.dart';
 import 'dart:convert';
 import 'package:open_file/open_file.dart';
 import 'package:path_provider/path_provider.dart';
@@ -123,14 +123,18 @@ class _SingleResultScreenState extends State<SingleResultScreen> {
 
     return results;
   }
+
   void _showErrorSnackbar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(message),
-        backgroundColor: AdminColors.dangerAccent,
+        content: Text(
+          message,
+          style: TeacherTextStyles.cardSubtitle,
+        ),
+        backgroundColor: TeacherColors.dangerAccent,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(12),
         ),
       ),
     );
@@ -138,11 +142,11 @@ class _SingleResultScreenState extends State<SingleResultScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.adminColors;
-    final textStyles = context.adminTextStyles;
+    final colors = context.teacherColors;
+    final textStyles = context.teacherTextStyles;
 
     return Scaffold(
-      backgroundColor: AdminColors.primaryBackground,
+      backgroundColor: TeacherColors.primaryBackground,
       body: CustomScrollView(
         slivers: [
           SliverAppBar(
@@ -152,12 +156,12 @@ class _SingleResultScreenState extends State<SingleResultScreen> {
             flexibleSpace: FlexibleSpaceBar(
               title: Text(
                 widget.assessmentType.toUpperCase(),
-                style: AdminTextStyles.sectionHeader.copyWith(
-                  color: AdminColors.primaryText,
+                style: TeacherTextStyles.sectionHeader.copyWith(
+                  color: TeacherColors.primaryText,
                   shadows: [
                     Shadow(
                       blurRadius: 10,
-                      color: AdminColors.primaryAccent,
+                      color: TeacherColors.primaryAccent,
                     ),
                   ],
                 ),
@@ -168,9 +172,9 @@ class _SingleResultScreenState extends State<SingleResultScreen> {
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                     colors: [
-                      AdminColors.primaryAccent.withOpacity(0.7),
-                      AdminColors.secondaryAccent.withOpacity(0.7),
-                      AdminColors.infoAccent.withOpacity(0.7),
+                      TeacherColors.primaryAccent.withOpacity(0.7),
+                      TeacherColors.secondaryAccent.withOpacity(0.7),
+                      TeacherColors.infoAccent.withOpacity(0.7),
                     ],
                   ),
                 ),
@@ -181,7 +185,7 @@ class _SingleResultScreenState extends State<SingleResultScreen> {
                     child: Icon(
                       Icons.assessment,
                       size: 120,
-                      color: AdminColors.primaryText,
+                      color: TeacherColors.primaryText,
                     ),
                   ),
                 ),
@@ -192,7 +196,7 @@ class _SingleResultScreenState extends State<SingleResultScreen> {
               ? SliverFillRemaining(
             child: Center(
               child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(AdminColors.primaryAccent),
+                valueColor: AlwaysStoppedAnimation<Color>(TeacherColors.primaryAccent),
               ),
             ),
           )
@@ -202,22 +206,25 @@ class _SingleResultScreenState extends State<SingleResultScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.search_off,
-                      size: 60,
-                      color: AdminColors.disabledText),
+                  Icon(
+                    Icons.search_off,
+                    size: 60,
+                    color: TeacherColors.secondaryText,
+                  ),
                   SizedBox(height: 16),
                   Text(
                     'No assessment data found',
-                    style: AdminTextStyles.cardSubtitle.copyWith(
-                      color: AdminColors.disabledText,
+                    style: TeacherTextStyles.cardSubtitle.copyWith(
+                      color: TeacherColors.secondaryText,
                     ),
                   ),
                   TextButton(
                     onPressed: _fetchAssessmentData,
                     child: Text(
                       'Retry',
-                      style: AdminTextStyles.secondaryButton.copyWith(
-                        color: AdminColors.primaryAccent,
+                      style: TeacherTextStyles.cardSubtitle.copyWith(
+                        color: TeacherColors.primaryAccent,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
                   ),
@@ -245,13 +252,11 @@ class _SingleResultScreenState extends State<SingleResultScreen> {
     );
   }
 
-
-
-  Widget _buildExamHeader(String examName, AdminColors colors, AdminTextStyles textStyles, int sequence) {
+  Widget _buildExamHeader(String examName, TeacherColors colors, TeacherTextStyles textStyles, int sequence) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
       child: Container(
-        decoration: AdminColors.resultsColor.toGlassDecoration(),
+        decoration: TeacherColors.glassDecoration(),
         child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Row(
@@ -259,10 +264,13 @@ class _SingleResultScreenState extends State<SingleResultScreen> {
             children: [
               Text(
                 examName,
-                style: AdminTextStyles.sectionTitle(AdminColors.primaryText),
+                style: TeacherTextStyles.cardTitle,
               ),
               IconButton(
-                icon: Icon(Icons.download, color: AdminColors.primaryAccent),
+                icon: Icon(
+                  Icons.download,
+                  color: TeacherColors.primaryAccent,
+                ),
                 onPressed: () => _downloadReport(sequence),
               ),
             ],
@@ -271,6 +279,7 @@ class _SingleResultScreenState extends State<SingleResultScreen> {
       ),
     );
   }
+
   Future<void> _downloadReport(int sequence) async {
     try {
       setState(() => _isLoading = true);
@@ -300,7 +309,7 @@ class _SingleResultScreenState extends State<SingleResultScreen> {
           msg: 'Report saved to $filePath',
           toastLength: Toast.LENGTH_LONG,
           gravity: ToastGravity.BOTTOM,
-          backgroundColor: AdminColors.successAccent,
+          backgroundColor: TeacherColors.successAccent,
           textColor: Colors.white,
         );
       } else {
@@ -311,7 +320,7 @@ class _SingleResultScreenState extends State<SingleResultScreen> {
         msg: 'Error: ${e.toString()}',
         toastLength: Toast.LENGTH_LONG,
         gravity: ToastGravity.BOTTOM,
-        backgroundColor: AdminColors.dangerAccent,
+        backgroundColor: TeacherColors.dangerAccent,
         textColor: Colors.white,
       );
     } finally {
@@ -319,11 +328,11 @@ class _SingleResultScreenState extends State<SingleResultScreen> {
     }
   }
 
-  Widget _buildResultsTable(ExamResult examResult, AdminColors colors, AdminTextStyles textStyles) {
+  Widget _buildResultsTable(ExamResult examResult, TeacherColors colors, TeacherTextStyles textStyles) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Container(
-        decoration: AdminColors.glassDecoration(),
+        decoration: TeacherColors.glassDecoration(),
         child: SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           child: DataTable(
@@ -386,7 +395,7 @@ class _SingleResultScreenState extends State<SingleResultScreen> {
                   DataCell(
                     Container(
                       decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(12),
                         color: _getScoreColor(totalAchieved, subject.assessmentTotal)
                             .withOpacity(0.2),
                       ),
@@ -410,7 +419,7 @@ class _SingleResultScreenState extends State<SingleResultScreen> {
                   DataCell(
                     Container(
                       decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(12),
                         color: _getScoreColor(
                             subject.assessmentMarks, subject.assessmentTotal)
                             .withOpacity(0.2),
@@ -433,16 +442,16 @@ class _SingleResultScreenState extends State<SingleResultScreen> {
     );
   }
 
-  TextStyle _headerTextStyle(AdminTextStyles textStyles, AdminColors colors) {
-    return AdminTextStyles.cardTitle.copyWith(
-      color: AdminColors.primaryAccent,
+  TextStyle _headerTextStyle(TeacherTextStyles textStyles, TeacherColors colors) {
+    return TeacherTextStyles.cardSubtitle.copyWith(
+      color: TeacherColors.primaryAccent,
       fontWeight: FontWeight.bold,
     );
   }
 
-  TextStyle _cellTextStyle(AdminTextStyles textStyles, AdminColors colors) {
-    return AdminTextStyles.cardSubtitle.copyWith(
-      color: AdminColors.primaryText,
+  TextStyle _cellTextStyle(TeacherTextStyles textStyles, TeacherColors colors) {
+    return TeacherTextStyles.cardSubtitle.copyWith(
+      color: TeacherColors.primaryText,
     );
   }
 
@@ -451,25 +460,25 @@ class _SingleResultScreenState extends State<SingleResultScreen> {
 
     final percentage = (score / total) * 100;
     if (percentage >= 85) {
-      return AdminColors.successAccent;
+      return TeacherColors.successAccent;
     } else if (percentage >= 70) {
-      return AdminColors.warningAccent;
+      return TeacherColors.warningAccent;
     } else if (percentage >= 50) {
-      return AdminColors.infoAccent;
+      return TeacherColors.infoAccent;
     } else {
-      return AdminColors.dangerAccent;
+      return TeacherColors.dangerAccent;
     }
   }
 }
 
 class ExamResult {
   final String examName;
-  final int sequence;  // Add this line
+  final int sequence;
   final List<SubjectAssessment> subjects;
 
   ExamResult({
     required this.examName,
-    required this.sequence,  // Add this line
+    required this.sequence,
     required this.subjects,
   });
 }
