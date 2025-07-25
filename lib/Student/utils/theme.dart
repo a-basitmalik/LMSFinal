@@ -38,6 +38,21 @@ class AppColors {
   static const Color fineColor = Colors.redAccent;
   static const Color resultsColor = Colors.orangeAccent;
 
+  static const accentPinkLight = Color(0xFFFFB6C1); // Light pink
+  static const accentPink = Color(0xFFFF69B4);      // Hot pink
+
+  // Blue accent colors
+  static const accentBlueLight = Color(0xFFADD8E6);  // Light blue
+  static const accentBlue = Color(0xFF1E90FF);       // Dodger blue
+
+  // Amber accent colors
+  static const accentAmberLight = Color(0xFFFFECB3); // Light amber
+  static const accentAmber = Color(0xFFFFC107);      // Amber
+
+  // Success colors
+  static const successLight = Color(0xFFC8E6C9);     // Light success green
+      // Success green
+
   // Gradient helpers - Matches admin exactly
   static LinearGradient accentGradient(Color color) {
     return LinearGradient(

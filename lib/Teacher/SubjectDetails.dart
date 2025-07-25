@@ -443,93 +443,93 @@ class _SubjectDashboardScreenState extends State<SubjectDashboardScreen> {
               ),
             ),
           ),
-          ],
-          const SizedBox(height: 32),
-          // Announcements Console Section
-          // Announcements Console Section
-          _buildSectionHeader(
-            icon: Icons.announcement,
-            title: 'ANNOUNCEMENT CONSOLE',
-            color: TeacherColors.primaryAccent,
-          ),
-          const SizedBox(height: 16),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: GlassCard(
-              borderRadius: 16,
-              borderColor: TeacherColors.primaryAccent.withOpacity(0.3),
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  children: [
-                    // _buildAnimatedButton(
-                    //   icon: Icons.add_rounded,
-                    //   label: 'CREATE NEW ANNOUNCEMENT',
-                    //   color: primaryAccent,
-                    //   onTap: () => _showAddAnnouncementModal(context),
-                    // ),
-                    // const SizedBox(height: 12),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _buildConsoleOption(
-                            icon: Icons.campaign_rounded,
-                            label: 'View',
-                            subLabel: 'Announcements',
-                            color: TeacherColors.primaryAccent,
-                            onTap: () => _navigateToAnnouncementsScreen(),
-                          ),
+        ],
+        const SizedBox(height: 32),
+        // Announcements Console Section
+        // Announcements Console Section
+        _buildSectionHeader(
+          icon: Icons.announcement,
+          title: 'ANNOUNCEMENT CONSOLE',
+          color: TeacherColors.primaryAccent,
+        ),
+        const SizedBox(height: 16),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: GlassCard(
+            borderRadius: 16,
+            borderColor: TeacherColors.primaryAccent.withOpacity(0.3),
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                children: [
+                  // _buildAnimatedButton(
+                  //   icon: Icons.add_rounded,
+                  //   label: 'CREATE NEW ANNOUNCEMENT',
+                  //   color: primaryAccent,
+                  //   onTap: () => _showAddAnnouncementModal(context),
+                  // ),
+                  // const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildConsoleOption(
+                          icon: Icons.campaign_rounded,
+                          label: 'View',
+                          subLabel: 'Announcements',
+                          color: TeacherColors.primaryAccent,
+                          onTap: () => _navigateToAnnouncementsScreen(),
                         ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: _buildConsoleOption(
-                            icon: Icons.history_rounded,
-                            label: 'Call',
-                            subLabel: 'History',
-                            color: TeacherColors.primaryAccent,
-                            onTap: () => _navigateToCallHistoryScreen(),
-                          ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _buildConsoleOption(
+                          icon: Icons.history_rounded,
+                          label: 'Call',
+                          subLabel: 'History',
+                          color: TeacherColors.primaryAccent,
+                          onTap: () => _navigateToCallHistoryScreen(),
                         ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    _buildAnimatedButton(
-                      icon: Icons.add_rounded,
-                      label: 'CREATE NEW ANNOUNCEMENT',
-                      color: TeacherColors.primaryAccent,
-                      onTap: () => _showAddAnnouncementModal(context),
-                    ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  _buildAnimatedButton(
+                    icon: Icons.add_rounded,
+                    label: 'CREATE NEW ANNOUNCEMENT',
+                    color: TeacherColors.primaryAccent,
+                    onTap: () => _showAddAnnouncementModal(context),
+                  ),
 
-                    const SizedBox(height: 12),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _buildConsoleOption(
-                            icon: Icons.report_problem,
-                            label: 'Add',
-                            subLabel: 'Complaint',
-                            color: TeacherColors.primaryAccent,
-                            onTap: () => _showAddComplaintModal(context),
-                          ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildConsoleOption(
+                          icon: Icons.report_problem,
+                          label: 'Add',
+                          subLabel: 'Complaint',
+                          color: TeacherColors.primaryAccent,
+                          onTap: () => _showAddComplaintModal(context),
                         ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: _buildConsoleOption(
-                            icon: Icons.list_alt,
-                            label: 'View',
-                            subLabel: 'Complaints',
-                            color: TeacherColors.primaryAccent,
-                            onTap: () => _navigateToComplaintsScreen(),
-                          ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _buildConsoleOption(
+                          icon: Icons.list_alt,
+                          label: 'View',
+                          subLabel: 'Complaints',
+                          color: TeacherColors.primaryAccent,
+                          onTap: () => _navigateToComplaintsScreen(),
                         ),
-                      ],
-                    ),
-                  ],
-                ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
           ),
-          const SizedBox(height: 24),
+        ),
+        const SizedBox(height: 24),
 
       ],
     );
@@ -539,7 +539,7 @@ class _SubjectDashboardScreenState extends State<SubjectDashboardScreen> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => ComplaintsScreen(subjectId: widget.subject['subject_id']),
+        builder: (context) => ComplaintsScreen(subjectId:int.parse(widget.subject['subject_id'])),
       ),
     );
   }
@@ -752,7 +752,7 @@ class _SubjectDashboardScreenState extends State<SubjectDashboardScreen> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => AnnouncementScreen(subjectId: widget.subject['subject_id']),
+        builder: (context) => AnnouncementScreen(subjectId: int.parse(widget.subject['subject_id'])),
       ),
     );
   }
@@ -760,7 +760,7 @@ class _SubjectDashboardScreenState extends State<SubjectDashboardScreen> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => CallHistoryScreen(subjectId: widget.subject['subject_id']),
+        builder: (context) => CallHistoryScreen(subjectId:int.parse( widget.subject['subject_id'])),
       ),
     );
   }
@@ -1659,6 +1659,7 @@ class GlassCard extends StatelessWidget {
   final double borderRadius;
   final double? height;
   final double? width;
+  final Color glowColor;
 
   const GlassCard({
     Key? key,
@@ -1667,6 +1668,7 @@ class GlassCard extends StatelessWidget {
     this.borderRadius = 16,
     this.height,
     this.width,
+    this.glowColor = Colors.transparent,
   }) : super(key: key);
 
   @override
