@@ -556,7 +556,7 @@ class _SubjectChatScreenState extends State<SubjectChatScreen> {
           '${widget.subject['name']} Chat',
           style: TeacherTextStyles.className,
         ),
-        backgroundColor: TeacherColors.classColor,
+        backgroundColor: TeacherColors.chatColor,
         iconTheme: IconThemeData(color: TeacherColors.primaryText),
       ),
       body: Stack(

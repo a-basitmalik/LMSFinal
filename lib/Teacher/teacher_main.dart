@@ -494,7 +494,7 @@ class _TeacherHomeScreenState extends State<TeacherHomeScreen> {
       itemCount: subjects.length,
       itemBuilder: (context, index) {
         final subject = subjects[index];
-        final subjectColor = _getColorForSubject(subject['subject_id'] ?? index);
+        final subjectColor = TeacherColors.primaryAccent;
         final icon = _getIconForSubject(subject['subject_name'] ?? '');
 
         return Container(

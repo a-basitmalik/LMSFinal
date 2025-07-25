@@ -269,7 +269,7 @@ class _SubjectAttendanceScreenState extends State<SubjectAttendanceScreen> {
           '${widget.subject['name']} Attendance',
           style: TeacherTextStyles.className.copyWith(color: TeacherColors.primaryText),
         ),
-        backgroundColor: TeacherColors.classColor,
+        backgroundColor: TeacherColors.chatColor,
         centerTitle: true,
         elevation: 0,
         shape: const RoundedRectangleBorder(
@@ -382,7 +382,7 @@ class _SubjectAttendanceScreenState extends State<SubjectAttendanceScreen> {
                   return Theme(
                     data: Theme.of(context).copyWith(
                       colorScheme: ColorScheme.light(
-                        primary: TeacherColors.classColor,
+                        primary: TeacherColors.chatColor,
                         onPrimary: TeacherColors.primaryText,
                         surface: TeacherColors.secondaryBackground,
                         onSurface: TeacherColors.primaryText,
@@ -411,7 +411,7 @@ class _SubjectAttendanceScreenState extends State<SubjectAttendanceScreen> {
       margin: const EdgeInsets.symmetric(horizontal: 16),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        gradient: TeacherColors.accentGradient(TeacherColors.classColor),
+        gradient: TeacherColors.accentGradient(TeacherColors.chatColor),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -512,7 +512,7 @@ class _SubjectAttendanceScreenState extends State<SubjectAttendanceScreen> {
             Container(
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                gradient: TeacherColors.accentGradient(TeacherColors.classColor),
+                gradient: TeacherColors.accentGradient(TeacherColors.chatColor),
               ),
               padding: const EdgeInsets.all(8),
               child: Text(
@@ -588,7 +588,7 @@ class _SubjectAttendanceScreenState extends State<SubjectAttendanceScreen> {
         child: ElevatedButton(
           onPressed: isSubmitting ? null : _submitAttendance,
           style: ElevatedButton.styleFrom(
-            backgroundColor: TeacherColors.classColor,
+            backgroundColor: TeacherColors.chatColor,
             padding: const EdgeInsets.symmetric(vertical: 16),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),

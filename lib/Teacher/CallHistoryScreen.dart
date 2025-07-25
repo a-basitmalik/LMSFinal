@@ -183,7 +183,7 @@ class _CallHistoryScreenState extends State<CallHistoryScreen> {
           margin: const EdgeInsets.only(bottom: 16),
           decoration: TeacherColors.glassDecoration(
             borderRadius: 16,
-            borderColor: TeacherColors.infoAccent.withOpacity(0.3), // Matching announcement console
+            borderColor: TeacherColors.primaryAccent.withOpacity(0.3), // Matching announcement console
           ),
           child: Column(
             children: [
@@ -220,7 +220,7 @@ class _CallHistoryScreenState extends State<CallHistoryScreen> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         IconButton(
-                          icon: Icon(Icons.phone, color: TeacherColors.infoAccent),
+                          icon: Icon(Icons.phone, color: TeacherColors.primaryAccent),
                           onPressed: () async {
                             if (student['phone_number'] != null) {
                               await _addCallLog(student['rfid']);
@@ -270,10 +270,10 @@ class _CallHistoryScreenState extends State<CallHistoryScreen> {
 
     return Container(
       decoration: BoxDecoration(
-        color: TeacherColors.infoAccent.withOpacity(0.1),
+        color: TeacherColors.primaryAccent.withOpacity(0.1),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: TeacherColors.infoAccent.withOpacity(0.3),
+          color: TeacherColors.primaryAccent.withOpacity(0.3),
           width: 1,
         ),
       ),
@@ -285,7 +285,7 @@ class _CallHistoryScreenState extends State<CallHistoryScreen> {
             'Call History:',
             style: TeacherTextStyles.cardSubtitle.copyWith(
               fontWeight: FontWeight.bold,
-              color: TeacherColors.infoAccent,
+              color: TeacherColors.primaryAccent,
             ),
           ),
           const SizedBox(height: 8),
@@ -293,7 +293,7 @@ class _CallHistoryScreenState extends State<CallHistoryScreen> {
             padding: const EdgeInsets.only(bottom: 8),
             child: Row(
               children: [
-                Icon(Icons.phone, size: 16, color: TeacherColors.infoAccent),
+                Icon(Icons.phone, size: 16, color: TeacherColors.primaryAccent),
                 const SizedBox(width: 8),
                 Text(
                   'Called by ${log['caller_type']}',

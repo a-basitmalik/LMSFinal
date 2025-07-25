@@ -412,7 +412,7 @@ class _SubjectDashboardScreenState extends State<SubjectDashboardScreen> {
         _buildSectionHeader(
           icon: Icons.question_answer,
           title: 'RECENT QUERIES',
-          color: TeacherColors.infoAccent,
+          color: TeacherColors.primaryAccent,
           onTap: () => _navigateToScreen(2),
         ),
         if (queries.isNotEmpty) ...[
@@ -421,7 +421,8 @@ class _SubjectDashboardScreenState extends State<SubjectDashboardScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: GlassCard(
               borderRadius: 16,
-              borderColor: TeacherColors.infoAccent.withOpacity(0.3),
+              borderColor:TeacherColors.primaryAccent.withOpacity(0.3),
+
               child: Column(
                 children: [
                   ...queries.take(2).map((query) {
@@ -449,14 +450,14 @@ class _SubjectDashboardScreenState extends State<SubjectDashboardScreen> {
           _buildSectionHeader(
             icon: Icons.announcement,
             title: 'ANNOUNCEMENT CONSOLE',
-            color: TeacherColors.infoAccent,
+            color: TeacherColors.primaryAccent,
           ),
           const SizedBox(height: 16),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: GlassCard(
               borderRadius: 16,
-              borderColor: TeacherColors.infoAccent.withOpacity(0.3),
+              borderColor: TeacherColors.primaryAccent.withOpacity(0.3),
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Column(
@@ -464,7 +465,7 @@ class _SubjectDashboardScreenState extends State<SubjectDashboardScreen> {
                     // _buildAnimatedButton(
                     //   icon: Icons.add_rounded,
                     //   label: 'CREATE NEW ANNOUNCEMENT',
-                    //   color: TeacherColors.infoAccent,
+                    //   color: primaryAccent,
                     //   onTap: () => _showAddAnnouncementModal(context),
                     // ),
                     // const SizedBox(height: 12),
@@ -475,7 +476,7 @@ class _SubjectDashboardScreenState extends State<SubjectDashboardScreen> {
                             icon: Icons.campaign_rounded,
                             label: 'View',
                             subLabel: 'Announcements',
-                            color: TeacherColors.infoAccent,
+                            color: TeacherColors.primaryAccent,
                             onTap: () => _navigateToAnnouncementsScreen(),
                           ),
                         ),
@@ -485,7 +486,7 @@ class _SubjectDashboardScreenState extends State<SubjectDashboardScreen> {
                             icon: Icons.history_rounded,
                             label: 'Call',
                             subLabel: 'History',
-                            color: TeacherColors.infoAccent,
+                            color: TeacherColors.primaryAccent,
                             onTap: () => _navigateToCallHistoryScreen(),
                           ),
                         ),
@@ -495,7 +496,7 @@ class _SubjectDashboardScreenState extends State<SubjectDashboardScreen> {
                     _buildAnimatedButton(
                       icon: Icons.add_rounded,
                       label: 'CREATE NEW ANNOUNCEMENT',
-                      color: TeacherColors.infoAccent,
+                      color: TeacherColors.primaryAccent,
                       onTap: () => _showAddAnnouncementModal(context),
                     ),
 
@@ -507,7 +508,7 @@ class _SubjectDashboardScreenState extends State<SubjectDashboardScreen> {
                             icon: Icons.report_problem,
                             label: 'Add',
                             subLabel: 'Complaint',
-                            color: TeacherColors.infoAccent,
+                            color: TeacherColors.primaryAccent,
                             onTap: () => _showAddComplaintModal(context),
                           ),
                         ),
@@ -517,7 +518,7 @@ class _SubjectDashboardScreenState extends State<SubjectDashboardScreen> {
                             icon: Icons.list_alt,
                             label: 'View',
                             subLabel: 'Complaints',
-                            color: TeacherColors.infoAccent,
+                            color: TeacherColors.primaryAccent,
                             onTap: () => _navigateToComplaintsScreen(),
                           ),
                         ),
@@ -673,7 +674,7 @@ class _SubjectDashboardScreenState extends State<SubjectDashboardScreen> {
                         }
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: TeacherColors.infoAccent,
+                        backgroundColor: TeacherColors.primaryAccent,
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -937,7 +938,7 @@ class _SubjectDashboardScreenState extends State<SubjectDashboardScreen> {
                       ),
                       child: Row(
                         children: [
-                          Icon(Icons.attach_file, color: TeacherColors.infoAccent),
+                          Icon(Icons.attach_file, color: TeacherColors.primaryAccent),
                           const SizedBox(width: 10),
                           Text('Add Attachment', style: TeacherTextStyles.cardSubtitle),
                         ],
@@ -964,7 +965,7 @@ class _SubjectDashboardScreenState extends State<SubjectDashboardScreen> {
                         child: ElevatedButton(
                           onPressed: _createAnnouncement,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: TeacherColors.infoAccent,
+                            backgroundColor: TeacherColors.primaryAccent,
                             padding: const EdgeInsets.symmetric(vertical: 16),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
@@ -1578,7 +1579,7 @@ class _SubjectDashboardScreenState extends State<SubjectDashboardScreen> {
     final List<Map<String, dynamic>> menuItems = [
       {'title': 'Overview', 'icon': Icons.lightbulb_outline, 'index': 0, 'color': TeacherColors.dangerAccent},
       {'title': 'Assignments', 'icon': Icons.assignment_outlined, 'index': 1, 'color': TeacherColors.assignmentColor},
-      {'title': 'Queries', 'icon': Icons.question_answer_outlined, 'index': 2, 'color': TeacherColors.infoAccent},
+      {'title': 'Queries', 'icon': Icons.question_answer_outlined, 'index': 2, 'color': TeacherColors.primaryAccent},
       {'title': 'Results', 'icon': Icons.assessment_outlined, 'index': 3, 'color': TeacherColors.successAccent},
       {'title': 'Attendance', 'icon': Icons.calendar_today_outlined, 'index': 4, 'color': TeacherColors.attendanceColor},
       {'title': 'Chat', 'icon': Icons.chat_bubble_outline, 'index': 5, 'color': TeacherColors.primaryAccent},
