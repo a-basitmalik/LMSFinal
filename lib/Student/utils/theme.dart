@@ -2,63 +2,57 @@ import 'package:flutter/material.dart';
 
 class AppColors {
   // Background colors
-  static const Color primaryBackground = Color(0xFF0A0A1A);
-  static const Color secondaryBackground = Color(0xFF12122B);
-  static const Color surface = Color(0x10FFFFFF);
-  static const Color cardBackground = Color(0x10FFFFFF); // Matches admin
-  static const Color cardBorder = Color(0x30FFFFFF); // Matches admin
+  static const Color primaryBackground = Color(0xFF1A1A2E); // Matches TeacherColors.primaryBackground
+  static const Color secondaryBackground = Color(0xFF16213E); // Matches TeacherColors.secondaryBackground
+  static const Color surface = Color(0x15FFFFFF); // Transparent white like cardBackground
+  static const Color cardBackground = Color(0x15FFFFFF); // Matches TeacherColors.cardBackground
+  static const Color cardBorder = Color(0x25FFFFFF); // Matches TeacherColors.cardBorder
 
   // Accent colors
-  static const Color primary = Colors.cyanAccent; // Matches admin's primaryAccent
-  static const Color primaryLight = Color(0xFF9E47FF);
-  static const Color primaryDark = Color(0xFF0400BA);
-  static const Color secondary = Colors.blueAccent; // Matches admin's secondaryAccent
-  static const Color secondaryLight = Color(0xFF66FFF9);
-  static const Color secondaryDark = Color(0xFF00A895);
+  static const Color primary = Color(0xFF00D1D1); // Matches TeacherColors.primaryAccent
+  static const Color primaryLight = Color(0xFF4CC9F0); // Matches TeacherColors.secondaryAccent
+  static const Color primaryDark = Color(0xFF00A895); // Fallback match
+  static const Color secondary = Color(0xFF4CC9F0); // Matches TeacherColors.secondaryAccent
+  static const Color secondaryLight = Color(0xFF60A5FA); // Matches TeacherColors.studentColor
+  static const Color secondaryDark = Color(0xFF00A895); // Close to secondaryAccent darker tone
 
   // Status colors
-  static const Color success = Colors.greenAccent; // Matches admin's successAccent
-  static const Color warning = Colors.orangeAccent; // Matches admin's warningAccent
-  static const Color error = Colors.redAccent; // Matches admin's dangerAccent
-  static const Color info = Colors.purpleAccent; // Matches admin's infoAccent
+  static const Color success = Color(0xFF4ADE80); // Matches TeacherColors.successAccent
+  static const Color warning = Color(0xFFF97316); // Matches TeacherColors.warningAccent
+  static const Color error = Color(0xFFEF4444); // Matches TeacherColors.dangerAccent
+  static const Color info = Color(0xFFA855F7); // Matches TeacherColors.infoAccent
 
   // Text colors
-  static const Color textPrimary = Colors.white; // Matches admin's primaryText
-  static const Color textSecondary = Color(0xFFB0B0CC); // Matches admin's secondaryText
-  static const Color disabledText = Color(0xFF666680); // Matches admin's disabledText
+  static const Color textPrimary = Colors.white; // Matches TeacherColors.primaryText
+  static const Color textSecondary = Color(0xFF94A3B8); // Matches TeacherColors.secondaryText
+  static const Color disabledText = Color(0xFF64748B); // Matches TeacherColors.disabledText
 
   // Glass morphism effects
-  static Color glassEffectLight = Colors.white.withOpacity(0.1); // Matches admin
-  static Color glassEffectDark = Colors.white.withOpacity(0.05); // Matches admin
+  static Color glassEffectLight = Colors.white.withOpacity(0.1); // Matches TeacherColors.glassEffectLight
+  static Color glassEffectDark = Colors.white.withOpacity(0.05); // Matches TeacherColors.glassEffectDark
 
-  // Section specific colors - Matches admin exactly
-  static const Color studentColor = Colors.blueAccent;
-  static const Color facultyColor = Colors.purpleAccent;
-  static const Color attendanceColor = Colors.greenAccent;
-  static const Color fineColor = Colors.redAccent;
-  static const Color resultsColor = Colors.orangeAccent;
+  // Section specific colors - Updated to match TeacherColors values
+  static const Color studentColor = Color(0xFF60A5FA); // Blue-400
+  static const Color facultyColor = Color(0xFFA855F7); // Purple-500
+  static const Color attendanceColor = Color(0xFF4ADE80); // Green-400
+  static const Color fineColor = Color(0xFFEF4444); // Red
+  static const Color resultsColor = Color(0xFFF59E0B); // Amber-500
 
-  static const accentPinkLight = Color(0xFFFFB6C1); // Light pink
-  static const accentPink = Color(0xFFFF69B4);      // Hot pink
+  // Other accent sets (unchanged)
+  static const accentPinkLight = Color(0xFFFFB6C1); // Optional set
+  static const accentPink = Color(0xFFFF69B4);      // Optional set
+  static const accentBlueLight = Color(0xFFADD8E6);
+  static const accentBlue = Color(0xFF1E90FF);
+  static const accentAmberLight = Color(0xFFFFECB3);
+  static const accentAmber = Color(0xFFFFC107);
+  static const successLight = Color(0xFFC8E6C9);
 
-  // Blue accent colors
-  static const accentBlueLight = Color(0xFFADD8E6);  // Light blue
-  static const accentBlue = Color(0xFF1E90FF);       // Dodger blue
-
-  // Amber accent colors
-  static const accentAmberLight = Color(0xFFFFECB3); // Light amber
-  static const accentAmber = Color(0xFFFFC107);      // Amber
-
-  // Success colors
-  static const successLight = Color(0xFFC8E6C9);     // Light success green
-      // Success green
-
-  // Gradient helpers - Matches admin exactly
+  // Gradient helper (unchanged)
   static LinearGradient accentGradient(Color color) {
     return LinearGradient(
       colors: [
-        color.withOpacity(0.3),
-        color.withOpacity(0.1),
+        color.withOpacity(0.4), // Matches TeacherColors.accentGradient
+        color.withOpacity(0.2),
       ],
       begin: Alignment.topLeft,
       end: Alignment.bottomRight,

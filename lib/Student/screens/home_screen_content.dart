@@ -81,10 +81,11 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
     }
   }
 
-  // Add this in your HomeScreenContent widget (replace the existing announcements section)
+
+
   Widget _buildAnnouncementsConsoleSection(BuildContext context) {
     final cyberBlue = Color(0xFF00E0FF);
-    final matrixGreen = Color(0xFF00FF9D);
+
     final announcements = studentData?['announcements'] ?? [];
 
     return Column(
@@ -100,7 +101,7 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
           borderRadius: 16,
           borderColor: cyberBlue.withOpacity(0.3),
           child: Padding(
-            padding: const EdgeInsets.all(16.0),
+            padding: const EdgeInsets.all(20.0),
             child: Column(
               children: [
                 Row(
@@ -119,7 +120,7 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
                         ),
                       ),
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: 16),
                     Expanded(
                       child: _buildConsoleOption(
                         icon: Icons.announcement_outlined,
@@ -127,20 +128,20 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
                         subLabel: 'Annoucement',
                         color: cyberBlue,
                         onTap: () {
-                          // Navigate to call history if needed
+                          // Subject announcement action
                         },
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 20),
                 _buildAnimatedButton(
                   icon: Icons.add_rounded,
                   label: 'CREATE NEW QUERY',
                   color: cyberBlue,
                   onTap: () => _showAddQueryModal(context),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 20),
                 Row(
                   children: [
                     Expanded(
@@ -152,7 +153,7 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
                         onTap: () => _showAddComplaintModal(context),
                       ),
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: 16),
                     Expanded(
                       child: _buildConsoleOption(
                         icon: Icons.phone_android,
@@ -160,7 +161,7 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
                         subLabel: 'Logs',
                         color: cyberBlue,
                         onTap: () {
-                          // Navigate to complaints screen if needed
+                          // Call log navigation
                         },
                       ),
                     ),
@@ -588,7 +589,7 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
     return Row(
       children: [
         Expanded(
-          child: _buildGlowingStatCard( // Changed to glowing version
+          child: _buildGlassStatCard( // Changed to glowing version
             context,
             icon: Icons.calendar_today,
             value: '${studentData?['attendance_percentage'] ?? '0'}%',
@@ -598,7 +599,7 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
         ),
         const SizedBox(width: 16),
         Expanded(
-          child: _buildGlowingStatCard( // Changed to glowing version
+          child: _buildGlassStatCard( // Changed to glowing version
             context,
             icon: Icons.assignment,
             value: '${studentData?['average_score'] ?? '0'}%',
@@ -610,92 +611,51 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
     );
   }
 
-  Widget _buildGlowingStatCard( // New glowing stat card version
+  Widget _buildGlassStatCard(
       BuildContext context, {
         required IconData icon,
         required String value,
         required String label,
         required Color color,
       }) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final baseColor = isDark ? color.withOpacity(0.8) : color;
-    final textColor = isDark ? Colors.white : Theme.of(context).colorScheme.onBackground;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(20),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-        child: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                baseColor.withOpacity(0.15),
-                baseColor.withOpacity(0.05),
-              ],
+    return GlassCard(
+      borderRadius: 20,
+      borderColor: color.withOpacity(0.3),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: color.withOpacity(0.2),
+              ),
+              child: Icon(
+                icon,
+                size: 24,
+                color: color,
+              ),
             ),
-            border: Border.all(
-              color: Colors.white.withOpacity(isDark ? 0.1 : 0.2),
-              width: 1,
+            const SizedBox(height: 12),
+            Text(
+              value,
+              style: theme.textTheme.headlineSmall?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: theme.colorScheme.onBackground,
+              ),
             ),
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: [
-              BoxShadow(
-                color: baseColor.withOpacity(0.2),
-                blurRadius: 15,
-                spreadRadius: 2,
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onBackground.withOpacity(0.7),
               ),
-            ],
-          ),
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: LinearGradient(
-                    colors: [
-                      baseColor.withOpacity(0.3),
-                      baseColor.withOpacity(0.1),
-                    ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: baseColor.withOpacity(0.3),
-                      blurRadius: 10,
-                      spreadRadius: 2,
-                    ),
-                  ],
-                ),
-                child: Icon(
-                  icon,
-                  size: 24,
-                  color: isDark ? Colors.white : Colors.white.withOpacity(0.9),
-                ),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                value,
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: textColor,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                label,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: isDark
-                      ? Colors.white.withOpacity(0.8)
-                      : Theme.of(context).colorScheme.onBackground.withOpacity(0.7),
-                ),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
