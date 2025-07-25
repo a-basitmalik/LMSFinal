@@ -1,6 +1,9 @@
+import 'dart:io';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:image_picker/image_picker.dart';
+import 'package:newapp/Teacher/CallHistoryScreen.dart';
 import 'package:newapp/Teacher/CreateAssessment.dart';
 import 'package:newapp/Teacher/HolographicCalendarScreen.dart';
 import 'package:newapp/Teacher/PlannerListScreen.dart';
@@ -585,7 +588,7 @@ class _SubjectDashboardScreenState extends State<SubjectDashboardScreen> {
                     ),
                     items: students.map((student) {
                       return DropdownMenuItem<String>(
-                        value: student['rfid'],
+                        value: student['rfid'].toString(),
                         child: Text('${student['name']} (${student['rfid']})'),
                       );
                     }).toList(),
@@ -656,8 +659,9 @@ class _SubjectDashboardScreenState extends State<SubjectDashboardScreen> {
                             selectedStudentId!,
                             titleController.text,
                             descriptionController.text,
-                            widget.subject['subject_id'],
+                            widget.subject['subject_id'].toString(),
                           );
+
                           Navigator.pop(context);
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(content: Text('Complaint submitted successfully')),
@@ -689,13 +693,25 @@ class _SubjectDashboardScreenState extends State<SubjectDashboardScreen> {
   }
 
   Future<List<Map<String, dynamic>>> _fetchStudentsForSubject() async {
-    // Implement API call to fetch students for this subject
-    // Example:
-    // return await StudentService.getStudentsForSubject(widget.subject['subject_id']);
-    return [
-      {'rfid': '123', 'name': 'John Doe'},
-      {'rfid': '456', 'name': 'Jane Smith'},
-    ];
+    try {
+      final response = await http.get(
+        Uri.parse('http://193.203.162.232:5050/SubjectAttendance/api/subject/${widget.subject['subject_id']}/students'),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+        return data.map((student) => {
+          'rfid': student['rfid'].toString(),
+          'name': student['student_name'],
+          'student_id': student['student_id'],
+        }).toList();
+      } else {
+        throw Exception('Failed to load students: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Failed to fetch students: $e');
+    }
   }
 
   Future<void> _submitComplaint(
@@ -704,15 +720,31 @@ class _SubjectDashboardScreenState extends State<SubjectDashboardScreen> {
       String description,
       String subjectId,
       ) async {
-    // Implement API call to submit complaint
-    // Example:
-    // await ComplaintService.addComplaint(
-    //   rfid: rfid,
-    //   title: title,
-    //   description: description,
-    //   complaintBy: 'teacher',
-    //   subjectId: subjectId,
-    // );
+    try {
+      final response = await http.post(
+        Uri.parse('http://193.203.162.232:5050/student/complaints/add'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({
+          'rfid': rfid,
+          'title': title,
+          'description': description,
+          'complaint_by': 'teacher', // Hardcoded as 'teacher' per your requirement
+          'subject_id': subjectId,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        // Success - you might want to show a success message
+        final responseData = json.decode(response.body);
+        print('Complaint submitted successfully: ${responseData['message']}');
+      } else {
+        // Handle error response
+        final errorData = json.decode(response.body);
+        throw Exception(errorData['error'] ?? 'Failed to submit complaint');
+      }
+    } catch (e) {
+      throw Exception('Failed to submit complaint: $e');
+    }
   }
 
   void _navigateToAnnouncementsScreen() {
@@ -723,15 +755,16 @@ class _SubjectDashboardScreenState extends State<SubjectDashboardScreen> {
       ),
     );
   }
-
   void _navigateToCallHistoryScreen() {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => AnnouncementScreen(subjectId: widget.subject['subject_id']),
+        builder: (context) => CallHistoryScreen(subjectId: widget.subject['subject_id']),
       ),
     );
   }
+
+
   Widget _buildConsoleOption({
     required IconData icon,
     required String label,
@@ -761,102 +794,193 @@ class _SubjectDashboardScreenState extends State<SubjectDashboardScreen> {
     );
   }
 
+
   void _showAddAnnouncementModal(BuildContext context) {
+    final TextEditingController titleController = TextEditingController();
+    final TextEditingController descriptionController = TextEditingController();
+    List<File> attachments = [];
+
+    Future<void> _pickFile() async {
+      final pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery);
+      if (pickedFile != null) {
+        setState(() {
+          attachments.add(File(pickedFile.path));
+        });
+      }
+    }
+
+    Future<void> _createAnnouncement() async {
+      try {
+        // First create the announcement
+        final announcementResponse = await http.post(
+          Uri.parse('http://193.203.162.232:5050/student/api/subject/${widget.subject['subject_id']}/announcements'),
+          headers: {'Content-Type': 'application/json'},
+          body: json.encode({
+            'title': titleController.text,
+            'description': descriptionController.text,
+          }),
+        );
+
+        if (announcementResponse.statusCode != 201) {
+          throw Exception('Failed to create announcement');
+        }
+
+        final announcementData = json.decode(announcementResponse.body);
+        final announcementId = announcementData['announcement_id'];
+
+        // Then upload attachments if any
+        if (attachments.isNotEmpty) {
+          for (var attachment in attachments) {
+            var request = http.MultipartRequest(
+              'POST',
+              Uri.parse('http://193.203.162.232:5050/student/api/announcements/$announcementId/attachments'),
+            );
+
+            request.files.add(await http.MultipartFile.fromPath(
+              'file',
+              attachment.path,
+            ));
+
+            var response = await request.send();
+            if (response.statusCode != 201) {
+              throw Exception('Failed to upload attachment');
+            }
+          }
+        }
+
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Announcement published successfully!')),
+        );
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: ${e.toString()}')),
+        );
+      }
+    }
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: Theme.of(context).scaffoldBackgroundColor,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'New Announcement',
-                style: TeacherTextStyles.headerTitle.copyWith(fontSize: 22),
-              ),
-              const SizedBox(height: 20),
-              TextField(
-                decoration: InputDecoration(
-                  labelText: 'Title',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
+      builder: (context) => StatefulBuilder(
+        builder: (BuildContext context, StateSetter setState) {
+          return Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Theme.of(context).scaffoldBackgroundColor,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+            ),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'New Announcement',
+                    style: TeacherTextStyles.headerTitle.copyWith(fontSize: 22),
                   ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                maxLines: 4,
-                decoration: InputDecoration(
-                  labelText: 'Description',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
+                  const SizedBox(height: 20),
+                  TextField(
+                    controller: titleController,
+                    decoration: InputDecoration(
+                      labelText: 'Title',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
                   ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              InkWell(
-                onTap: () {
-                  // Handle file attachment
-                },
-                child: Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    border: Border.all(color: TeacherColors.cardBorder),
-                    borderRadius: BorderRadius.circular(12),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: descriptionController,
+                    maxLines: 4,
+                    decoration: InputDecoration(
+                      labelText: 'Description',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
                   ),
-                  child: Row(
+                  const SizedBox(height: 16),
+                  if (attachments.isNotEmpty) ...[
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Attachments:',
+                          style: TeacherTextStyles.cardSubtitle,
+                        ),
+                        const SizedBox(height: 8),
+                        ...attachments.map((file) => ListTile(
+                          leading: const Icon(Icons.attach_file),
+                          title: Text(
+                            file.path.split('/').last,
+                            style: TeacherTextStyles.cardSubtitle,
+                          ),
+                          trailing: IconButton(
+                            icon: const Icon(Icons.close),
+                            onPressed: () => setState(() {
+                              attachments.remove(file);
+                            }),
+                          ),
+                        )).toList(),
+                        const SizedBox(height: 8),
+                      ],
+                    ),
+                  ],
+                  InkWell(
+                    onTap: _pickFile,
+                    child: Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: TeacherColors.cardBorder),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.attach_file, color: TeacherColors.infoAccent),
+                          const SizedBox(width: 10),
+                          Text('Add Attachment', style: TeacherTextStyles.cardSubtitle),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  Row(
                     children: [
-                      Icon(Icons.attach_file, color: TeacherColors.infoAccent),
-                      const SizedBox(width: 10),
-                      Text('Add Attachment', style: TeacherTextStyles.cardSubtitle),
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () => Navigator.pop(context),
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: Text('Cancel', style: TeacherTextStyles.primaryButton),
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: _createAnnouncement,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: TeacherColors.infoAccent,
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: Text('Publish', style: TeacherTextStyles.primaryButton),
+                        ),
+                      ),
                     ],
                   ),
-                ),
-              ),
-              const SizedBox(height: 24),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () => Navigator.pop(context),
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      child: Text('Cancel', style: TeacherTextStyles.primaryButton),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () {
-                        // Handle announcement creation
-                        Navigator.pop(context);
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: TeacherColors.infoAccent,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      child: Text('Publish', style: TeacherTextStyles.primaryButton),
-                    ),
-                  ),
+                  const SizedBox(height: 10),
                 ],
               ),
-              const SizedBox(height: 10),
-            ],
-          ),
-        ),
+            ),
+          );
+        },
       ),
     );
   }
