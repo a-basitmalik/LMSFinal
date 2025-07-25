@@ -3,7 +3,10 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
+import 'package:newapp/Teacher/themes/theme_extensions.dart';
+import 'package:newapp/Teacher/themes/theme_text_styles.dart';
 import '../../Teacher/SubjectDetails.dart';
+import '../../Teacher/themes/theme_colors.dart';
 import '../utils/theme.dart';
 import 'attendance_screen.dart';
 import 'chat_rooms_screen.dart';
@@ -23,7 +26,6 @@ DateTime? _safeParseDate(String? dateStr) {
     return null;
   }
 }
-
 
 class HomeScreenContent extends StatefulWidget {
   final String rfid;
@@ -81,92 +83,315 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
     }
   }
 
+  @override
+  Widget build(BuildContext context) {
+    if (isLoading) {
+      return Center(
+        child: CircularProgressIndicator(
+          valueColor: AlwaysStoppedAnimation<Color>(TeacherColors.primaryAccent),
+        ),
+      );
+    }
 
+    if (hasError || studentData == null) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.error_outline, size: 48, color: TeacherColors.dangerAccent),
+            const SizedBox(height: 16),
+            Text(
+              'Failed to load student data',
+              style: TeacherTextStyles.cardSubtitle,
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: _fetchStudentData,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: TeacherColors.primaryAccent,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: Text(
+                'Retry',
+                style: TeacherTextStyles.primaryButton,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
 
-  Widget _buildAnnouncementsConsoleSection(BuildContext context) {
-    final cyberBlue = Color(0xFF00E0FF);
-    final announcements = studentData?['announcements'] ?? [];
+    return Scaffold(
+      backgroundColor: TeacherColors.primaryBackground,
+      body: CustomScrollView(
+        slivers: [
+          SliverAppBar(
+            expandedHeight: 200,
+            floating: false,
+            pinned: true,
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            flexibleSpace: FlexibleSpaceBar(
+              title: Text(
+                'DASHBOARD',
+                style: TeacherTextStyles.sectionHeader.copyWith(
+                  fontSize: 18,
+                  letterSpacing: 1.5,
+                ),
+              ),
+              centerTitle: true,
+              background: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      TeacherColors.primaryAccent.withOpacity(0.3),
+                      Colors.transparent,
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+          SliverPadding(
+            padding: const EdgeInsets.all(16),
+            sliver: SliverToBoxAdapter(
+              child: _buildHeader(context),
+            ),
+          ),
+          SliverPadding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            sliver: SliverToBoxAdapter(
+              child: _buildStatsRow(context),
+            ),
+          ),
+          SliverPadding(
+            padding: const EdgeInsets.all(16),
+            sliver: SliverToBoxAdapter(
+              child: _buildTimetableSection(context),
+            ),
+          ),
+          SliverPadding(
+            padding: const EdgeInsets.all(16),
+            sliver: SliverToBoxAdapter(
+              child: _buildQuickActionsSection(context),
+            ),
+          ),
+          SliverPadding(
+            padding: const EdgeInsets.all(16),
+            sliver: SliverToBoxAdapter(
+              child: _buildAnnouncementsConsoleSection(context),
+            ),
+          ),
+          SliverPadding(
+            padding: const EdgeInsets.all(16),
+            sliver: SliverToBoxAdapter(
+              child: _buildAssignmentsSection(context),
+            ),
+          ),
+          const SliverToBoxAdapter(child: SizedBox(height: 20)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeader(BuildContext context) {
+    return Container(
+      decoration: TeacherColors.glassDecoration(),
+      padding: const EdgeInsets.all(20),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Good ${_getGreeting()}',
+                style: TeacherTextStyles.cardSubtitle,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                studentData?['name'] ?? 'Student',
+                style: TeacherTextStyles.sectionHeader.copyWith(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: TeacherColors.primaryAccent.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  'Grade ${studentData?['grade']} - Section ${studentData?['section']}',
+                  style: TeacherTextStyles.cardSubtitle.copyWith(
+                    color: TeacherColors.primaryAccent,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          Container(
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: TeacherColors.primaryAccent,
+                width: 2,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: TeacherColors.primaryAccent.withOpacity(0.2),
+                  blurRadius: 10,
+                  spreadRadius: 2,
+                ),
+              ],
+            ),
+            child: CircleAvatar(
+              radius: 32,
+              backgroundImage: studentData?['profile_image'] != null
+                  ? NetworkImage(studentData!['profile_image'])
+                  : const AssetImage('assets/default_profile.png')
+              as ImageProvider,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatsRow(BuildContext context) {
+    return Container(
+      decoration: TeacherColors.glassDecoration(),
+      padding: const EdgeInsets.all(16),
+      child: Row(
+        children: [
+          Expanded(
+            child: _buildStatsCard(
+              context,
+              icon: Icons.calendar_today_rounded,
+              value: '${studentData?['attendance_percentage'] ?? '0'}%',
+              label: 'Attendance',
+              color: TeacherColors.primaryAccent,
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: _buildStatsCard(
+              context,
+              icon: Icons.assignment_rounded,
+              value: '${studentData?['average_score'] ?? '0'}%',
+              label: 'Avg. Score',
+              color: TeacherColors.secondaryAccent,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatsCard(
+      BuildContext context, {
+        required IconData icon,
+        required String value,
+        required String label,
+        required Color color,
+      }) {
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            color.withOpacity(0.1),
+            color.withOpacity(0.05),
+          ],
+        ),
+      ),
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  color.withOpacity(0.3),
+                  color.withOpacity(0.1),
+                ],
+              ),
+            ),
+            child: Icon(
+              icon,
+              size: 24,
+              color: color,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            value,
+            style: TeacherTextStyles.statValue.copyWith(
+              color: color,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: TeacherTextStyles.cardSubtitle.copyWith(
+              color: color.withOpacity(0.8),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTimetableSection(BuildContext context) {
+    final timetable = (studentData?['timetable'] as List?) ?? [];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildSectionHeader(
-          icon: Icons.announcement,
-          title: 'ANNOUNCEMENT CONSOLE',
-          color: cyberBlue,
+        Padding(
+          padding: const EdgeInsets.only(bottom: 16),
+          child: Text(
+            "TODAY'S CLASSES",
+            style: TeacherTextStyles.sectionHeader,
+          ),
         ),
-        const SizedBox(height: 16),
-        GlassCard(
-          borderRadius: 16,
-          borderColor: cyberBlue.withOpacity(0.3),
-          child: Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: Column(
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildConsoleOption(
-                        icon: Icons.campaign_rounded,
-                        label: 'General',
-                        subLabel: 'Announcements',
-                        color: cyberBlue,
-                        onTap: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => AnnouncementsScreen(),
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: _buildConsoleOption(
-                        icon: Icons.announcement_outlined,
-                        label: 'Subject',
-                        subLabel: 'Annoucement',
-                        color: cyberBlue,
-                        onTap: () {
-                          // Subject announcement action
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 20),
-                _buildAnimatedButton(
-                  icon: Icons.add_rounded,
-                  label: 'CREATE NEW QUERY',
-                  color: cyberBlue,
-                  onTap: () => _showAddQueryModal(context),
-                ),
-                const SizedBox(height: 20),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildConsoleOption(
-                        icon: Icons.report_problem,
-                        label: 'View',
-                        subLabel: 'Complaint',
-                        color: cyberBlue,
-                        onTap: () => _showAddComplaintModal(context),
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: _buildConsoleOption(
-                        icon: Icons.phone_android,
-                        label: 'Call',
-                        subLabel: 'Logs',
-                        color: cyberBlue,
-                        onTap: () {
-                          // Call log navigation
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-              ],
+        Container(
+          decoration: TeacherColors.glassDecoration(),
+          child: timetable.isNotEmpty && timetable[0] != null
+              ? Column(
+            children: [
+              for (var i = 0; i < timetable.length; i++)
+                if (timetable[i] != null)
+                  _buildClassItem(
+                    subject: timetable[i]['subject'] ?? 'No Subject',
+                    time: timetable[i]['time'] ?? '--:--',
+                    room: timetable[i]['room'] ?? '--',
+                    isLast: i == timetable.length - 1,
+                  ),
+            ],
+          )
+              : Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Center(
+              child: Text(
+                'No classes scheduled for today',
+                style: TeacherTextStyles.cardSubtitle,
+              ),
             ),
           ),
         ),
@@ -174,7 +399,321 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
     );
   }
 
-// Helper widget for console options
+  Widget _buildClassItem({
+    required String subject,
+    required String time,
+    required String room,
+    required bool isLast,
+  }) {
+    final IconData subjectIcon = _getSubjectIcon(subject);
+    final Color subjectColor = _getSubjectColor(subject);
+
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      subjectColor.withOpacity(0.3),
+                      subjectColor.withOpacity(0.1),
+                    ],
+                  ),
+                ),
+                child: Icon(
+                  subjectIcon,
+                  color: subjectColor,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      subject,
+                      style: TeacherTextStyles.cardTitle,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      time,
+                      style: TeacherTextStyles.cardSubtitle,
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: subjectColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  room,
+                  style: TeacherTextStyles.cardSubtitle.copyWith(
+                    color: subjectColor,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          if (!isLast)
+            Padding(
+              padding: const EdgeInsets.only(top: 16),
+              child: Divider(
+                height: 1,
+                color: TeacherColors.cardBorder.withOpacity(0.3),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildQuickActionsSection(BuildContext context) {
+    final quickActions = [
+      {
+        'icon': Icons.calendar_today,
+        'label': 'Attendance',
+        'color': TeacherColors.primaryAccent,
+        'onTap': () => Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => AttendanceScreen(rfid: widget.rfid),
+          ),
+        ),
+      },
+      {
+        'icon': Icons.book,
+        'label': 'Syllabus',
+        'color': TeacherColors.secondaryAccent,
+        'onTap': () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => SyllabusScreen()),
+        ),
+      },
+      {
+        'icon': Icons.assignment,
+        'label': 'Assignments',
+        'color': TeacherColors.infoAccent,
+        'onTap': () => Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => AssignmentsScreen(studentRfid: widget.rfid),
+          ),
+        ),
+      },
+      {
+        'icon': Icons.chat,
+        'label': 'Chat Rooms',
+        'color': TeacherColors.successAccent,
+        'onTap': () => Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => ChatRoomsScreen(rfid: widget.rfid),
+          ),
+        ),
+      },
+      {
+        'icon': Icons.help_outline,
+        'label': 'Queries',
+        'color': TeacherColors.warningAccent,
+        'onTap': () => Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => QueriesScreen(studentRfid: widget.rfid),
+          ),
+        ),
+      },
+      {
+        'icon': Icons.assessment,
+        'label': 'Assessments',
+        'color': TeacherColors.dangerAccent,
+        'onTap': () => Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => AssessmentsScreen(rfid: widget.rfid),
+          ),
+        ),
+      },
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(bottom: 16),
+          child: Text(
+            'QUICK ACCESS',
+            style: TeacherTextStyles.sectionHeader,
+          ),
+        ),
+        GridView.count(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          crossAxisCount: 3,
+          childAspectRatio: 1.1,
+          mainAxisSpacing: 16,
+          crossAxisSpacing: 16,
+          children: quickActions.map((action) {
+            return _buildQuickActionButton(
+              icon: action['icon'] as IconData,
+              label: action['label'] as String,
+              color: action['color'] as Color,
+              onTap: action['onTap'] as VoidCallback,
+            );
+          }).toList(),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildQuickActionButton({
+    required IconData icon,
+    required String label,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        decoration: TeacherColors.glassDecoration(
+          borderColor: color.withOpacity(0.3),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    color.withOpacity(0.3),
+                    color.withOpacity(0.1),
+                  ],
+                ),
+              ),
+              child: Icon(
+                icon,
+                size: 24,
+                color: color,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              label,
+              style: TeacherTextStyles.cardSubtitle.copyWith(
+                color: color,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAnnouncementsConsoleSection(BuildContext context) {
+    final announcements = studentData?['announcements'] ?? [];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(bottom: 16),
+          child: Text(
+            'ANNOUNCEMENT CONSOLE',
+            style: TeacherTextStyles.sectionHeader,
+          ),
+        ),
+        Container(
+          decoration: TeacherColors.glassDecoration(),
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildConsoleOption(
+                      icon: Icons.campaign_rounded,
+                      label: 'General',
+                      subLabel: 'Announcements',
+                      color: TeacherColors.primaryAccent,
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => AnnouncementsScreen(),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: _buildConsoleOption(
+                      icon: Icons.announcement_outlined,
+                      label: 'Subject',
+                      subLabel: 'Annoucement',
+                      color: TeacherColors.secondaryAccent,
+                      onTap: () {
+                        // Subject announcement action
+                      },
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              _buildAnimatedButton(
+                icon: Icons.add_rounded,
+                label: 'CREATE NEW QUERY',
+                color: TeacherColors.primaryAccent,
+                onTap: () => _showAddQueryModal(context),
+              ),
+              const SizedBox(height: 20),
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildConsoleOption(
+                      icon: Icons.report_problem,
+                      label: 'View',
+                      subLabel: 'Complaint',
+                      color: TeacherColors.dangerAccent,
+                      onTap: () => _showAddComplaintModal(context),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: _buildConsoleOption(
+                      icon: Icons.phone_android,
+                      label: 'Call',
+                      subLabel: 'Logs',
+                      color: TeacherColors.infoAccent,
+                      onTap: () {
+                        // Call log navigation
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildConsoleOption({
     required IconData icon,
     required String label,
@@ -198,15 +737,14 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
             const SizedBox(height: 8),
             Text(
               label,
-              style: TextStyle(
+              style: TeacherTextStyles.cardSubtitle.copyWith(
                 color: color,
-                fontSize: 12,
                 fontWeight: FontWeight.bold,
               ),
             ),
             Text(
               subLabel,
-              style: TextStyle(
+              style: TeacherTextStyles.cardSubtitle.copyWith(
                 color: color,
                 fontSize: 10,
               ),
@@ -214,1105 +752,6 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
           ],
         ),
       ),
-    );
-  }
-
-// Add query modal
-  void _showAddQueryModal(BuildContext context) {
-    final subjectController = TextEditingController();
-    final questionController = TextEditingController();
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: Theme.of(context).scaffoldBackgroundColor,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'New Query',
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  color: Colors.blueAccent,
-                ),
-              ),
-              const SizedBox(height: 20),
-              TextField(
-                controller: subjectController,
-                decoration: InputDecoration(
-                  labelText: 'Subject',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: questionController,
-                maxLines: 4,
-                decoration: InputDecoration(
-                  labelText: 'Your Question',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 24),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () => Navigator.pop(context),
-                      child: const Text('Cancel'),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () async {
-                        if (subjectController.text.isEmpty ||
-                            questionController.text.isEmpty) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Please fill all fields')),
-                          );
-                          return;
-                        }
-
-                        try {
-                          // Submit query logic here
-                          Navigator.pop(context);
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Query submitted successfully')),
-                          );
-                        } catch (e) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Error: ${e.toString()}')),
-                          );
-                        }
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.blueAccent,
-                      ),
-                      child: const Text('Submit'),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 10),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-// Add complaint modal
-  void _showAddComplaintModal(BuildContext context) {
-    final titleController = TextEditingController();
-    final descriptionController = TextEditingController();
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: Theme.of(context).scaffoldBackgroundColor,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'Add Complaint',
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  color: Colors.redAccent,
-                ),
-              ),
-              const SizedBox(height: 20),
-              TextField(
-                controller: titleController,
-                decoration: InputDecoration(
-                  labelText: 'Title',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: descriptionController,
-                maxLines: 4,
-                decoration: InputDecoration(
-                  labelText: 'Description',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 24),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () => Navigator.pop(context),
-                      child: const Text('Cancel'),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () async {
-                        if (titleController.text.isEmpty ||
-                            descriptionController.text.isEmpty) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Please fill all fields')),
-                          );
-                          return;
-                        }
-
-                        try {
-                          // Submit complaint logic here
-                          Navigator.pop(context);
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Complaint submitted successfully')),
-                          );
-                        } catch (e) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Error: ${e.toString()}')),
-                          );
-                        }
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.redAccent,
-                      ),
-                      child: const Text('Submit'),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 10),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-// Section header widget
-  Widget _buildSectionHeader({
-    required IconData icon,
-    required String title,
-    Color? color,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Row(
-        children: [
-          Icon(icon, color: color ?? Colors.blueAccent, size: 20),
-          const SizedBox(width: 8),
-          Text(
-            title,
-            style: TextStyle(
-              color: color ?? Colors.blueAccent,
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 1.2,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    if (isLoading) {
-      return const Center(child: CircularProgressIndicator());
-    }
-
-    if (hasError || studentData == null) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.error_outline, size: 48, color: Colors.red),
-            const SizedBox(height: 16),
-            const Text('Failed to load student data'),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: _fetchStudentData,
-              child: const Text('Retry'),
-            ),
-          ],
-        ),
-      );
-    }
-
-    return SafeArea(
-      child: RefreshIndicator(
-        onRefresh: _fetchStudentData,
-        child: CustomScrollView(
-          slivers: [
-            SliverToBoxAdapter(child: _buildHeader(context)),
-            SliverPadding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              sliver: SliverToBoxAdapter(child: _buildStatsRow(context)),
-            ),
-            SliverPadding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              sliver: SliverToBoxAdapter(child: _buildTimetableSection(context)),
-            ),
-            SliverPadding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              sliver: SliverToBoxAdapter(child: _buildQuickActionsSection(context)),
-            ),
-            SliverPadding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              sliver: SliverToBoxAdapter(
-                child: _buildAnnouncementsConsoleSection(context),
-              ),
-            ),
-            SliverPadding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              sliver: SliverToBoxAdapter(child: _buildAssignmentsSection(context)),
-            ),
-            const SliverToBoxAdapter(child: SizedBox(height: 20)),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildHeader(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final headerGradient = isDark
-        ? [AppColors.primaryDark, AppColors.primary]
-        : [AppColors.primary, AppColors.primaryLight];
-
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: headerGradient,
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: const BorderRadius.only(
-          bottomLeft: Radius.circular(24),
-          bottomRight: Radius.circular(24),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.primary.withOpacity(0.3),
-            blurRadius: 10,
-            spreadRadius: 2,
-          ),
-        ],
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Good ${_getGreeting()}',
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  color: Colors.white.withOpacity(0.9),
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                studentData?['name'] ?? 'Student',
-                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  'Grade ${studentData?['grade']} - Section ${studentData?['section']}',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          Container(
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(color: Colors.white, width: 2),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  blurRadius: 8,
-                  spreadRadius: 2,
-                ),
-              ],
-            ),
-            child: CircleAvatar(
-              radius: 32,
-              backgroundImage: studentData?['profile_image'] != null
-                  ? NetworkImage(studentData!['profile_image'])
-                  : const AssetImage('assets/default_profile.png')
-              as ImageProvider,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStatsRow(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    return Row(
-      children: [
-        Expanded(
-          child: _buildGlassStatCard( // Changed to glowing version
-            context,
-            icon: Icons.calendar_today,
-            value: '${studentData?['attendance_percentage'] ?? '0'}%',
-            label: 'Attendance',
-            color: isDark ? AppColors.primaryLight : AppColors.primary,
-          ),
-        ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: _buildGlassStatCard( // Changed to glowing version
-            context,
-            icon: Icons.assignment,
-            value: '${studentData?['average_score'] ?? '0'}%',
-            label: 'Avg. Score',
-            color: isDark ? AppColors.secondaryLight : AppColors.secondary,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildGlassStatCard(
-      BuildContext context, {
-        required IconData icon,
-        required String value,
-        required String label,
-        required Color color,
-      }) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-
-    return GlassCard(
-      borderRadius: 20,
-      borderColor: color.withOpacity(0.3),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: color.withOpacity(0.2),
-              ),
-              child: Icon(
-                icon,
-                size: 24,
-                color: color,
-              ),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              value,
-              style: theme.textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: theme.colorScheme.onBackground,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onBackground.withOpacity(0.7),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildHolographicActionButton(
-      BuildContext context, {
-        required IconData icon,
-        required String label,
-        required Color color,
-        required VoidCallback onTap,
-      }) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final iconColor = isDark ? Colors.white : Colors.white.withOpacity(0.9);
-
-    return Padding(
-      padding: const EdgeInsets.only(right: 16),
-      child: GestureDetector(
-        onTap: onTap,
-        child: GlassCard( // Changed back to GlassCard for glow effect
-          borderRadius: 20,
-          borderColor: color.withOpacity(0.3),
-          glowColor: color.withOpacity(0.2),
-          child: Container(
-            width: 120,
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: LinearGradient(
-                      colors: [
-                        color.withOpacity(0.3),
-                        color.withOpacity(0.1),
-                      ],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: color.withOpacity(0.3),
-                        blurRadius: 10,
-                        spreadRadius: 2,
-                      ),
-                    ],
-                  ),
-                  child: Icon(
-                    icon,
-                    size: 24,
-                    color: iconColor,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  label,
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: iconColor,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-  Widget _buildAssignmentsSection(BuildContext context) {
-    final assignments = studentData?['assignments'] ?? [];
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SectionHeader(
-          title: "UPCOMING ASSIGNMENTS",
-          titleColor: AppColors.accentAmberLight,
-                onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => AssignmentsScreen(studentRfid: widget.rfid),
-              ),
-            );
-          },
-        ),
-        const SizedBox(height: 16),
-
-        GlassCard( // Added GlassCard for assignments stats
-          borderRadius: 20,
-          borderColor: AppColors.accentAmberLight.withOpacity(0.3),
-          glowColor: AppColors.accentAmberLight,
-          child: Padding(
-            padding: const EdgeInsets.all(12),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _buildAssignmentStatItem(
-                  icon: Icons.check_circle,
-                  value: assignments.where((a) => a['status'] == 'completed').length.toString(),
-                  label: 'Completed',
-                ),
-                _buildAssignmentStatItem(
-                  icon: Icons.pending_actions,
-                  value: assignments.where((a) => a['status'] == 'pending').length.toString(),
-                  label: 'Pending',
-                ),
-                _buildAssignmentStatItem(
-                  icon: Icons.calendar_today,
-                  value: assignments.length.toString(),
-                  label: 'Upcoming',
-                ),
-              ],
-            ),
-          ),
-        ),
-        const SizedBox(height: 16),
-
-        GlassCard( // Added GlassCard for submit button
-          borderRadius: 12,
-          borderColor: AppColors.accentAmberLight.withOpacity(0.5),
-          glowColor: AppColors.accentAmberLight,
-          child: InkWell(
-            borderRadius: BorderRadius.circular(12),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => AssignmentsScreen(studentRfid: widget.rfid),
-                ),
-              );
-            },
-            child: Padding(
-              padding: const EdgeInsets.all(12.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Container(
-                    width: 36,
-                    height: 36,
-                    decoration: BoxDecoration(
-                      color: AppColors.accentAmberLight.withOpacity(0.1),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      Icons.upload,
-                      color: AppColors.accentAmberLight,
-                      size: 18,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'SUBMIT YOUR ASSIGNMENT',
-                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          color:AppColors.accentAmberLight,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      Text(
-                        'Upload your completed work',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppColors.accentAmberLight.withOpacity(0.6),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(height: 16),
-
-        if (assignments.isNotEmpty)
-          GlassCard( // Added GlassCard for assignments list
-            borderRadius: 20,
-            borderColor: AppColors.accentAmberLight.withOpacity(0.3),
-            glowColor: AppColors.accentAmberLight,
-            child: Column(
-              children: [
-                for (var i = 0; i < (assignments.length > 2 ? 2 : assignments.length); i++)
-                  _buildAssignmentListItem(
-                    subject: assignments[i]['subject'],
-                    title: assignments[i]['title'],
-                    dueDate: assignments[i]['due'],
-                    isLast: i == (assignments.length > 2 ? 1 : assignments.length - 1),
-                    color: AppColors.accentAmberLight,
-                  ),
-              ],
-            ),
-          ),
-        if (assignments.isEmpty)
-          GlassCard(
-            borderRadius: 20,
-            borderColor: AppColors.accentAmberLight.withOpacity(0.3),
-            glowColor: AppColors.accentAmberLight,
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Text(
-                'No upcoming assignments',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppColors.accentAmberLight.withOpacity(0.6),
-                ),
-              ),
-            ),
-          ),
-      ],
-    );
-  }
-
-  Widget _buildAssignmentListItem({
-    required String subject,
-    required String title,
-    required String dueDate,
-    required bool isLast,
-    required Color color,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: color.withOpacity(0.2),
-                  shape: BoxShape.circle,
-                ),
-                child: Center(
-                  child: Text(
-                    subject[0],
-                    style: TextStyle(
-                      color: color,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: color,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '$subject • Due in $dueDate',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: color.withOpacity(0.6),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Icon(Icons.chevron_right, color: color.withOpacity(0.6)),
-            ],
-          ),
-          if (!isLast)
-            Padding(
-              padding: const EdgeInsets.only(top: 16),
-              child: Divider(
-                height: 1,
-                color: color.withOpacity(0.1),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-  Widget _buildStatCard(
-      BuildContext context, {
-        required IconData icon,
-        required String value,
-        required String label,
-        required Color color,
-      }) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final baseColor = isDark ? color.withOpacity(0.8) : color;
-    final textColor = isDark ? Colors.white : Theme.of(context).colorScheme.onBackground;
-
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(20),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-        child: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                baseColor.withOpacity(0.15),
-                baseColor.withOpacity(0.05),
-              ],
-            ),
-            border: Border.all(
-              color: Colors.white.withOpacity(isDark ? 0.1 : 0.2),
-              width: 1,
-            ),
-            borderRadius: BorderRadius.circular(20),
-          ),
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: LinearGradient(
-                    colors: [
-                      baseColor.withOpacity(0.3),
-                      baseColor.withOpacity(0.1),
-                    ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                ),
-                child: Icon(
-                  icon,
-                  size: 24,
-                  color: isDark ? Colors.white : Colors.white.withOpacity(0.9),
-                ),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                value,
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: textColor,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                label,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: isDark
-                      ? Colors.white.withOpacity(0.8)
-                      : Theme.of(context).colorScheme.onBackground.withOpacity(0.7),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTimetableSection(BuildContext context) {
-    final timetable = (studentData?['timetable'] as List?) ?? [];
-    debugPrint('Timetable data: $timetable');
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SectionHeader(
-          title: "TODAY'S CLASSES",
-          titleColor: AppColors.primary,
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => TimetableScreen(),
-              ),
-            );
-          },
-        ),
-        const SizedBox(height: 16),
-
-        if (timetable.isNotEmpty && timetable[0] != null)
-          HolographicCard(
-            borderColor: AppColors.primary.withOpacity(0.3),
-            child: Column(
-              children: [
-                for (var i = 0; i < timetable.length; i++)
-                  if (timetable[i] != null)
-                    _buildClassItem(
-                      subject: timetable[i]['subject'] ?? 'No Subject',
-                      time: timetable[i]['time'] ?? '--:--',
-                      room: timetable[i]['room'] ?? '--',
-                      isLast: i == timetable.length - 1,
-                    ),
-              ],
-            ),
-          ),
-        if (timetable.isEmpty || timetable[0] == null)
-          HolographicCard(
-            borderColor: AppColors.primary.withOpacity(0.3),
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Text(
-                'No classes today',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.onBackground.withOpacity(0.6),
-                ),
-              ),
-            ),
-          ),
-      ],
-    );
-  }
-
-  Widget _buildClassItem({
-    required String subject,
-    required String time,
-    required String room,
-    required bool isLast,
-  }) {
-    final IconData subjectIcon = _getSubjectIcon(subject);
-    final Color subjectColor = _getSubjectColor(subject);
-
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              CircleAvatar(
-                backgroundColor: subjectColor.withOpacity(0.2),
-                child: Icon(
-                  subjectIcon,
-                  color: subjectColor,
-                  size: 20,
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      subject,
-                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: Theme.of(context).colorScheme.onBackground,
-                      ),
-                    ),
-                    Text(
-                      time,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Theme.of(context).colorScheme.onBackground.withOpacity(0.6),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: subjectColor.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  room,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: subjectColor,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          if (!isLast)
-            Padding(
-              padding: const EdgeInsets.only(top: 16),
-              child: Divider(
-                height: 1,
-                color: Theme.of(context).dividerColor.withOpacity(0.1),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildQuickActionsSection(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    final quickActions = [
-      {
-        'icon': Icons.calendar_today,
-        'label': 'Attendance',
-        'color': isDark ? AppColors.primaryLight : AppColors.primary,
-        'onTap': () => Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => AttendanceScreen(rfid: widget.rfid),
-          ),
-        ),
-      },
-      {
-        'icon': Icons.book,
-        'label': 'Syllabus',
-        'color': isDark ? AppColors.secondaryLight : AppColors.secondary,
-        'onTap': () => Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => SyllabusScreen()),
-        ),
-      },
-      {
-        'icon': Icons.assignment,
-        'label': 'Assignments',
-        'color': isDark ? AppColors.accentPinkLight : AppColors.accentPink,
-        'onTap': () => Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => AssignmentsScreen(studentRfid: widget.rfid),
-          ),
-        ),
-      },
-      {
-        'icon': Icons.chat,
-        'label': 'Chat Rooms',
-        'color': isDark ? AppColors.accentBlueLight : AppColors.accentBlue,
-        'onTap': () => Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => ChatRoomsScreen(rfid: widget.rfid),
-          ),
-        ),
-      },
-      {
-        'icon': Icons.help_outline,
-        'label': 'Queries',
-        'color': isDark ? AppColors.accentAmberLight : AppColors.accentAmber,
-        'onTap': () => Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => QueriesScreen(studentRfid: widget.rfid),
-          ),
-        ),
-      },
-      {
-        'icon': Icons.assessment,
-        'label': 'Assessments',
-        'color': isDark ? AppColors.successLight : AppColors.success,
-        'onTap': () => Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => AssessmentsScreen(rfid: widget.rfid),
-          ),
-        ),
-      },
-    ];
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SectionHeader(
-          title: 'QUICK ACCESS',
-          titleColor: AppColors.accentBlue,
-          onTap: () {},
-        ),
-        const SizedBox(height: 16),
-        SizedBox(
-          height: 150,
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            itemCount: quickActions.length,
-            itemBuilder: (context, index) {
-              final action = quickActions[index];
-              return _buildHolographicActionButton(
-                context,
-                icon: action['icon'] as IconData,
-                label: action['label'] as String,
-                color: action['color'] as Color,
-                onTap: action['onTap'] as VoidCallback,
-              );
-            },
-          ),
-        ),
-      ],
-    );
-  }
-
-
-  Widget _buildAnnouncementsSection(BuildContext context) {
-    final announcements = studentData?['announcements'] ?? [];
-    final cyberBlue = Color(0xFF00E0FF);
-    final matrixGreen = Color(0xFF00FF9D);
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SectionHeader(
-          title: 'ANNOUNCEMENTS',
-          titleColor: cyberBlue,
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => AnnouncementsScreen(),
-              ),
-            );
-          },
-        ),
-        const SizedBox(height: 16),
-        HolographicCard(
-          borderColor: cyberBlue.withOpacity(0.3),
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              children: [
-                if (announcements.isNotEmpty)
-                  for (var i = 0; i < (announcements.length > 2 ? 2 : announcements.length); i++)
-                    Column(
-                      children: [
-                        if (i > 0) const SizedBox(height: 12),
-                        _buildAnnouncementItem(
-                          title: announcements[i]['title'],
-                          message: announcements[i]['message'],
-                          time: announcements[i]['date'],
-                          color: [cyberBlue, matrixGreen][i % 2],
-                        ),
-                      ],
-                    ),
-                if (announcements.isEmpty)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    child: Text(
-                      'No announcements available',
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Theme.of(context).colorScheme.onBackground.withOpacity(0.6),
-                      ),
-                    ),
-                  ),
-                const SizedBox(height: 16),
-                _buildAnimatedButton(
-                  icon: Icons.arrow_forward,
-                  label: 'SEE ALL',
-                  color: cyberBlue,
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => AnnouncementsScreen(),
-                      ),
-                    );
-                  },
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
     );
   }
 
@@ -1345,7 +784,7 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
               const SizedBox(width: 8),
               Text(
                 label,
-                style: TextStyle(
+                style: TeacherTextStyles.cardSubtitle.copyWith(
                   color: color,
                   fontWeight: FontWeight.bold,
                 ),
@@ -1357,117 +796,209 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
     );
   }
 
-  Widget _buildAnnouncementItem({
-    required String title,
-    required String message,
-    required String time,
-    required Color color,
-  }) {
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        gradient: LinearGradient(
-          colors: [
-            color.withOpacity(0.1),
-            color.withOpacity(0.05),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+  Widget _buildAssignmentsSection(BuildContext context) {
+    final assignments = studentData?['assignments'] ?? [];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(bottom: 16),
+          child: Text(
+            "UPCOMING ASSIGNMENTS",
+            style: TeacherTextStyles.sectionHeader,
+          ),
         ),
-        border: Border.all(
-          color: color.withOpacity(0.3),
-          width: 1,
+        Container(
+          decoration: TeacherColors.glassDecoration(),
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _buildAssignmentStatItem(
+                icon: Icons.check_circle,
+                value: assignments.where((a) => a['status'] == 'completed').length.toString(),
+                label: 'Completed',
+                color: TeacherColors.successAccent,
+              ),
+              _buildAssignmentStatItem(
+                icon: Icons.pending_actions,
+                value: assignments.where((a) => a['status'] == 'pending').length.toString(),
+                label: 'Pending',
+                color: TeacherColors.warningAccent,
+              ),
+              _buildAssignmentStatItem(
+                icon: Icons.calendar_today,
+                value: assignments.length.toString(),
+                label: 'Upcoming',
+                color: TeacherColors.dangerAccent,
+              ),
+            ],
+          ),
         ),
-      ),
-      padding: const EdgeInsets.all(12),
-      child: Row(
-        children: [
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: LinearGradient(
-                colors: [
-                  color.withOpacity(0.8),
-                  color.withOpacity(0.4),
+        const SizedBox(height: 16),
+        Container(
+          decoration: TeacherColors.glassDecoration(
+            borderColor: TeacherColors.primaryAccent.withOpacity(0.5),
+          ),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(12),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => AssignmentsScreen(studentRfid: widget.rfid),
+                ),
+              );
+            },
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Row(
+                children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          TeacherColors.primaryAccent.withOpacity(0.3),
+                          TeacherColors.primaryAccent.withOpacity(0.1),
+                        ],
+                      ),
+                    ),
+                    child: Icon(
+                      Icons.upload,
+                      color: TeacherColors.primaryAccent,
+                      size: 20,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'SUBMIT YOUR ASSIGNMENT',
+                          style: TeacherTextStyles.cardTitle.copyWith(
+                            color: TeacherColors.primaryAccent,
+                          ),
+                        ),
+                        Text(
+                          'Upload your completed work',
+                          style: TeacherTextStyles.cardSubtitle,
+                        ),
+                      ],
+                    ),
+                  ),
                 ],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
               ),
             ),
-            child: Icon(
-              Icons.notifications,
-              color: Colors.white,
-            ),
           ),
-          const SizedBox(width: 12),
-          Expanded(
+        ),
+        const SizedBox(height: 16),
+        if (assignments.isNotEmpty)
+          Container(
+            decoration: TeacherColors.glassDecoration(),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  title,
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: color,
-                    fontSize: 16,
+                for (var i = 0; i < (assignments.length > 2 ? 2 : assignments.length); i++)
+                  _buildAssignmentListItem(
+                    subject: assignments[i]['subject'],
+                    title: assignments[i]['title'],
+                    dueDate: assignments[i]['due'],
+                    isLast: i == (assignments.length > 2 ? 1 : assignments.length - 1),
                   ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  message,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.onBackground.withOpacity(0.8),
-                  ),
-                ),
               ],
             ),
           ),
-          Text(
-            time,
-            style: TextStyle(
-              color: Theme.of(context).colorScheme.onBackground.withOpacity(0.6),
+        if (assignments.isEmpty)
+          Container(
+            decoration: TeacherColors.glassDecoration(),
+            padding: const EdgeInsets.all(16),
+            child: Center(
+              child: Text(
+                'No upcoming assignments',
+                style: TeacherTextStyles.cardSubtitle,
+              ),
             ),
           ),
-        ],
-      ),
+      ],
     );
   }
 
-
-
-  Widget _buildAssignmentStatsRow({
-    required int completed,
-    required int pending,
-    required int upcoming,
+  Widget _buildAssignmentListItem({
+    required String subject,
+    required String title,
+    required String dueDate,
+    required bool isLast,
   }) {
-    return HolographicCard(
-      borderColor: Colors.red.withOpacity(0.3),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            _buildAssignmentStatItem(
-              icon: Icons.check_circle,
-              value: completed.toString(),
-              label: 'Completed',
+    final subjectColor = _getSubjectColor(subject);
+
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      subjectColor.withOpacity(0.3),
+                      subjectColor.withOpacity(0.1),
+                    ],
+                  ),
+                ),
+                child: Center(
+                  child: Text(
+                    subject[0],
+                    style: TeacherTextStyles.statValue.copyWith(
+                      color: subjectColor,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: TeacherTextStyles.cardTitle,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '$subject • Due in $dueDate',
+                      style: TeacherTextStyles.cardSubtitle,
+                    ),
+                  ],
+                ),
+              ),
+              Icon(
+                Icons.chevron_right,
+                color: TeacherColors.secondaryText,
+              ),
+            ],
+          ),
+          if (!isLast)
+            Padding(
+              padding: const EdgeInsets.only(top: 16),
+              child: Divider(
+                height: 1,
+                color: TeacherColors.cardBorder.withOpacity(0.3),
+              ),
             ),
-            _buildAssignmentStatItem(
-              icon: Icons.pending_actions,
-              value: pending.toString(),
-              label: 'Pending',
-            ),
-            _buildAssignmentStatItem(
-              icon: Icons.calendar_today,
-              value: upcoming.toString(),
-              label: 'Upcoming',
-            ),
-          ],
-        ),
+        ],
       ),
     );
   }
@@ -1476,18 +1007,18 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
     required IconData icon,
     required String value,
     required String label,
+    required Color color,
   }) {
     return Column(
       children: [
         Row(
           children: [
-            Icon(icon, size: 16, color: Colors.red),
+            Icon(icon, size: 16, color: color),
             const SizedBox(width: 4),
             Text(
               value,
-              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                color: Colors.red,
-                fontWeight: FontWeight.bold,
+              style: TeacherTextStyles.cardTitle.copyWith(
+                color: color,
               ),
             ),
           ],
@@ -1495,64 +1026,157 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
         const SizedBox(height: 4),
         Text(
           label,
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-            color: Colors.red.withOpacity(0.6),
+          style: TeacherTextStyles.cardSubtitle.copyWith(
+            color: color.withOpacity(0.8),
           ),
         ),
       ],
     );
   }
 
-  Widget _buildSubmitAssignmentButton() {
-    return HolographicCard(
-      borderColor: Colors.red.withOpacity(0.5),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(12),
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => AssignmentsScreen(studentRfid: widget.rfid),
+  void _showAddQueryModal(BuildContext context) {
+    final subjectController = TextEditingController();
+    final questionController = TextEditingController();
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+          border: Border.all(
+            color: TeacherColors.cardBorder,
+            width: 1.0,
+          ),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              TeacherColors.glassEffectLight,
+              TeacherColors.glassEffectDark,
+            ],
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.2),
+              blurRadius: 10,
+              spreadRadius: 2,
             ),
-          );
-        },
-        child: Padding(
-          padding: const EdgeInsets.all(12.0),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
+          ],
+        ),
+
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                  color: Colors.red.withOpacity(0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  Icons.upload,
-                  color: Colors.red,
-                  size: 18,
-                ),
+              Text(
+                'New Query',
+                style: TeacherTextStyles.sectionHeader,
               ),
-              const SizedBox(width: 12),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'SUBMIT YOUR ASSIGNMENT',
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      color: Colors.red,
-                      fontWeight: FontWeight.bold,
+              const SizedBox(height: 20),
+              TextField(
+                controller: subjectController,
+                style: TeacherTextStyles.cardTitle,
+                decoration: InputDecoration(
+                  labelText: 'Subject',
+                  labelStyle: TeacherTextStyles.cardSubtitle,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                      color: TeacherColors.cardBorder,
                     ),
                   ),
-                  Text(
-                    'Upload your completed work',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Colors.red.withOpacity(0.6),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                      color: TeacherColors.cardBorder,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: questionController,
+                maxLines: 4,
+                style: TeacherTextStyles.cardTitle,
+                decoration: InputDecoration(
+                  labelText: 'Your Question',
+                  labelStyle: TeacherTextStyles.cardSubtitle,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                      color: TeacherColors.cardBorder,
+                    ),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                      color: TeacherColors.cardBorder,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.pop(context),
+                      style: OutlinedButton.styleFrom(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        side: BorderSide(
+                          color: TeacherColors.cardBorder,
+                        ),
+                      ),
+                      child: Text(
+                        'Cancel',
+                        style: TeacherTextStyles.cardSubtitle,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        if (subjectController.text.isEmpty ||
+                            questionController.text.isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Please fill all fields')),
+                          );
+                          return;
+                        }
+
+                        try {
+                          // Submit query logic here
+                          Navigator.pop(context);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Query submitted successfully')),
+                          );
+                        } catch (e) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('Error: ${e.toString()}')),
+                          );
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: TeacherColors.primaryAccent,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: Text(
+                        'Submit',
+                        style: TeacherTextStyles.primaryButton,
+                      ),
                     ),
                   ),
                 ],
               ),
+              const SizedBox(height: 10),
             ],
           ),
         ),
@@ -1560,6 +1184,157 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
     );
   }
 
+  void _showAddComplaintModal(BuildContext context) {
+    final titleController = TextEditingController();
+    final descriptionController = TextEditingController();
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+          border: Border.all(
+            color: TeacherColors.cardBorder,
+            width: 1.0,
+          ),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              TeacherColors.glassEffectLight,
+              TeacherColors.glassEffectDark,
+            ],
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.2),
+              blurRadius: 10,
+              spreadRadius: 2,
+            ),
+          ],
+        ),
+
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Add Complaint',
+                style: TeacherTextStyles.sectionHeader.copyWith(
+                  color: TeacherColors.dangerAccent,
+                ),
+              ),
+              const SizedBox(height: 20),
+              TextField(
+                controller: titleController,
+                style: TeacherTextStyles.cardTitle,
+                decoration: InputDecoration(
+                  labelText: 'Title',
+                  labelStyle: TeacherTextStyles.cardSubtitle,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                      color: TeacherColors.cardBorder,
+                    ),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                      color: TeacherColors.cardBorder,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: descriptionController,
+                maxLines: 4,
+                style: TeacherTextStyles.cardTitle,
+                decoration: InputDecoration(
+                  labelText: 'Description',
+                  labelStyle: TeacherTextStyles.cardSubtitle,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                      color: TeacherColors.cardBorder,
+                    ),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                      color: TeacherColors.cardBorder,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.pop(context),
+                      style: OutlinedButton.styleFrom(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        side: BorderSide(
+                          color: TeacherColors.cardBorder,
+                        ),
+                      ),
+                      child: Text(
+                        'Cancel',
+                        style: TeacherTextStyles.cardSubtitle,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        if (titleController.text.isEmpty ||
+                            descriptionController.text.isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Please fill all fields')),
+                          );
+                          return;
+                        }
+
+                        try {
+                          // Submit complaint logic here
+                          Navigator.pop(context);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Complaint submitted successfully')),
+                          );
+                        } catch (e) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('Error: ${e.toString()}')),
+                          );
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: TeacherColors.dangerAccent,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: Text(
+                        'Submit',
+                        style: TeacherTextStyles.primaryButton,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 
   IconData _getSubjectIcon(String subject) {
     final subjectIcons = {
@@ -1580,14 +1355,14 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
 
   Color _getSubjectColor(String subject) {
     final colors = {
-      'Mathematics': AppColors.primary,
-      'Physics': AppColors.secondary,
-      'Chemistry': AppColors.accentBlue,
-      'Biology': AppColors.success,
-      'English': AppColors.accentPink,
-      'History': AppColors.accentAmber,
+      'Mathematics': TeacherColors.primaryAccent,
+      'Physics': TeacherColors.secondaryAccent,
+      'Chemistry': TeacherColors.infoAccent,
+      'Biology': TeacherColors.successAccent,
+      'English': TeacherColors.warningAccent,
+      'History': TeacherColors.dangerAccent,
     };
-    return colors[subject] ?? AppColors.primary;
+    return colors[subject] ?? TeacherColors.primaryAccent;
   }
 
   String _getGreeting() {
@@ -1595,101 +1370,5 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
     if (hour < 12) return 'Morning';
     if (hour < 17) return 'Afternoon';
     return 'Evening';
-  }
-}
-
-class HolographicCard extends StatelessWidget {
-  final Widget child;
-  final double borderRadius;
-  final Color borderColor;
-  final double? width;
-  final double? height;
-
-  const HolographicCard({
-    super.key,
-    required this.child,
-    this.borderRadius = 12,
-    this.borderColor = Colors.white,
-    this.width,
-    this.height,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    return Container(
-      width: width,
-      height: height,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(borderRadius),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            borderColor.withOpacity(isDark ? 0.05 : 0.1),
-            borderColor.withOpacity(isDark ? 0.02 : 0.05),
-          ],
-        ),
-        border: Border.all(
-          color: borderColor.withOpacity(isDark ? 0.1 : 0.2),
-          width: 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: borderColor.withOpacity(0.05),
-            blurRadius: 10,
-            spreadRadius: 2,
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(borderRadius),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-          child: child,
-        ),
-      ),
-    );
-  }
-}
-
-class SectionHeader extends StatelessWidget {
-  final String title;
-  final VoidCallback onTap;
-  final Color? titleColor;
-
-  const SectionHeader({
-    super.key,
-    required this.title,
-    required this.onTap,
-    this.titleColor,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-      child: InkWell(
-        onTap: onTap,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              title,
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                color: titleColor ?? Theme.of(context).colorScheme.onBackground,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            Icon(
-              Icons.arrow_forward_ios,
-              size: 16,
-              color: titleColor ?? Theme.of(context).colorScheme.onBackground.withOpacity(0.6),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 }
