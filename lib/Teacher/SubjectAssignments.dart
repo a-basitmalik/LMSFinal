@@ -66,7 +66,7 @@ class _SubjectAssignmentsScreenState extends State<SubjectAssignmentsScreen> {
         });
 
         final response = await _dio.post(
-          'http://193.203.162.232:5050/teacher/api/assignments/upload',
+          'http://193.203.162.232:5050/student/api/assignments/upload',
           data: formData,
         );
 
@@ -388,7 +388,7 @@ class _SubjectAssignmentsScreenState extends State<SubjectAssignmentsScreen> {
   Future<void> _submitAssignment() async {
     try {
       final response = await http.post(
-        Uri.parse('$_baseUrl/subjects/${widget.subject['subject_id']}/assignments'),
+        Uri.parse('http://193.203.162.232:5050/student/api/subjects/${widget.subject['subject_id']}/assignments'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
           'title': _titleController.text,
