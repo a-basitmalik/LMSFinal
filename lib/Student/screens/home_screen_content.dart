@@ -85,7 +85,6 @@ class _HomeScreenContentState extends State<HomeScreenContent> {
 
   Widget _buildAnnouncementsConsoleSection(BuildContext context) {
     final cyberBlue = Color(0xFF00E0FF);
-
     final announcements = studentData?['announcements'] ?? [];
 
     return Column(
